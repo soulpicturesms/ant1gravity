@@ -1,0 +1,17 @@
+{
+  "name": "ant1gravity-backend",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "dependencies": {
+    "@seald-io/nedb": "^4.0.4",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.0-rc.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

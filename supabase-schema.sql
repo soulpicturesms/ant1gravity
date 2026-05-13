@@ -1,0 +1,156 @@
+-- =============================================
+-- ANT1GRAVITY Guild Portal — Supabase Schema
+-- Ejecutar en: Supabase Dashboard > SQL Editor
+-- =============================================
+
+-- Habilitar extensión UUID
+create extension if not exists "pgcrypto";
+
+-- ── USERS ──────────────────────────────────
+create table if not exists users (
+  id          text primary key default gen_random_uuid()::text,
+  username    text unique not null,
+  password    text not null,
+  role        text default 'member' check (role in ('member','officer','admin')),
+  avatar_url  text,
+  coins       integer default 0,
+  pvp_fame    bigint default 0,
+  pvp_kills   integer default 0,
+  cta_attendance integer default 0,
+  total_activities integer default 0,
+  created_at  timestamptz default now()
+);
+
+-- ── NEWS ───────────────────────────────────
+create table if not exists news (
+  id          text primary key default gen_random_uuid()::text,
+  title       text not null,
+  content     text not null,
+  image_url   text,
+  author_id   text references users(id) on delete set null,
+  author_name text,
+  pinned      boolean default false,
+  category    text default 'general',
+  created_at  timestamptz default now()
+);
+
+-- ── ACTIVITIES ─────────────────────────────
+create table if not exists activities (
+  id           text primary key default gen_random_uuid()::text,
+  name         text not null,
+  type         text not null,
+  date         timestamptz not null,
+  description  text,
+  created_by   text references users(id) on delete set null,
+  creator_name text,
+  created_at   timestamptz default now()
+);
+
+-- ── ATTENDANCE ─────────────────────────────
+create table if not exists attendance (
+  id          text primary key default gen_random_uuid()::text,
+  user_id     text references users(id) on delete cascade,
+  activity_id text references activities(id) on delete cascade,
+  present     boolean default true,
+  unique(user_id, activity_id)
+);
+
+-- ── BUILDS ─────────────────────────────────
+create table if not exists builds (
+  id          text primary key default gen_random_uuid()::text,
+  title       text not null,
+  category    text not null,
+  description text,
+  items       text,
+  image_url   text,
+  author_id   text references users(id) on delete set null,
+  author_name text,
+  featured    boolean default false,
+  created_at  timestamptz default now()
+);
+
+-- ── EQUIPMENT PRESETS ──────────────────────
+create table if not exists equipment_presets (
+  id         text primary key default gen_random_uuid()::text,
+  name       text not null,
+  slot       text not null,
+  coin_value integer not null,
+  tier       text default 'T8',
+  created_at timestamptz default now()
+);
+
+-- ── DEATH REPORTS ──────────────────────────
+create table if not exists death_reports (
+  id             text primary key default gen_random_uuid()::text,
+  user_id        text references users(id) on delete cascade,
+  username       text,
+  avatar_url     text,
+  screenshot_url text not null,
+  description    text,
+  status         text default 'pending' check (status in ('pending','approved','rejected')),
+  coins_awarded  integer default 0,
+  admin_notes    text,
+  items_lost     text,
+  reviewed_by    text,
+  reviewed_at    timestamptz,
+  claimed        boolean default false,
+  created_at     timestamptz default now()
+);
+
+-- ── COIN TRANSACTIONS ──────────────────────
+create table if not exists coin_transactions (
+  id         text primary key default gen_random_uuid()::text,
+  user_id    text references users(id) on delete cascade,
+  username   text,
+  amount     integer not null,
+  type       text not null,
+  reason     text,
+  admin_id   text,
+  report_id  text,
+  created_at timestamptz default now()
+);
+
+-- ── DISABLE RLS (usamos JWT propio) ────────
+alter table users disable row level security;
+alter table news disable row level security;
+alter table activities disable row level security;
+alter table attendance disable row level security;
+alter table builds disable row level security;
+alter table equipment_presets disable row level security;
+alter table death_reports disable row level security;
+alter table coin_transactions disable row level security;
+
+-- ── SEED: PRESETS DE EQUIPO ────────────────
+insert into equipment_presets (name, slot, coin_value, tier) values
+  ('Cultist Cowl','head',600,'T8'),('Specter Hood','head',500,'T8'),
+  ('Scholar Cowl','head',300,'T8'),('Mage Cowl','head',250,'T7'),
+  ('Cultist Robe','chest',800,'T8'),('Specter Jacket','chest',700,'T8'),
+  ('Royal Robe','chest',900,'T8'),('Cleric Robe','chest',400,'T8'),
+  ('Cultist Sandals','feet',500,'T8'),('Specter Shoes','feet',450,'T8'),
+  ('Scholar Sandals','feet',250,'T8'),('Graveguard Boots','feet',350,'T8'),
+  ('Great Nature Staff','main_hand',1200,'T8'),('Hallowfall','main_hand',2000,'T8'),
+  ('Bedrock Mace','main_hand',800,'T8'),('Blazing Staff','main_hand',900,'T8'),
+  ('Occult Staff','main_hand',1100,'T8'),('Bow of Badon','main_hand',1500,'T8'),
+  ('Shield of Badon','off_hand',800,'T8'),('Tome of Spells','off_hand',300,'T8'),
+  ('Mistcaller','off_hand',200,'T8'),('Muisak','off_hand',350,'T8'),
+  ('Lymhurst Cape','cape',150,'T8'),('Thetford Cape','cape',150,'T8'),
+  ('Bridgewatch Cape','cape',150,'T8'),
+  ('Direwolf','mount',500,'T8'),('Swiftclaw','mount',300,'T7'),('Armored Horse','mount',100,'T5'),
+  ('Roast Pork','food',80,'T8'),('Pork Omelette','food',60,'T7'),
+  ('Major Resistance Potion','potion',50,'T7'),('Invisibility Potion','potion',70,'T7')
+on conflict do nothing;
+
+-- ── SEED: NOTICIA BIENVENIDA ───────────────
+insert into news (title, content, category, pinned, author_name)
+values (
+  'Bienvenidos a ANT1GRAVITY',
+  '¡Este es el portal oficial del gremio ANT1GRAVITY en Albion Online! Aquí encontrarán toda la información sobre actividades, builds, rankings y el sistema de reequipo. ¡Que comience la batalla!',
+  'announcement', true, 'Sistema'
+) on conflict do nothing;
+
+-- ── STORAGE BUCKETS ────────────────────────
+-- Ejecutar en Supabase Dashboard > Storage > New bucket
+-- O descomentar estas líneas si tu versión de Supabase lo soporta:
+-- insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true) on conflict do nothing;
+-- insert into storage.buckets (id, name, public) values ('screenshots', 'screenshots', true) on conflict do nothing;
+-- insert into storage.buckets (id, name, public) values ('builds', 'builds', true) on conflict do nothing;
