@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ItemPicker from '../components/ItemPicker';
@@ -64,35 +65,75 @@ function ItemIcon({ code, size = 40, empty = true }) {
 }
 
 /* ── ITEM ICON WITH SPELL TOOLTIP ON HOVER ── */
-function ItemIconWithSpells({ code, spells, size = 56, label }) {
-  const [hover, setHover] = useState(false);
-  const hasSpells = spells && Object.values(spells).some(Boolean);
+function ItemIconWithSpells({ code, spells: storedSpells, size = 56, label }) {
+  const ref = useRef(null);
+  const [tipPos, setTipPos]   = useState(null);
+  const [spells, setSpells]   = useState(storedSpells || null);
+  const [loading, setLoading] = useState(false);
+
+  // Extract baseId from item code (e.g. T8_MAIN_SWORD@2 → MAIN_SWORD)
+  const baseId = code ? code.replace(/^T\d+_/, '').replace(/@\d+$/, '') : null;
+
+  const handleEnter = async () => {
+    if (!ref.current || !code) return;
+    const rect = ref.current.getBoundingClientRect();
+    setTipPos({ top: rect.top, centerX: rect.left + rect.width / 2 });
+
+    // Fetch spells if not stored (API returns arrays, normalize to first option per slot)
+    if (!spells && baseId && !loading) {
+      setLoading(true);
+      try {
+        const data = await api.getItemSpells(baseId);
+        const hasAny = data && ['q','w','e','passive'].some(k => data[k]?.length);
+        if (hasAny) {
+          const normalized = {};
+          for (const k of ['q','w','e','passive']) {
+            if (data[k]?.length) normalized[k] = data[k][0];
+          }
+          setSpells(normalized);
+        }
+      } catch { /* silent */ }
+      finally { setLoading(false); }
+    }
+  };
+
+  const hasSpells = spells && (
+    spells.q || spells.w || spells.e || spells.passive
+  );
 
   return (
     <div
-      style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      ref={ref}
+      style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}
+      onMouseEnter={handleEnter}
+      onMouseLeave={() => setTipPos(null)}
     >
       <ItemIcon code={code} size={size} />
-      {/* Spell tooltip */}
-      {hover && hasSpells && (
+      {/* Fixed-position tooltip — escapes modal overflow clipping */}
+      {tipPos && (hasSpells || loading) && typeof document !== 'undefined' && ReactDOM.createPortal(
         <div style={{
-          position: 'absolute', bottom: '105%', left: '50%', transform: 'translateX(-50%)',
-          background: '#0a0a14', border: '1px solid #2a2a3a',
-          borderRadius: 10, padding: '10px 12px', zIndex: 600,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+          position: 'fixed',
+          top: tipPos.top - 8,
+          left: tipPos.centerX,
+          transform: 'translate(-50%, -100%)',
+          background: '#0d0d1a', border: '1px solid #2a2a40',
+          borderRadius: 10, padding: '10px 14px', zIndex: 9999,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.9)',
           minWidth: 160, pointerEvents: 'none',
         }}>
           <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
             {label}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['q','w','e','passive'].filter(k => spells[k]).map(k => (
-              <SpellRow key={k} spells={{ [k]: spells[k] }} size={28} gap={4} />
-            ))}
-          </div>
-        </div>
+          {loading && <div style={{ fontSize: '0.7rem', color: '#3a3a5a' }}>···</div>}
+          {hasSpells && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {['q','w','e','passive'].filter(k => spells[k]).map(k => (
+                <SpellRow key={k} spells={{ [k]: spells[k] }} size={28} gap={4} />
+              ))}
+            </div>
+          )}
+        </div>,
+        document.body
       )}
     </div>
   );
