@@ -209,6 +209,33 @@ values (
   'announcement', true, 'Sistema'
 ) on conflict do nothing;
 
+-- ── MIGRATION v2: ALBION CHARACTER + DEATH-BASED REEQUIP ──────────────────
+-- Ejecutar en Supabase SQL Editor:
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS albion_character TEXT;
+
+CREATE TABLE IF NOT EXISTS reequip_requests (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        TEXT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  username       TEXT,
+  albion_character TEXT,
+  event_id       BIGINT      UNIQUE NOT NULL,
+  death_event    JSONB       NOT NULL,
+  status         TEXT        NOT NULL DEFAULT 'pending',
+  selected_items JSONB,
+  silver_total   BIGINT      DEFAULT 0,
+  coins_awarded  INTEGER     DEFAULT 0,
+  admin_id       TEXT        REFERENCES users(id),
+  admin_notes    TEXT,
+  reviewed_at    TIMESTAMPTZ,
+  claimed        BOOLEAN     DEFAULT false,
+  created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS reequip_requests_user_idx    ON reequip_requests(user_id);
+CREATE INDEX IF NOT EXISTS reequip_requests_status_idx  ON reequip_requests(status);
+CREATE INDEX IF NOT EXISTS reequip_requests_event_idx   ON reequip_requests(event_id);
+
 -- ── STORAGE BUCKETS ────────────────────────
 -- Crear manualmente en: Supabase Dashboard > Storage > New bucket (marcar como Public)
 -- Buckets necesarios: avatars, builds, screenshots, media

@@ -27,6 +27,7 @@ export default function Navbar() {
     { to: '/', label: 'Inicio' },
     { to: '/members', label: 'Miembros' },
     { to: '/builds', label: 'Builds' },
+    { to: '/killboard', label: 'Killboard' },
     { to: '/reequip', label: 'Reequipo', auth: true },
     { to: '/admin', label: 'Admin', admin: true },
   ];

@@ -49,6 +49,13 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json(safe(user));
 });
 
+router.put('/profile', requireAuth, async (req, res) => {
+  const { albion_character } = req.body;
+  const value = albion_character?.trim() || null;
+  await supabase.from('users').update({ albion_character: value }).eq('id', req.user.id);
+  res.json({ ok: true, albion_character: value });
+});
+
 router.post('/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió imagen' });
   try {

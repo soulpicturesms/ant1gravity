@@ -6,6 +6,9 @@ export default function Profile() {
   const { user, refreshUser } = useAuth();
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState('');
+  const [albionChar, setAlbionChar] = useState('');
+  const [savingChar, setSavingChar] = useState(false);
+  const [charMsg, setCharMsg] = useState('');
   const fileRef = useRef();
   const [myRequests, setMyRequests] = useState([]);
   const [creditMsg, setCreditMsg] = useState('');
@@ -15,10 +18,25 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
+      setAlbionChar(user.albion_character || '');
       api.getMyRequests().then(d => setMyRequests(Array.isArray(d) ? d : [])).catch(() => {});
       api.getRankingsTop().then(d => setWeeklyStats(d)).catch(() => {});
     }
   }, [user]);
+
+  const saveAlbionChar = async () => {
+    setSavingChar(true);
+    setCharMsg('');
+    try {
+      await api.updateProfile({ albion_character: albionChar });
+      await refreshUser();
+      setCharMsg('¡Personaje vinculado!');
+    } catch (e) {
+      setCharMsg(e.message);
+    } finally {
+      setSavingChar(false);
+    }
+  };
 
   const requestCredit = async () => {
     setRequesting(true);
@@ -89,6 +107,31 @@ export default function Profile() {
           <div style={{ fontSize: '0.78rem', color: '#4a4a6a', marginTop: 8 }}>
             Miembro desde {new Date(user.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
           </div>
+
+          {/* Albion Character Link */}
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #1e1e30', textAlign: 'left' }}>
+            <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              Personaje Albion
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className="input"
+                placeholder="Nombre exacto..."
+                value={albionChar}
+                onChange={e => setAlbionChar(e.target.value)}
+                style={{ fontSize: '0.85rem', flex: 1 }}
+              />
+              <button className="btn btn-primary btn-sm" onClick={saveAlbionChar} disabled={savingChar}>
+                {savingChar ? '...' : 'OK'}
+              </button>
+            </div>
+            {charMsg && <div style={{ marginTop: 6, fontSize: '0.78rem', color: '#00cc66' }}>{charMsg}</div>}
+            {user.albion_character && (
+              <div style={{ marginTop: 6, fontSize: '0.78rem', color: '#00d4ff' }}>
+                ✓ Vinculado: <strong>{user.albion_character}</strong>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
@@ -127,11 +170,12 @@ export default function Profile() {
             <div className="card-title">Sistema de Reequipo</div>
             <div className="alert alert-info">
               Tus coins acumuladas: <strong style={{ color: '#ffd700' }}>⚡ {user.coins}</strong>.
-              Cuando un admin apruebe tu reporte de muerte, los coins se acreditan automáticamente.
-              Cuando tengas coins disponibles, podés solicitar el canje — un lider del gremio te entregará el silver en juego.
+              Cuando morís en Albion, entrá al Killboard → "Mis Muertes" y solicitá el reequipo directamente desde el evento.
+              Un admin revisará los precios del mercado y acreditará los coins. Luego podés solicitar el canje de silver en juego.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-              <a href="/reequip" className="btn btn-primary btn-sm">📸 Reportar Muerte</a>
+              <a href="/killboard" className="btn btn-primary btn-sm">⚔️ Ver Mis Muertes</a>
+              <a href="/reequip" className="btn btn-secondary btn-sm">📋 Mis Solicitudes</a>
               {(user.coins || 0) > 0 && !hasPending && (
                 <button className="btn btn-secondary btn-sm" style={{ borderColor: '#ffd700', color: '#ffd700' }} onClick={requestCredit} disabled={requesting}>
                   {requesting ? '...' : '💳 Solicitar Canje'}
