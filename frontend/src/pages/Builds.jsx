@@ -125,13 +125,7 @@ function ItemIconWithSpells({ code, spells: storedSpells, size = 56, label }) {
             {label}
           </div>
           {loading && <div style={{ fontSize: '0.7rem', color: '#3a3a5a' }}>···</div>}
-          {hasSpells && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {['q','w','e','passive'].filter(k => spells[k]).map(k => (
-                <SpellRow key={k} spells={{ [k]: spells[k] }} size={28} gap={4} />
-              ))}
-            </div>
-          )}
+          {hasSpells && <SpellRow spells={spells} size={42} gap={6} />}
         </div>,
         document.body
       )}
