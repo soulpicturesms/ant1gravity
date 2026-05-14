@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
   try {
     const hash = bcrypt.hashSync(password, 10);
     const { data: user, error } = await supabase.from('users').insert({
-      username, password: hash, role: 'member',
+      username, password: hash, role: 'pending',
       coins: 0, pvp_fame: 0, pvp_kills: 0, cta_attendance: 0, total_activities: 0,
     }).select().single();
     if (error) {

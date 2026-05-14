@@ -114,4 +114,8 @@ export const api = {
   adjustCoins: (body) => req('/api/admin/coins/adjust', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   createUser: (body) => req('/api/admin/users', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   deleteUser: (id) => req(`/api/admin/users/${id}`, { method: 'DELETE', headers: headers() }),
+  getPendingUsers: () => req('/api/admin/pending', { headers: headers() }),
+  approveUser: (id, role) => req(`/api/admin/users/${id}/approve`, { method: 'POST', headers: headers(), body: JSON.stringify({ role }) }),
+  rejectUser: (id) => req(`/api/admin/users/${id}/reject`, { method: 'DELETE', headers: headers() }),
+  editUsername: (id, username) => req(`/api/admin/users/${id}/username`, { method: 'PUT', headers: headers(), body: JSON.stringify({ username }) }),
 };
