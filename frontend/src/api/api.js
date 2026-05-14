@@ -92,9 +92,6 @@ export const api = {
   getKills:  () => req('/api/killboard/kills'),
   getDeaths: () => req('/api/killboard/deaths'),
 
-  // Profile
-  updateProfile: (body) => req('/api/auth/profile', { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
-
   // Killboard - personal
   getMyDeaths: () => req('/api/killboard/my-deaths', { headers: headers() }),
 

@@ -26,10 +26,9 @@ router.post('/death-request', requireAuth, async (req, res) => {
   const { data: existing } = await supabase.from('reequip_requests').select('id').eq('event_id', event_id).maybeSingle();
   if (existing) return res.status(400).json({ error: 'Ya existe una solicitud para esta muerte' });
 
-  const { data: user } = await supabase.from('users').select('username,albion_character').eq('id', req.user.id).maybeSingle();
   const { data, error } = await supabase.from('reequip_requests').insert({
-    user_id: req.user.id, username: user?.username,
-    albion_character: user?.albion_character,
+    user_id: req.user.id, username: req.user.username,
+    albion_character: req.user.username,
     event_id: parseInt(event_id), death_event,
     status: 'pending', claimed: false,
   }).select().single();

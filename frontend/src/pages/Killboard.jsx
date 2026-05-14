@@ -214,7 +214,6 @@ export default function Killboard() {
   const [myDeathsLoading, setMyDeathsLoading] = useState(false);
   const [myDeathsError, setMyDeathsError]   = useState(null);
   const [myCharacter, setMyCharacter]     = useState(null);
-  const [characterNotLinked, setCharacterNotLinked] = useState(false);
   const [submittedEvents, setSubmittedEvents] = useState(new Set());
 
   const load = useCallback(async () => {
@@ -241,9 +240,7 @@ export default function Killboard() {
         api.getMyDeaths(),
         api.getMyDeathRequests(),
       ]);
-      if (deathsRes.characterNotLinked) { setCharacterNotLinked(true); setMyDeaths([]); return; }
-      if (deathsRes.playerNotFound) { setMyDeathsError(`No se encontró el personaje "${deathsRes.character || ''}" en Albion`); return; }
-      setCharacterNotLinked(false);
+      if (deathsRes.playerNotFound) { setMyDeathsError(`No se encontró el personaje "${deathsRes.character || ''}" en Albion Online. Avisale a un admin para verificar que tu usuario coincida con tu nombre de personaje.`); return; }
       setMyDeaths(deathsRes.deaths || []);
       setMyCharacter(deathsRes.character);
       const submitted = new Set((requestsRes || []).map(r => r.event_id));
@@ -351,14 +348,7 @@ export default function Killboard() {
       {/* Mis Muertes */}
       {tab === 'mine' && (
         <div>
-          {characterNotLinked && (
-            <div className="alert alert-info">
-              Vinculá tu personaje de Albion en tu{' '}
-              <a href="/profile" style={{ color: '#00d4ff', fontWeight: 600 }}>Perfil</a>{' '}
-              para ver tus muertes y solicitar reequipo automático.
-            </div>
-          )}
-          {!characterNotLinked && myCharacter && (
+          {myCharacter && (
             <div style={{ marginBottom: 16, fontSize: '0.82rem', color: '#6a6a8a' }}>
               Mostrando muertes de <strong style={{ color: '#00d4ff' }}>{myCharacter}</strong>
               <button onClick={loadMyDeaths} style={{ marginLeft: 10, background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>↻</button>
@@ -366,7 +356,7 @@ export default function Killboard() {
           )}
           {myDeathsLoading && <div className="loading"><div className="spinner" /> Cargando muertes...</div>}
           {myDeathsError && <div className="alert alert-error">{myDeathsError}</div>}
-          {!myDeathsLoading && !myDeathsError && !characterNotLinked && myDeaths.length === 0 && (
+          {!myDeathsLoading && !myDeathsError && myDeaths.length === 0 && (
             <div className="empty"><div className="empty-icon">💀</div><p>No hay muertes recientes</p></div>
           )}
           {!myDeathsLoading && !myDeathsError && (

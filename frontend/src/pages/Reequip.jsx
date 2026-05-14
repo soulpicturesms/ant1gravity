@@ -297,13 +297,6 @@ export default function Reequip() {
         </div>
       )}
 
-      {!user?.albion_character && (
-        <div className="alert alert-info" style={{ marginBottom: 16 }}>
-          Vinculá tu personaje de Albion en tu <a href="/profile" style={{ color: '#00d4ff', fontWeight: 600 }}>Perfil</a> para solicitar reequipo desde el{' '}
-          <a href="/killboard" style={{ color: '#00d4ff', fontWeight: 600 }}>Killboard → Mis Muertes</a>.
-        </div>
-      )}
-
       <div className="tabs">
         {tabs.map(t => <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>)}
       </div>

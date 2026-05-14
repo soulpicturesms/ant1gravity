@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
 const GUILD_ID   = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
@@ -95,10 +94,7 @@ const CACHE_TTL_MY = 2 * 60 * 1000;
 
 router.get('/my-deaths', requireAuth, async (req, res) => {
   try {
-    const { data: user } = await supabase.from('users').select('albion_character').eq('id', req.user.id).maybeSingle();
-    if (!user?.albion_character) return res.json({ deaths: [], characterNotLinked: true });
-
-    const charName = user.albion_character.trim();
+    const charName = req.user.username;
     const cached = myDeathsCache[charName];
     if (cached && Date.now() - cached.ts < CACHE_TTL_MY) {
       return res.json({ deaths: cached.data, character: charName });
