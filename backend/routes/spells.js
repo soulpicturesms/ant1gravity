@@ -41,8 +41,9 @@ async function getItemSpellMap() {
   }
 
   // Returns { q: string[], w: string[], e: string[], passive: string[] }
-  // Weapons: @slots="1"→Q, "2"→W, "3"→E, no @slots + PASSIVE_* → passive
-  // Armor:   no @slots on any spell; PASSIVE_* → passive, others → q
+  // Rule: PASSIVE_* always → passive (armor uses @slots to group passives, not for Q/W/E)
+  // Weapons: non-passive @slots="1"→Q, "2"→W, "3"→E
+  // Armor: active spells have no @slots and no PASSIVE_ prefix → all go to q
   function parseSlots(item) {
     const result = { q: [], w: [], e: [], passive: [] };
     const spellList = resolveSpellList(item);
@@ -52,15 +53,14 @@ async function getItemSpellMap() {
     for (const spell of spells) {
       const id = spell['@uniquename'];
       if (!id) continue;
-      const slotNum = spell['@slots'];
 
+      if (id.startsWith('PASSIVE_')) { result.passive.push(id); continue; }
+
+      const slotNum = spell['@slots'];
       if (slotNum === '1') result.q.push(id);
       else if (slotNum === '2') result.w.push(id);
       else if (slotNum === '3') result.e.push(id);
-      else {
-        if (id.startsWith('PASSIVE_')) result.passive.push(id);
-        else result.q.push(id);
-      }
+      else result.q.push(id);
     }
     return result;
   }

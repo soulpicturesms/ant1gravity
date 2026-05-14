@@ -80,12 +80,18 @@ const SLOT_LABELS = { q: 'Q', w: 'W', e: 'E', passive: '★' };
 function SpellSlotPicker({ options, selected, onChange }) {
   const slots = ['q', 'w', 'e', 'passive'].filter(k => options[k]?.length);
   if (!slots.length) return null;
+  // If no W/E, item is armor → rename Q to "Activa" and ★ to "Pasiva"
+  const isArmor = !options.w?.length && !options.e?.length;
+  const label = (k) => {
+    if (isArmor) return k === 'q' ? 'ACTIVA' : 'PASIVA';
+    return SLOT_LABELS[k];
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {slots.map(k => (
         <div key={k}>
           <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
-            {SLOT_LABELS[k]}
+            {label(k)}
           </div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
             {options[k].map(spell => {
