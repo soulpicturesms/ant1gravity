@@ -177,12 +177,20 @@ function SkillBadge({ baseId }) {
 }
 
 /* ── BUILD DETAIL PANEL (inside modal, shows one variant) ── */
+function formatSilver(n) {
+  if (!n) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`;
+  return n.toLocaleString();
+}
+
 function BuildDetail({ variant, sharedItems }) {
-  const [showAlt, setShowAlt] = useState(false);
+  const [showAlt, setShowAlt]       = useState(false);
+  const [prices, setPrices]         = useState(null);   // null=hidden, {}=loading/loaded
+  const [priceLoading, setPriceLoading] = useState(false);
   const eq = showAlt ? (variant.equipment_alt || {}) : (variant.equipment || {});
   const col = roleColor(variant.role);
 
-  // Extract base IDs for skills
   function baseId(code) {
     if (!code) return null;
     return code.replace(/^T\d+_/, '').replace(/@\d+$/, '');
@@ -194,23 +202,86 @@ function BuildDetail({ variant, sharedItems }) {
   const armorBase    = baseId(eq.armor?.code);
   const shoesBase    = baseId(eq.shoes?.code);
 
+  const fetchPrices = async () => {
+    const codes = [
+      ...GEAR_SLOTS.map(s => eq[s.key]?.code),
+      ...SHARED_SLOTS.map(s => sharedItems?.[s.key]?.code),
+    ].filter(Boolean);
+    if (!codes.length) return;
+    setPriceLoading(true);
+    setPrices({});
+    try {
+      const data = await api.getMarketPrices(codes);
+      const map = {};
+      for (const { id, price, city } of data) map[id] = { price, city };
+      setPrices(map);
+    } catch { setPrices(null); }
+    setPriceLoading(false);
+  };
+
+  const togglePrices = () => {
+    if (prices !== null) { setPrices(null); return; }
+    fetchPrices();
+  };
+
+  const allItems = [
+    ...GEAR_SLOTS.map(s => ({ ...eq[s.key], label: s.label })),
+    ...SHARED_SLOTS.map(s => ({ ...sharedItems?.[s.key], label: s.label })),
+  ].filter(i => i?.code);
+
+  const total = prices ? allItems.reduce((sum, i) => sum + (prices[i.code]?.price || 0), 0) : 0;
+
   return (
     <div>
-      {/* Alt toggle */}
-      {variant.has_alt && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-          {['Principal', 'Alternativa'].map((lbl, i) => {
-            const active = i === 0 ? !showAlt : showAlt;
-            return (
-              <button key={lbl} onClick={() => setShowAlt(i === 1)} style={{
-                padding: '5px 14px', borderRadius: 6, cursor: 'pointer',
-                fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem',
-                border: `1px solid ${active ? col : '#2a2a3a'}`,
-                background: active ? col + '22' : 'transparent',
-                color: active ? col : '#5a5a7a', transition: 'all 0.15s',
-              }}>{lbl}</button>
-            );
-          })}
+      {/* Alt toggle + price button row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        {variant.has_alt && ['Principal', 'Alternativa'].map((lbl, i) => {
+          const active = i === 0 ? !showAlt : showAlt;
+          return (
+            <button key={lbl} onClick={() => setShowAlt(i === 1)} style={{
+              padding: '5px 14px', borderRadius: 6, cursor: 'pointer',
+              fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem',
+              border: `1px solid ${active ? col : '#2a2a3a'}`,
+              background: active ? col + '22' : 'transparent',
+              color: active ? col : '#5a5a7a', transition: 'all 0.15s',
+            }}>{lbl}</button>
+          );
+        })}
+        <button onClick={togglePrices} style={{
+          marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+          fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
+          border: `1px solid ${prices !== null ? '#ffaa0055' : '#2a2a3a'}`,
+          background: prices !== null ? 'rgba(255,170,0,0.1)' : 'transparent',
+          color: prices !== null ? '#ffaa00' : '#5a5a7a', transition: 'all 0.15s',
+          display: 'flex', alignItems: 'center', gap: 5,
+        }}>
+          {priceLoading ? '⏳ Consultando...' : prices !== null ? '💰 Ocultar precio' : '💰 Ver precio estimado'}
+        </button>
+      </div>
+
+      {/* Price panel */}
+      {prices !== null && !priceLoading && (
+        <div style={{ background: 'rgba(255,170,0,0.06)', border: '1px solid rgba(255,170,0,0.15)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+            {allItems.map(item => {
+              const p = prices[item.code];
+              return (
+                <div key={item.code} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.72rem' }}>
+                  <span style={{ color: '#5a5a7a', minWidth: 70, fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6rem' }}>{item.label}</span>
+                  <span style={{ color: '#9090b0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.code}</span>
+                  <span style={{ color: p ? '#ffcc44' : '#3a3a5a', fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0 }}>
+                    {p ? `${formatSilver(p.price)} 🪙` : 'Sin datos'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255,170,0,0.15)', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.6rem', color: '#4a4a6a' }}>Precio mínimo de venta · Albion Online Data Project</span>
+            <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#ffaa00' }}>
+              ~{formatSilver(total)} plata
+            </span>
+          </div>
         </div>
       )}
 

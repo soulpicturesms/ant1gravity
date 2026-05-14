@@ -115,6 +115,10 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
   const debounceRef = useRef(null);
   const noEnchant = NO_ENCHANT.has(slot);
 
+  // Available tiers/enchants for the currently selected item
+  const availTiers   = selected?.tiers?.length   ? selected.tiers   : TIERS;
+  const availEnchants = selected?.enchants?.length ? selected.enchants : [];
+
   const search = useCallback(async (q) => {
     setLoading(true);
     try {
@@ -136,6 +140,15 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
     setQuery(val);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => search(val), 300);
+  };
+
+  const handleSelectItem = (item) => {
+    setSelected(item);
+    // Auto-select highest available tier
+    const tiers = item.tiers?.length ? item.tiers : TIERS;
+    const maxTier = Math.max(...tiers);
+    setTier(maxTier);
+    setEnchant(0);
   };
 
   const handleConfirm = () => {
@@ -213,7 +226,7 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => setSelected(item)}
+                    onClick={() => handleSelectItem(item)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
@@ -270,16 +283,26 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Tier</div>
               <div style={{ display: 'flex', gap: 5 }}>
-                {TIERS.map(t => (
-                  <button key={t} onClick={() => setTier(t)} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 6,
-                    fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
-                    cursor: 'pointer', transition: 'all 0.1s',
-                    border: `1px solid ${tier === t ? '#00d4ff66' : '#1e1e30'}`,
-                    background: tier === t ? 'rgba(0,212,255,0.15)' : 'transparent',
-                    color: tier === t ? '#00d4ff' : '#6a6a8a',
-                  }}>T{t}</button>
-                ))}
+                {TIERS.map(t => {
+                  const exists = availTiers.includes(t);
+                  const active = tier === t;
+                  return (
+                    <button key={t}
+                      onClick={() => exists && setTier(t)}
+                      disabled={!exists}
+                      title={!exists ? 'Este tier no existe para este item' : undefined}
+                      style={{
+                        flex: 1, padding: '5px 0', borderRadius: 6,
+                        fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
+                        transition: 'all 0.1s',
+                        cursor: exists ? 'pointer' : 'not-allowed',
+                        opacity: exists ? 1 : 0.25,
+                        border: `1px solid ${active ? '#00d4ff66' : '#1e1e30'}`,
+                        background: active ? 'rgba(0,212,255,0.15)' : 'transparent',
+                        color: active ? '#00d4ff' : '#6a6a8a',
+                      }}>T{t}</button>
+                  );
+                })}
               </div>
             </div>
 
@@ -292,16 +315,24 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                     const colors = ['#6a6a8a', '#4aee4a', '#5a5aff', '#cc44cc', '#ee8800'];
                     const col = colors[e];
                     const active = enchant === e;
+                    // .0 always exists; .1-.4 only if item has them in its enchants array
+                    const exists = e === 0 || !selected || availEnchants.includes(e);
                     return (
-                      <button key={e} onClick={() => setEnchant(e)} style={{
-                        flex: 1, padding: '5px 0', borderRadius: 6,
-                        fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
-                        cursor: 'pointer', transition: 'all 0.15s',
-                        border: `1px solid ${active ? col : '#1e1e30'}`,
-                        background: active ? col + '28' : 'transparent',
-                        color: active ? col : '#4a4a6a',
-                        boxShadow: active && e > 0 ? `0 0 8px 2px ${col}55` : 'none',
-                      }}>.{e}</button>
+                      <button key={e}
+                        onClick={() => exists && setEnchant(e)}
+                        disabled={!exists}
+                        title={!exists ? 'Este encantamiento no existe para este item' : undefined}
+                        style={{
+                          flex: 1, padding: '5px 0', borderRadius: 6,
+                          fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
+                          transition: 'all 0.15s',
+                          cursor: exists ? 'pointer' : 'not-allowed',
+                          opacity: exists ? 1 : 0.2,
+                          border: `1px solid ${active ? col : '#1e1e30'}`,
+                          background: active ? col + '28' : 'transparent',
+                          color: active ? col : '#4a4a6a',
+                          boxShadow: active && e > 0 ? `0 0 8px 2px ${col}55` : 'none',
+                        }}>.{e}</button>
                     );
                   })}
                 </div>
