@@ -35,6 +35,9 @@ export const api = {
   updateStats: (id, body) => req(`/api/members/${id}/stats`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
   updateRole: (id, role) => req(`/api/members/${id}/role`, { method: 'PUT', headers: headers(), body: JSON.stringify({ role }) }),
 
+  // Item search
+  searchItems: (slot, q) => req(`/api/items/search?slot=${slot}&q=${encodeURIComponent(q || '')}`),
+
   // Builds
   getBuilds: (category) => req(`/api/builds${category ? `?category=${category}` : ''}`),
   getBuild: (id) => req(`/api/builds/${id}`),

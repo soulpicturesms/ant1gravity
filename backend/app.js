@@ -17,5 +17,6 @@ app.use('/api/credits',   require('./routes/credits'));
 app.use('/api/rankings',  require('./routes/rankings_txt'));
 app.use('/api/giveaway',  require('./routes/giveaway'));
 app.use('/api/media',     require('./routes/media'));
+app.use('/api/items',     require('./routes/items'));
 
 module.exports = app;
