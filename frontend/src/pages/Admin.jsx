@@ -261,7 +261,6 @@ export default function Admin() {
     { id: 'news', label: '📰 Noticias' },
     { id: 'members', label: '👥 Miembros' },
     { id: 'presets', label: '⚡ Presets Equipo' },
-    { id: 'activities', label: '🛡️ Actividades' },
     ...(isStrictAdmin ? [{ id: 'coins', label: '💰 Coins' }] : []),
     { id: 'blacklist', label: '🚫 Blacklist' },
     { id: 'credits', label: creditFilter === 'pending' && pendingCredits > 0 ? `💳 Créditos (${pendingCredits})` : '💳 Créditos' },
@@ -548,53 +547,6 @@ export default function Admin() {
         </div>
       )}
 
-      {/* Activities */}
-      {tab === 'activities' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
-          <div className="card">
-            <div className="card-title">Crear Actividad</div>
-            <div className="form-group"><label>Nombre</label><input className="input" value={activityForm.name} onChange={e => setActivityForm(p => ({ ...p, name: e.target.value }))} placeholder="Ej: CTA Zona Roja" /></div>
-            <div className="form-group">
-              <label>Tipo</label>
-              <select className="select" value={activityForm.type} onChange={e => setActivityForm(p => ({ ...p, type: e.target.value }))}>
-                <option>CTA</option><option>AVALON</option><option>DUNGEON</option><option>ZVZ</option><option>OTHER</option>
-              </select>
-            </div>
-            <div className="form-group"><label>Fecha y Hora</label><input type="datetime-local" className="input" value={activityForm.date} onChange={e => setActivityForm(p => ({ ...p, date: e.target.value }))} /></div>
-            <div className="form-group"><label>Descripción</label><textarea className="textarea" value={activityForm.description} onChange={e => setActivityForm(p => ({ ...p, description: e.target.value }))} rows={3} /></div>
-            <button className="btn btn-primary" onClick={saveActivity}>Crear Actividad</button>
-          </div>
-
-          <div>
-            <div className="card-title" style={{ marginBottom: 12 }}>Actividades Recientes</div>
-            {activities.map(a => (
-              <div key={a.id} className="card" style={{ marginBottom: 10, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                      <strong style={{ fontFamily: 'Rajdhani', fontSize: '1rem' }}>{a.name}</strong>
-                      <span className={`badge ${a.type === 'CTA' ? 'badge-cta' : a.type === 'AVALON' ? 'badge-avalon' : 'badge-member'}`}>{a.type}</span>
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#6a6a8a' }}>{new Date(a.date).toLocaleString('es-ES')} · {a.attendee_count} asistentes</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '0.78rem', color: '#6a6a8a', marginBottom: 6 }}>Marcar asistencia:</div>
-                    <select className="select" style={{ padding: '4px 8px', fontSize: '0.78rem', width: 'auto' }} onChange={async e => {
-                      if (!e.target.value) return;
-                      await api.markAttendance(a.id, [parseInt(e.target.value)]);
-                      loadAll(); notify(true, 'Asistencia marcada');
-                      e.target.value = '';
-                    }}>
-                      <option value="">+ Agregar jugador</option>
-                      {members.map(m => <option key={m.id} value={m.id}>{m.username}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Blacklist */}
       {tab === 'blacklist' && (
