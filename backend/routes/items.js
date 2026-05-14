@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const ITEMS_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.json';
+const ITEMS_URL = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json';
 const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 const SLOT_PATTERNS = {
