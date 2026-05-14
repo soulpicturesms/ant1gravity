@@ -5,41 +5,8 @@ const RAW_ITEMS_URL = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/ma
 const SPELLS_URL    = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/spells.json';
 const CACHE_TTL     = 24 * 60 * 60 * 1000;
 
-let spellMapCache     = { data: null, ts: 0 };
-let itemSpellsCache   = { data: null, ts: 0 };
-
-// Safely get first spell ID from a spell slot entry
-function firstSpellId(spellEntry) {
-  if (!spellEntry) return null;
-  const arr = Array.isArray(spellEntry) ? spellEntry : [spellEntry];
-  return arr[0]?.['@id'] || null;
-}
-
-// Parse active + passive spell slots from a raw item object
-function parseSlots(item) {
-  const result = { q: null, w: null, e: null, passive: null };
-
-  // Active slots → Q W E
-  const activeSlots = item.activespellslots?.activespellslot;
-  if (activeSlots) {
-    const arr = Array.isArray(activeSlots) ? activeSlots : [activeSlots];
-    arr.forEach((slot, i) => {
-      const id = firstSpellId(slot.activespell);
-      if (i === 0) result.q = id;
-      else if (i === 1) result.w = id;
-      else if (i === 2) result.e = id;
-    });
-  }
-
-  // Passive slot
-  const passiveSlot = item.passivespellslots?.passivespellslot;
-  if (passiveSlot) {
-    const arr = Array.isArray(passiveSlot) ? passiveSlot : [passiveSlot];
-    result.passive = firstSpellId(arr[0]?.activespell);
-  }
-
-  return result;
-}
+let spellMapCache   = { data: null, ts: 0 };
+let itemSpellsCache = { data: null, ts: 0 };
 
 // Build map: baseId → { q, w, e, passive } spell uniquenames
 async function getItemSpellMap() {
@@ -49,8 +16,57 @@ async function getItemSpellMap() {
   const raw = await res.json();
   const items = raw.items;
 
-  const map = {};
+  // Full lookup by uniquename for @reference resolution
+  const byName = {};
+  const addToLookup = (group) => {
+    if (!group) return;
+    const arr = Array.isArray(group) ? group : [group];
+    for (const item of arr) {
+      const uname = item['@uniquename'];
+      if (uname) byName[uname] = item;
+    }
+  };
+  addToLookup(items.weapon);
+  addToLookup(items.equipmentitem);
 
+  // Resolve craftingspelllist, following @reference chains (armor items point to lower tiers)
+  function resolveSpellList(item) {
+    let spellList = item.craftingspelllist;
+    let depth = 0;
+    while (spellList?.['@reference'] && depth < 8) {
+      spellList = byName[spellList['@reference']]?.craftingspelllist;
+      depth++;
+    }
+    return spellList;
+  }
+
+  // Parse spell slots from craftingspelllist:
+  // - Weapons:   @slots="1"→Q, "2"→W, "3"→E, no @slots→passive
+  // - Armor:     no @slots on any entry; non-PASSIVE_* → Q (one active slot), PASSIVE_* → passive
+  function parseSlots(item) {
+    const result = { q: null, w: null, e: null, passive: null };
+    const spellList = resolveSpellList(item);
+    if (!spellList?.craftspell) return result;
+
+    const spells = Array.isArray(spellList.craftspell) ? spellList.craftspell : [spellList.craftspell];
+    for (const spell of spells) {
+      const id = spell['@uniquename'];
+      if (!id) continue;
+      const slotNum = spell['@slots'];
+
+      if (slotNum === '1') { if (!result.q) result.q = id; }
+      else if (slotNum === '2') { if (!result.w) result.w = id; }
+      else if (slotNum === '3') { if (!result.e) result.e = id; }
+      else {
+        // No @slots: passive or armor active ability
+        if (id.startsWith('PASSIVE_')) { if (!result.passive) result.passive = id; }
+        else { if (!result.q) result.q = id; }
+      }
+    }
+    return result;
+  }
+
+  const map = {};
   const processGroup = (group) => {
     if (!group) return;
     const arr = Array.isArray(group) ? group : [group];
@@ -58,7 +74,7 @@ async function getItemSpellMap() {
       const uname = item['@uniquename'];
       if (!uname) continue;
       const baseId = uname.replace(/^T\d+_/, '');
-      if (baseId === uname || map[baseId]) continue; // no tier prefix, or already mapped
+      if (baseId === uname || map[baseId]) continue;
       const slots = parseSlots(item);
       if (slots.q || slots.w || slots.e || slots.passive) map[baseId] = slots;
     }
@@ -71,7 +87,7 @@ async function getItemSpellMap() {
   return map;
 }
 
-// Build map: spell uniquename → { uisprite, name }
+// Build map: spell uniquename → { uisprite }
 async function getSpellInfoMap() {
   if (spellMapCache.data && Date.now() - spellMapCache.ts < CACHE_TTL) return spellMapCache.data;
 
@@ -83,18 +99,14 @@ async function getSpellInfoMap() {
   (Array.isArray(spells) ? spells : [spells]).forEach(s => {
     const id = s['@uniquename'];
     if (!id) return;
-    map[id] = {
-      uniquename: id,
-      uisprite:   s['@uisprite'] || id,
-      category:   s['@category'] || '',
-    };
+    map[id] = { uniquename: id, uisprite: s['@uisprite'] || id };
   });
 
   spellMapCache = { data: map, ts: Date.now() };
   return map;
 }
 
-// GET /api/spells/item?id=2H_BOW
+// GET /api/spells/item?id=MAIN_SWORD
 // Returns: { q, w, e, passive } each: { uniquename, uisprite, iconUrl } | null
 router.get('/item', async (req, res) => {
   const { id } = req.query;
