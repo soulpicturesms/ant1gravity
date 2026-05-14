@@ -505,7 +505,11 @@ export default function Admin() {
                 {SLOT_OPTIONS.map(s => <option key={s} value={s}>{SLOT_LABELS[s]}</option>)}
               </select>
             </div>
-            <div className="form-group"><label>Valor en Coins</label><input type="number" className="input" value={presetForm.coin_value} onChange={e => setPresetForm(p => ({ ...p, coin_value: parseInt(e.target.value) || 0 }))} min="0" /></div>
+            <div className="form-group"><label>Valor en Coins</label>
+              <input className="input" value={presetForm.coin_value ? Number(presetForm.coin_value).toLocaleString('es-AR') : ''} placeholder="Ej: 1.500"
+                onChange={e => { const raw = parseInt(e.target.value.replace(/\D/g, '')) || 0; setPresetForm(p => ({ ...p, coin_value: raw })); }} />
+              {presetForm.coin_value > 0 && <div style={{ marginTop: 4, fontSize: '0.78rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {Number(presetForm.coin_value).toLocaleString('es-AR')} coins</div>}
+            </div>
             <div className="form-group">
               <label>Tier</label>
               <select className="select" value={presetForm.tier} onChange={e => setPresetForm(p => ({ ...p, tier: e.target.value }))}>
@@ -530,7 +534,7 @@ export default function Admin() {
                       <div key={p.id} style={{ background: '#13131f', border: '1px solid #1e1e30', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div>
                           <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {p.coin_value} · {p.tier}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {Number(p.coin_value).toLocaleString('es-AR')} · {p.tier}</div>
                         </div>
                         <button className="btn-icon" style={{ padding: '3px 7px', fontSize: '0.8rem' }} onClick={() => { setEditingPreset(p); setPresetForm({ name: p.name, slot: p.slot, coin_value: p.coin_value, tier: p.tier }); }}>✏️</button>
                         <button className="btn-icon" style={{ padding: '3px 7px', fontSize: '0.8rem', borderColor: '#ff335544', color: '#ff6688' }} onClick={() => deletePreset(p.id)}>×</button>
