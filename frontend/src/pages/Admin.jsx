@@ -61,6 +61,8 @@ export default function Admin() {
   const [coinDropOpen, setCoinDropOpen] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ username: '', password: '', role: 'member' });
   const [statsEdit, setStatsEdit] = useState({ user_id: '', pvp_fame: '', pvp_kills: '', cta_attendance: '', total_activities: '' });
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [editingUsername, setEditingUsername] = useState({}); // { [id]: newName }
 
   const notify = (ok, msg) => { if (ok) setMsg(msg); else setErr(msg); setTimeout(() => { setMsg(''); setErr(''); }, 4000); };
 
@@ -77,6 +79,7 @@ export default function Admin() {
     api.getWeeklyPrize().then(setWeeklyPrize).catch(() => {});
     api.getBanners().then(b => setBanners(Array.isArray(b) ? b : [])).catch(() => {});
     api.getRankingsTop().then(setRankingsInfo).catch(() => {});
+    api.getPendingUsers().then(setPendingUsers).catch(() => {});
   };
 
   useEffect(() => { loadAll(); }, []);
@@ -226,10 +229,32 @@ export default function Admin() {
     } catch (e) { notify(false, e.message); }
   };
 
+  const approveUser = async (id, role) => {
+    try { await api.approveUser(id, role); loadAll(); notify(true, 'Usuario aprobado'); }
+    catch (e) { notify(false, e.message); }
+  };
+
+  const rejectUser = async (id, username) => {
+    if (!confirm(`¿Rechazar y eliminar la cuenta de "${username}"?`)) return;
+    try { await api.rejectUser(id); loadAll(); notify(true, 'Usuario rechazado y eliminado'); }
+    catch (e) { notify(false, e.message); }
+  };
+
+  const saveUsername = async (id) => {
+    const newName = editingUsername[id];
+    if (!newName || !newName.trim()) return;
+    try {
+      await api.editUsername(id, newName.trim());
+      setEditingUsername(p => { const n = { ...p }; delete n[id]; return n; });
+      loadAll(); notify(true, 'Nombre actualizado');
+    } catch (e) { notify(false, e.message); }
+  };
+
   const pendingCredits = creditRequests.filter(r => r.status === 'pending').length;
 
   const tabs = [
     { id: 'overview', label: '📊 Overview' },
+    { id: 'pending', label: pendingUsers.length > 0 ? `⏳ Pendientes (${pendingUsers.length})` : '⏳ Pendientes' },
     { id: 'news', label: '📰 Noticias' },
     { id: 'members', label: '👥 Miembros' },
     { id: 'presets', label: '⚡ Presets Equipo' },
@@ -273,6 +298,50 @@ export default function Admin() {
           <div className="alert alert-info">
             <strong>Credenciales por defecto:</strong> admin / admin123 — Cambia la contraseña en producción.
           </div>
+        </div>
+      )}
+
+      {/* Pending Users */}
+      {tab === 'pending' && (
+        <div>
+          <div className="section-header"><h2>Usuarios Pendientes</h2><div className="accent-line" /></div>
+          {pendingUsers.length === 0 ? (
+            <div className="empty"><div className="empty-icon">✅</div><p>No hay usuarios pendientes de aprobación</p></div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {pendingUsers.map(u => (
+                <div key={u.id} className="card" style={{ border: '1px solid rgba(255,170,0,0.3)', background: 'rgba(255,170,0,0.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#ffaa00', flex: 1 }}>
+                      ⏳ {u.username}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#6a6a8a' }}>Registrado: {formatDate(u.created_at)}</div>
+                  </div>
+
+                  {/* Editar nombre */}
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      className="input"
+                      style={{ flex: 1, minWidth: 160 }}
+                      placeholder={`Nombre actual: ${u.username}`}
+                      value={editingUsername[u.id] ?? ''}
+                      onChange={e => setEditingUsername(p => ({ ...p, [u.id]: e.target.value }))}
+                    />
+                    <button className="btn btn-secondary btn-sm" onClick={() => saveUsername(u.id)} disabled={!editingUsername[u.id]?.trim()}>
+                      ✏️ Cambiar nombre
+                    </button>
+                  </div>
+
+                  {/* Aprobar / Rechazar */}
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn-success btn-sm" onClick={() => approveUser(u.id, 'member')}>✅ Aprobar como Miembro</button>
+                    <button className="btn btn-secondary btn-sm" onClick={() => approveUser(u.id, 'officer')} style={{ borderColor: '#ffaa00', color: '#ffaa00' }}>⭐ Aprobar como Officer</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => rejectUser(u.id, u.username)}>🗑 Rechazar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

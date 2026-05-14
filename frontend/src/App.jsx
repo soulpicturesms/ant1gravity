@@ -11,15 +11,41 @@ import Reequip from './pages/Reequip';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 
+function PendingScreen() {
+  const { logout } = useAuth();
+  return (
+    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ maxWidth: 480, width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: '4rem', marginBottom: 16 }}>⏳</div>
+        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffaa00', letterSpacing: '0.1em', marginBottom: 12 }}>
+          CUENTA PENDIENTE
+        </div>
+        <div style={{ color: '#9090b0', fontSize: '1rem', lineHeight: 1.7, marginBottom: 24 }}>
+          Tu cuenta está esperando aprobación de un administrador.<br />
+          Una vez aprobada podrás acceder a todas las funciones del portal.
+        </div>
+        <div style={{ background: 'rgba(255,170,0,0.08)', border: '1px solid rgba(255,170,0,0.25)', borderRadius: 10, padding: '14px 20px', marginBottom: 24, fontSize: '0.88rem', color: '#ffaa00' }}>
+          💬 Avisale a un admin en el servidor de Discord para que te apruebe.
+        </div>
+        <button onClick={logout} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6a6a8a', borderRadius: 6, padding: '8px 20px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.9rem' }}>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading"><div className="spinner"></div> Cargando...</div>;
   if (!user) return <Navigate to="/login" />;
+  if (user.role === 'pending') return <PendingScreen />;
   if (adminOnly && user.role !== 'admin' && user.role !== 'officer') return <Navigate to="/" />;
   return children;
 }
 
 function AppRoutes() {
+  const { user } = useAuth();
   return (
     <>
       <Navbar />

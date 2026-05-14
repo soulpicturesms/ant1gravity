@@ -68,4 +68,36 @@ router.delete('/users/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Listar usuarios pendientes
+router.get('/pending', requireAdmin, async (req, res) => {
+  const { data } = await supabase.from('users').select('id,username,role,created_at').eq('role', 'pending').order('created_at', { ascending: true });
+  res.json(data || []);
+});
+
+// Aprobar usuario pendiente (con rol opcional)
+router.post('/users/:id/approve', requireAdmin, async (req, res) => {
+  const { role } = req.body;
+  const newRole = ['member','officer','admin'].includes(role) ? role : 'member';
+  await supabase.from('users').update({ role: newRole }).eq('id', req.params.id);
+  res.json({ ok: true });
+});
+
+// Rechazar y eliminar usuario pendiente
+router.delete('/users/:id/reject', requireAdmin, async (req, res) => {
+  await supabase.from('users').delete().eq('id', req.params.id);
+  res.json({ ok: true });
+});
+
+// Editar username de cualquier usuario
+router.put('/users/:id/username', requireAdmin, async (req, res) => {
+  const { username } = req.body;
+  if (!username || username.trim().length < 2) return res.status(400).json({ error: 'Nombre inválido' });
+  const { error } = await supabase.from('users').update({ username: username.trim() }).eq('id', req.params.id);
+  if (error) {
+    if (error.code === '23505') return res.status(400).json({ error: 'Ese nombre ya existe' });
+    return res.status(500).json({ error: error.message });
+  }
+  res.json({ ok: true });
+});
+
 module.exports = router;
