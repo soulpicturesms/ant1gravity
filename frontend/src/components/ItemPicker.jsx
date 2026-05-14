@@ -237,10 +237,10 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                     onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                     onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    {/* Icon preview at T4 (lowest playable tier, always exists) */}
+                    {/* Icon preview at lowest available tier */}
                     <div style={{ width: 38, height: 38, background: '#0a0a14', borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid #1e1e30' }}>
                       <img
-                        src={itemUrl(item.id, 4)}
+                        src={itemUrl(item.id, item.tiers?.length ? Math.min(...item.tiers) : 4)}
                         alt=""
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                         onError={e => { e.target.style.display = 'none'; }}
