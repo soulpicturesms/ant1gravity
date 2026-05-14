@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { supabase } = require('../supabase');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireStrictAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 const safe = u => {
@@ -33,7 +33,7 @@ router.get('/transactions', requireAdmin, async (req, res) => {
   res.json(data || []);
 });
 
-router.post('/coins/adjust', requireAdmin, async (req, res) => {
+router.post('/coins/adjust', requireStrictAdmin, async (req, res) => {
   const { user_id, amount, reason } = req.body;
   if (!user_id || amount === undefined) return res.status(400).json({ error: 'Faltan campos' });
   const num = parseInt(amount);
@@ -62,7 +62,7 @@ router.post('/users', requireAdmin, async (req, res) => {
   res.json(safe(data));
 });
 
-router.delete('/users/:id', requireAdmin, async (req, res) => {
+router.delete('/users/:id', requireStrictAdmin, async (req, res) => {
   if (req.params.id === req.user.id) return res.status(400).json({ error: 'No puedes eliminarte a ti mismo' });
   await supabase.from('users').delete().eq('id', req.params.id);
   res.json({ ok: true });
@@ -74,16 +74,23 @@ router.get('/pending', requireAdmin, async (req, res) => {
   res.json(data || []);
 });
 
-// Aprobar usuario pendiente (con rol opcional)
+// Aprobar usuario pendiente (officers solo pueden dar member/officer, no admin)
 router.post('/users/:id/approve', requireAdmin, async (req, res) => {
   const { role } = req.body;
-  const newRole = ['member','officer','admin'].includes(role) ? role : 'member';
+  const isStrictAdmin = req.user.role === 'admin';
+  const allowed = isStrictAdmin ? ['member','officer','admin'] : ['member','officer'];
+  const newRole = allowed.includes(role) ? role : 'member';
   await supabase.from('users').update({ role: newRole }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
-// Rechazar y eliminar usuario pendiente
+// Rechazar y eliminar usuario pendiente (officers solo pueden rechazar pending)
 router.delete('/users/:id/reject', requireAdmin, async (req, res) => {
+  const isStrictAdmin = req.user.role === 'admin';
+  if (!isStrictAdmin) {
+    const { data: u } = await supabase.from('users').select('role').eq('id', req.params.id).maybeSingle();
+    if (u && u.role !== 'pending') return res.status(403).json({ error: 'Solo el administrador puede expulsar miembros' });
+  }
   await supabase.from('users').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });

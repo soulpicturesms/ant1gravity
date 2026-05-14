@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -21,6 +22,8 @@ function StatCard({ label, value, color = '#00d4ff', icon }) {
 }
 
 export default function Admin() {
+  const { user: authUser } = useAuth();
+  const isStrictAdmin = authUser?.role === 'admin';
   const [tab, setTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [members, setMembers] = useState([]);
@@ -259,7 +262,7 @@ export default function Admin() {
     { id: 'members', label: '👥 Miembros' },
     { id: 'presets', label: '⚡ Presets Equipo' },
     { id: 'activities', label: '🛡️ Actividades' },
-    { id: 'coins', label: '💰 Coins' },
+    ...(isStrictAdmin ? [{ id: 'coins', label: '💰 Coins' }] : []),
     { id: 'blacklist', label: '🚫 Blacklist' },
     { id: 'credits', label: creditFilter === 'pending' && pendingCredits > 0 ? `💳 Créditos (${pendingCredits})` : '💳 Créditos' },
     { id: 'rankings', label: '📄 Rankings TXT' },
@@ -334,8 +337,9 @@ export default function Admin() {
 
                   {/* Aprobar / Rechazar */}
                   <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="btn btn-success btn-sm" onClick={() => approveUser(u.id, 'member')}>✅ Aprobar como Miembro</button>
-                    <button className="btn btn-secondary btn-sm" onClick={() => approveUser(u.id, 'officer')} style={{ borderColor: '#ffaa00', color: '#ffaa00' }}>⭐ Aprobar como Officer</button>
+                    <button className="btn btn-success btn-sm" onClick={() => approveUser(u.id, 'member')}>✅ Miembro</button>
+                    <button className="btn btn-secondary btn-sm" onClick={() => approveUser(u.id, 'officer')} style={{ borderColor: '#ffaa00', color: '#ffaa00' }}>⭐ Officer</button>
+                    {isStrictAdmin && <button className="btn btn-secondary btn-sm" onClick={() => approveUser(u.id, 'admin')} style={{ borderColor: '#ff3366', color: '#ff3366' }}>🔴 Admin</button>}
                     <button className="btn btn-danger btn-sm" onClick={() => rejectUser(u.id, u.username)}>🗑 Rechazar</button>
                   </div>
                 </div>
@@ -479,7 +483,7 @@ export default function Admin() {
                     <td style={{ fontFamily: 'Rajdhani', color: '#ff8844' }}>{m.cta_attendance}</td>
                     <td style={{ fontFamily: 'Rajdhani', color: '#ffd700' }}>⚡ {m.coins}</td>
                     <td>
-                      <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>
+                      {isStrictAdmin && <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>}
                     </td>
                   </tr>
                 ))}

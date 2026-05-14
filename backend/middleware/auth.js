@@ -21,4 +21,14 @@ function requireAdmin(req, res, next) {
   });
 }
 
-module.exports = { requireAuth, requireAdmin, JWT_SECRET };
+// Solo admin puro (no officer)
+function requireStrictAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Solo el administrador puede hacer esto' });
+    }
+    next();
+  });
+}
+
+module.exports = { requireAuth, requireAdmin, requireStrictAdmin, JWT_SECRET };
