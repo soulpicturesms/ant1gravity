@@ -240,7 +240,6 @@ export default function Admin() {
     { id: 'pending', label: pendingUsers.length > 0 ? `⏳ Pendientes (${pendingUsers.length})` : '⏳ Pendientes' },
     { id: 'news', label: '📰 Noticias' },
     { id: 'members', label: '👥 Miembros' },
-    { id: 'activities', label: '🛡️ Actividades' },
     ...(isStrictAdmin ? [{ id: 'coins', label: '💰 Coins' }] : []),
     { id: 'blacklist', label: '🚫 Blacklist' },
     { id: 'credits', label: creditFilter === 'pending' && pendingCredits > 0 ? `💳 Créditos (${pendingCredits})` : '💳 Créditos' },
