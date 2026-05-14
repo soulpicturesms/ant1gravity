@@ -110,11 +110,10 @@ async function getSpellInfoMap() {
 function enrichSpell(spellId, spellMap) {
   if (!spellId) return null;
   const info = spellMap[spellId] || {};
-  const uisprite = info.uisprite || spellId;
   return {
     uniquename: spellId,
-    uisprite,
-    iconUrl: `https://render.albiononline.com/v1/spell/${uisprite}.png`,
+    uisprite: info.uisprite || spellId,
+    iconUrl: `https://render.albiononline.com/v1/spell/${spellId}.png`,
   };
 }
 
