@@ -3,7 +3,6 @@ import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ItemPicker from '../components/ItemPicker';
 import { SpellRow } from '../components/SpellIcon';
-import { ITEM_SKILLS } from '../data/item-skills';
 
 const RENDER = 'https://render.albiononline.com/v1/item';
 
@@ -60,6 +59,41 @@ function ItemIcon({ code, size = 40, empty = true }) {
         ? <img src={`${RENDER}/${code}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setOk(false)} />
         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2, fontSize: size * 0.35 }}>?</div>
       }
+    </div>
+  );
+}
+
+/* ── ITEM ICON WITH SPELL TOOLTIP ON HOVER ── */
+function ItemIconWithSpells({ code, spells, size = 56, label }) {
+  const [hover, setHover] = useState(false);
+  const hasSpells = spells && Object.values(spells).some(Boolean);
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <ItemIcon code={code} size={size} />
+      {/* Spell tooltip */}
+      {hover && hasSpells && (
+        <div style={{
+          position: 'absolute', bottom: '105%', left: '50%', transform: 'translateX(-50%)',
+          background: '#0a0a14', border: '1px solid #2a2a3a',
+          borderRadius: 10, padding: '10px 12px', zIndex: 600,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+          minWidth: 160, pointerEvents: 'none',
+        }}>
+          <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+            {label}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {['q','w','e','passive'].filter(k => spells[k]).map(k => (
+              <SpellRow key={k} spells={{ [k]: spells[k] }} size={28} gap={4} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -148,34 +182,6 @@ function ContentCard({ content, onClick }) {
   );
 }
 
-/* ── SKILLS PANEL (inside detail) ── */
-const SLOT_CFG = {
-  Q:      { color: '#00d4ff', bg: 'rgba(0,212,255,0.12)', border: 'rgba(0,212,255,0.3)', label: 'Q' },
-  W:      { color: '#00e8c0', bg: 'rgba(0,232,192,0.12)', border: 'rgba(0,232,192,0.3)', label: 'W' },
-  E:      { color: '#ff8c00', bg: 'rgba(255,140,0,0.12)', border: 'rgba(255,140,0,0.3)', label: 'E' },
-  Pasiva: { color: '#ffaa00', bg: 'rgba(255,170,0,0.12)', border: 'rgba(255,170,0,0.3)', label: '★' },
-};
-
-function SkillBadge({ baseId }) {
-  if (!baseId) return null;
-  const skills = ITEM_SKILLS[baseId];
-  if (!skills) return null;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {[['Q', skills.q], ['W', skills.w], ['E', skills.e], ['Pasiva', skills.passive]]
-        .filter(([, v]) => v)
-        .map(([key, skill]) => {
-          const cfg = SLOT_CFG[key];
-          return (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 6, padding: '4px 8px' }}>
-              <div style={{ width: 18, height: 18, borderRadius: 4, background: 'rgba(0,0,0,0.4)', border: `1px solid ${cfg.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 800, fontSize: '0.65rem', color: cfg.color, flexShrink: 0 }}>{cfg.label}</div>
-              <span style={{ fontSize: '0.75rem', color: '#d0d0e8', flex: 1 }}>{skill}</span>
-            </div>
-          );
-        })}
-    </div>
-  );
-}
 
 /* ── BUILD DETAIL PANEL (inside modal, shows one variant) ── */
 function formatSilver(n) {
@@ -285,7 +291,12 @@ function BuildDetail({ variant, sharedItems }) {
         {GEAR_SLOTS.map(s => (
           <div key={s.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
             <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
-            <ItemIcon code={eq[s.key]?.code} size={56} />
+            <ItemIconWithSpells
+              code={eq[s.key]?.code}
+              spells={eq[s.key]?.spells}
+              label={eq[s.key]?.name || s.label}
+              size={56}
+            />
             {eq[s.key]?.name && <div style={{ fontSize: '0.65rem', color: '#9090b0', textAlign: 'center', lineHeight: 1.2 }}>{eq[s.key].name}</div>}
             {eq[s.key]?.code && <div style={{ fontSize: '0.55rem', color: '#3a3a5a', fontFamily: 'monospace' }}>{eq[s.key].code}</div>}
           </div>
@@ -306,42 +317,6 @@ function BuildDetail({ variant, sharedItems }) {
           </div>
         </div>
       )}
-
-      {/* Skills */}
-      {(() => {
-        const slotSkills = [
-          { label: 'Arma Ppal.', key: 'mainhand' },
-          { label: 'Arma Sec.',  key: 'offhand' },
-          { label: 'Cabeza',     key: 'head' },
-          { label: 'Pecho',      key: 'armor' },
-          { label: 'Botas',      key: 'shoes' },
-        ].map(s => ({ ...s, item: eq[s.key] }))
-         .filter(s => s.item?.code);
-
-        if (!slotSkills.length) return null;
-        return (
-          <div style={{ borderTop: '1px solid #1a1a28', paddingTop: 12 }}>
-            <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Skills</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {slotSkills.map(({ label, key, item }) => {
-                const bid = baseId(item.code);
-                const hasIcons = item.spells && (item.spells.q || item.spells.w || item.spells.e || item.spells.passive);
-                const hasText  = bid && ITEM_SKILLS[bid];
-                if (!hasIcons && !hasText) return null;
-                return (
-                  <div key={key}>
-                    <div style={{ fontSize: '0.6rem', color: '#5a5a7a', marginBottom: 4 }}>{label}</div>
-                    {hasIcons
-                      ? <SpellRow spells={item.spells} size={32} gap={5} />
-                      : <SkillBadge baseId={bid} />
-                    }
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
