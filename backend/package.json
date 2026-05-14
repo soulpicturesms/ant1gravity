@@ -11,6 +11,10 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0-rc.4"
   },
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
   "devDependencies": {
     "nodemon": "^3.1.0"
   }
