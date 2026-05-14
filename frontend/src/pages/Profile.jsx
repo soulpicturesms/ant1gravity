@@ -82,7 +82,7 @@ export default function Profile() {
           {msg && <div style={{ marginTop: 8, color: '#00cc66', fontSize: '0.8rem' }}>{msg}</div>}
 
           <div style={{ marginTop: 20, padding: '16px 0', borderTop: '1px solid #1e1e30' }}>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffd700' }}>⚡ {user.coins}</div>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')}</div>
             <div style={{ fontSize: '0.78rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Coins Disponibles</div>
           </div>
 
@@ -127,7 +127,7 @@ export default function Profile() {
           <div className="card">
             <div className="card-title">Sistema de Reequipo</div>
             <div className="alert alert-info">
-              Tus coins acumuladas: <strong style={{ color: '#ffd700' }}>⚡ {user.coins}</strong>.
+              Tus coins acumuladas: <strong style={{ color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')}</strong>.
               Cuando morís en Albion, entrá al Killboard → "Mis Muertes" y solicitá el reequipo directamente desde el evento.
               Un admin revisará los precios del mercado y acreditará los coins. Luego podés solicitar el canje de silver en juego.
             </div>
@@ -150,7 +150,7 @@ export default function Profile() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {myRequests.map(r => (
                     <div key={r.id} style={{ background: '#0f0f18', border: '1px solid #1e1e30', borderRadius: 6, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {r.coins}</span>
+                      <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {Number(r.coins).toLocaleString('es-AR')}</span>
                       <span style={{ fontSize: '0.75rem', color: '#6a6a8a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
                       <span style={{ fontSize: '0.75rem', color: r.status === 'pending' ? '#ffaa00' : r.status === 'completed' ? '#00cc66' : '#ff6688' }}>
                         {r.status === 'pending' ? '⏳ Pendiente' : r.status === 'completed' ? '✅ Entregado' : '❌ Rechazado'}
