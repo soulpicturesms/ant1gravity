@@ -108,7 +108,7 @@ export default function Navbar() {
               <Link to="/profile" className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
                 <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', color: 'white', lineHeight: 1 }}>{user.username}</span>
-                  <span style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {user.coins} coins</span>
+                  <span style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</span>
                 </div>
                 <div className="avatar" style={{ width: 38, height: 38, background: 'linear-gradient(135deg, #00aacc, #0044aa)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '2px solid rgba(0,212,255,0.3)', flexShrink: 0 }}>
                   {user.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.username[0].toUpperCase()}
@@ -154,7 +154,7 @@ export default function Navbar() {
               </div>
               <div>
                 <div style={{ color: 'white', lineHeight: 1 }}>{user.username}</div>
-                <div style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {user.coins} coins</div>
+                <div style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</div>
               </div>
             </NavLink>
             <button className="mobile-link" onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#ff6688', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', textAlign: 'left', width: '100%', cursor: 'pointer' }}>Salir</button>
