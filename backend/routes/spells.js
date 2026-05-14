@@ -54,7 +54,12 @@ async function getItemSpellMap() {
       const id = spell['@uniquename'];
       if (!id) continue;
 
-      if (id.startsWith('PASSIVE_')) { result.passive.push(id); continue; }
+      if (id.startsWith('PASSIVE_')) {
+        // @slots="2" → second passive slot (chest pieces); everything else → first passive slot
+        if (spell['@slots'] === '2') result.w.push(id);
+        else result.passive.push(id);
+        continue;
+      }
 
       const slotNum = spell['@slots'];
       if (slotNum === '1') result.q.push(id);

@@ -75,16 +75,23 @@ function SkillsPanel({ baseId }) {
   );
 }
 
-const SLOT_LABELS = { q: 'Q', w: 'W', e: 'E', passive: '★' };
+// Maps item slot → active keybinding label for armor pieces
+const ARMOR_KEY = { head: 'R', armor: 'D', shoes: 'F', cape: 'Activa' };
 
-function SpellSlotPicker({ options, selected, onChange }) {
+
+function SpellSlotPicker({ options, selected, onChange, itemSlot }) {
   const slots = ['q', 'w', 'e', 'passive'].filter(k => options[k]?.length);
   if (!slots.length) return null;
-  // If no W/E, item is armor → rename Q to "Activa" and ★ to "Pasiva"
-  const isArmor = !options.w?.length && !options.e?.length;
+
+  const armorKey = ARMOR_KEY[itemSlot]; // defined only for head/armor/shoes/cape
+
   const label = (k) => {
-    if (isArmor) return k === 'q' ? 'ACTIVA' : 'PASIVA';
-    return SLOT_LABELS[k];
+    if (armorKey) {
+      if (k === 'q') return armorKey;          // R / D / F
+      if (k === 'passive') return 'Pasiva 1';
+      if (k === 'w') return 'Pasiva 2';
+    }
+    return { q: 'Q', w: 'W', e: 'E', passive: '★' }[k] || k;
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -414,7 +421,7 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                   Skills {spellsLoading && <span style={{ color: '#3a3a5a' }}>···</span>}
                 </div>
                 {spellOptions
-                  ? <SpellSlotPicker options={spellOptions} selected={selectedSpells} onChange={setSelectedSpells} />
+                  ? <SpellSlotPicker options={spellOptions} selected={selectedSpells} onChange={setSelectedSpells} itemSlot={slot} />
                   : !spellsLoading && <SkillsPanel baseId={selected.id} />
                 }
               </div>
