@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../api/api';
 import { ITEM_SKILLS } from '../data/item-skills';
+import { SpellRow } from './SpellIcon';
 
 const RENDER = 'https://render.albiononline.com/v1/item';
 const TIERS = [4, 5, 6, 7, 8];
@@ -111,6 +112,8 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
   const [selected, setSelected] = useState(null);
   const [tier, setTier]         = useState(8);
   const [enchant, setEnchant]   = useState(0);
+  const [spellData, setSpellData] = useState(null);
+  const [spellsLoading, setSpellsLoading] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
   const noEnchant = NO_ENCHANT.has(slot);
@@ -142,18 +145,32 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
     debounceRef.current = setTimeout(() => search(val), 300);
   };
 
-  const handleSelectItem = (item) => {
+  const handleSelectItem = async (item) => {
     setSelected(item);
+    setSpellData(null);
     // Auto-select highest available tier
     const tiers = item.tiers?.length ? item.tiers : TIERS;
     const maxTier = Math.max(...tiers);
     setTier(maxTier);
     setEnchant(0);
+    // Fetch spell icons (weapons/armor only)
+    if (!NO_ENCHANT.has(slot)) {
+      setSpellsLoading(true);
+      try {
+        const spells = await api.getItemSpells(item.id);
+        const hasAny = spells && (spells.q || spells.w || spells.e || spells.passive);
+        setSpellData(hasAny ? spells : null);
+      } catch {
+        setSpellData(null);
+      } finally {
+        setSpellsLoading(false);
+      }
+    }
   };
 
   const handleConfirm = () => {
     if (!selected) return;
-    onSelect({ id: selected.id, name: selected.name, code: buildCode(selected.id, tier, enchant) });
+    onSelect({ id: selected.id, name: selected.name, code: buildCode(selected.id, tier, enchant), spells: spellData || undefined });
   };
 
   return (
@@ -342,8 +359,13 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
             {/* Skills */}
             {selected && (
               <div style={{ flex: 1, marginBottom: 16 }}>
-                <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Skills</div>
-                <SkillsPanel baseId={selected.id} />
+                <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                  Skills {spellsLoading && <span style={{ color: '#3a3a5a' }}>···</span>}
+                </div>
+                {spellData
+                  ? <SpellRow spells={spellData} size={36} gap={6} />
+                  : !spellsLoading && <SkillsPanel baseId={selected.id} />
+                }
               </div>
             )}
 

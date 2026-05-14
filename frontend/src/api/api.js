@@ -38,6 +38,7 @@ export const api = {
   // Item search
   searchItems: (slot, q) => req(`/api/items/search?slot=${slot}&q=${encodeURIComponent(q || '')}`),
   getMarketPrices: (codes) => req(`/api/market/price?items=${encodeURIComponent(codes.join(','))}`),
+  getItemSpells: (baseId) => req(`/api/spells/item?id=${encodeURIComponent(baseId)}`),
 
   // Builds (legacy)
   getBuilds: (category) => req(`/api/builds${category ? `?category=${category}` : ''}`),

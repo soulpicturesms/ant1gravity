@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import ItemPicker from '../components/ItemPicker';
+import { SpellRow } from '../components/SpellIcon';
 import { ITEM_SKILLS } from '../data/item-skills';
 
 const RENDER = 'https://render.albiononline.com/v1/item';
@@ -196,12 +197,6 @@ function BuildDetail({ variant, sharedItems }) {
     return code.replace(/^T\d+_/, '').replace(/@\d+$/, '');
   }
 
-  const mainhandBase = baseId(eq.mainhand?.code);
-  const offhandBase  = baseId(eq.offhand?.code);
-  const headBase     = baseId(eq.head?.code);
-  const armorBase    = baseId(eq.armor?.code);
-  const shoesBase    = baseId(eq.shoes?.code);
-
   const fetchPrices = async () => {
     const codes = [
       ...GEAR_SLOTS.map(s => eq[s.key]?.code),
@@ -313,23 +308,40 @@ function BuildDetail({ variant, sharedItems }) {
       )}
 
       {/* Skills */}
-      <div style={{ borderTop: '1px solid #1a1a28', paddingTop: 12 }}>
-        <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Skills</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[
-            { label: 'Arma Ppal.', id: mainhandBase },
-            { label: 'Arma Sec.',  id: offhandBase },
-            { label: 'Cabeza',     id: headBase },
-            { label: 'Pecho',      id: armorBase },
-            { label: 'Botas',      id: shoesBase },
-          ].filter(x => x.id && ITEM_SKILLS[x.id]).map(({ label, id }) => (
-            <div key={id}>
-              <div style={{ fontSize: '0.6rem', color: '#5a5a7a', marginBottom: 4 }}>{label}</div>
-              <SkillBadge baseId={id} />
+      {(() => {
+        const slotSkills = [
+          { label: 'Arma Ppal.', key: 'mainhand' },
+          { label: 'Arma Sec.',  key: 'offhand' },
+          { label: 'Cabeza',     key: 'head' },
+          { label: 'Pecho',      key: 'armor' },
+          { label: 'Botas',      key: 'shoes' },
+        ].map(s => ({ ...s, item: eq[s.key] }))
+         .filter(s => s.item?.code);
+
+        if (!slotSkills.length) return null;
+        return (
+          <div style={{ borderTop: '1px solid #1a1a28', paddingTop: 12 }}>
+            <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Skills</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {slotSkills.map(({ label, key, item }) => {
+                const bid = baseId(item.code);
+                const hasIcons = item.spells && (item.spells.q || item.spells.w || item.spells.e || item.spells.passive);
+                const hasText  = bid && ITEM_SKILLS[bid];
+                if (!hasIcons && !hasText) return null;
+                return (
+                  <div key={key}>
+                    <div style={{ fontSize: '0.6rem', color: '#5a5a7a', marginBottom: 4 }}>{label}</div>
+                    {hasIcons
+                      ? <SpellRow spells={item.spells} size={32} gap={5} />
+                      : <SkillBadge baseId={bid} />
+                    }
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
