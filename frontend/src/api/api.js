@@ -37,6 +37,7 @@ export const api = {
 
   // Item search
   searchItems: (slot, q) => req(`/api/items/search?slot=${slot}&q=${encodeURIComponent(q || '')}`),
+  getMarketPrices: (codes) => req(`/api/market/price?items=${encodeURIComponent(codes.join(','))}`),
 
   // Builds (legacy)
   getBuilds: (category) => req(`/api/builds${category ? `?category=${category}` : ''}`),
