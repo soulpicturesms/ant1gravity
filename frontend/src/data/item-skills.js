@@ -227,4 +227,25 @@ export const ITEM_SKILLS = {
   'SHOES_CLOTH_MORGANA':          { passive:'Demon Sandals' },
   'SHOES_CLOTH_ROYAL':            { passive:'Royal Sandals' },
   'SHOES_CLOTH_AVALON':           { passive:'Avalonian Sandals' },
+
+  // ── SHAPESHIFTER (Nuevas) ─────────────────────────────────
+  '2H_SHAPESHIFTER_MORGANA':      { q:'Pounce', w:'Vicious Bite', e:'Blood Moon', passive:'Wild Form' },
+  '2H_SHAPESHIFTER_HELL':         { q:'Pounce', w:'Vicious Bite', e:'Infernal Transformation', passive:'Wild Form' },
+  '2H_SHAPESHIFTER_KEEPER':       { q:'Pounce', w:'Vicious Bite', e:'Earthrune', passive:'Wild Form' },
+  '2H_SHAPESHIFTER_AVALON':       { q:'Pounce', w:'Vicious Bite', e:'Lightcaller', passive:'Wild Form' },
+  '2H_SHAPESHIFTER_CRYSTAL':      { q:'Pounce', w:'Vicious Bite', e:'Crystal Transformation', passive:'Wild Form' },
+
+  // ── CRYSTAL WEAPONS (Nuevas/Correcciones) ─────────────────
+  'MAIN_CURSEDSTAFF_CRYSTAL':     { q:'Pestilence', w:'Void Sphere', e:'Putrefaction', passive:'Curse Arrow' },
+  'MAIN_FIRESTAFF_CRYSTAL':       { q:'Fire Bolt', w:'Burning Field', e:'Flame Walk', passive:'Mana Sparks' },
+  'MAIN_NATURESTAFF_CRYSTAL':     { q:'Regeneration', w:'Entangle', e:'Barkforge', passive:'Rejuvenation' },
+  'MAIN_SWORD_CRYSTAL':           { q:'Heroic Strike', w:'Heroic Charge', e:'Infinity Blade', passive:'Battle Trance' },
+  'MAIN_MACE_CRYSTAL':            { q:'Aggressive Rush', w:'Ground Shaker', e:'Storm Monarch', passive:'Block Mastery' },
+  '2H_GLAIVE_CRYSTAL':            { q:'Lunging Stab', w:'Impale', e:'Rift Glaive', passive:'Bloodthirst' },
+  '2H_SCYTHE_CRYSTAL':            { q:'Deadly Swipe', w:'Reaper', e:'Crystal Scythe', passive:'Sunder Armor' },
+  '2H_DOUBLEBLADEDSTAFF_CRYSTAL': { q:'Crippling Strike', w:'Concussive Blow', e:'Phantom Blade', passive:'Fortify' },
+  '2H_DAGGERPAIR_CRYSTAL':        { q:'Deadly Swipe', w:'Dash', e:'Assassin Twin', passive:'Sunder Armor' },
+  '2H_DUALCROSSBOW_CRYSTAL':      { q:'Bolt', w:'Explosive Bolt', e:'Light Desintegrator', passive:'Ranger' },
+  '2H_KNUCKLES_CRYSTAL':          { q:'Dragon Leap', w:'Triple Kick', e:'Pulsing Force', passive:'Combo Mastery' },
 };
+
