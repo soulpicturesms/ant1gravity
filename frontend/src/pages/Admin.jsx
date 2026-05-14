@@ -459,7 +459,7 @@ export default function Admin() {
                     <td style={{ fontFamily: 'Rajdhani', color: '#00d4ff' }}>{m.pvp_fame?.toLocaleString()}</td>
                     <td style={{ fontFamily: 'Rajdhani', color: '#ff6688' }}>{m.pvp_kills}</td>
                     <td style={{ fontFamily: 'Rajdhani', color: '#ff8844' }}>{m.cta_attendance}</td>
-                    <td style={{ fontFamily: 'Rajdhani', color: '#ffd700' }}>⚡ {m.coins}</td>
+                    <td style={{ fontFamily: 'Rajdhani', color: '#ffd700' }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</td>
                     <td>
                       {isStrictAdmin && <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>}
                     </td>
@@ -568,7 +568,7 @@ export default function Admin() {
                   <div>
                     <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem' }}>
                       {r.username}
-                      <span style={{ marginLeft: 10, fontFamily: 'Rajdhani', fontSize: '1.2rem', color: '#ffd700' }}>⚡ {r.coins} coins</span>
+                      <span style={{ marginLeft: 10, fontFamily: 'Rajdhani', fontSize: '1.2rem', color: '#ffd700' }}>⚡ {Number(r.coins).toLocaleString('es-AR')} coins</span>
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#6a6a8a', marginTop: 4 }}>Solicitado: {formatDate(r.created_at)}</div>
                     {r.admin_notes && <div style={{ fontSize: '0.82rem', color: '#9090b0', marginTop: 6 }}>Nota: {r.admin_notes}</div>}
@@ -618,7 +618,7 @@ export default function Admin() {
               />
               {coinAdjust.user_id && !coinDropOpen && (
                 <div style={{ marginTop: 4, fontSize: '0.8rem', color: '#00cc66' }}>
-                  ✓ {members.find(m => m.id === coinAdjust.user_id)?.username} — ⚡ {members.find(m => m.id === coinAdjust.user_id)?.coins} coins
+                  ✓ {members.find(m => m.id === coinAdjust.user_id)?.username} — ⚡ {Number(members.find(m => m.id === coinAdjust.user_id)?.coins).toLocaleString('es-AR')} coins
                 </div>
               )}
               {coinDropOpen && (
@@ -634,7 +634,7 @@ export default function Admin() {
                       onMouseLeave={e => e.currentTarget.style.background = coinAdjust.user_id === m.id ? 'rgba(0,212,255,0.08)' : 'transparent'}
                     >
                       <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{m.username}</span>
-                      <span style={{ fontSize: '0.8rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {m.coins}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</span>
                     </div>
                   ))}
                 </div>
@@ -693,7 +693,7 @@ export default function Admin() {
                     <tr key={t.id}>
                       <td style={{ fontSize: '0.78rem', color: '#6a6a8a' }}>{new Date(t.created_at).toLocaleDateString('es-ES')}</td>
                       <td style={{ fontWeight: 600 }}>{t.username}</td>
-                      <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: t.amount >= 0 ? '#00cc66' : '#ff3355' }}>{t.amount >= 0 ? '+' : ''}{t.amount} ⚡</td>
+                      <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: t.amount >= 0 ? '#00cc66' : '#ff3355' }}>{t.amount >= 0 ? '+' : ''}{Number(t.amount).toLocaleString('es-AR')} ⚡</td>
                       <td><span className="badge badge-member">{t.type}</span></td>
                       <td style={{ fontSize: '0.82rem', color: '#9090b0' }}>{t.reason}</td>
                     </tr>
