@@ -667,7 +667,7 @@ export default function Admin() {
               />
               {coinAdjust.amount > 0 && (
                 <div style={{ marginTop: 6, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: coinMode === 'add' ? '#00cc66' : '#ff3355' }}>
-                  {coinMode === 'add' ? `+${coinAdjust.amount} ⚡ coins` : `-${coinAdjust.amount} ⚡ coins`}
+                  {coinMode === 'add' ? `+${Number(coinAdjust.amount).toLocaleString('es-AR')} ⚡ coins` : `-${Number(coinAdjust.amount).toLocaleString('es-AR')} ⚡ coins`}
                 </div>
               )}
             </div>
