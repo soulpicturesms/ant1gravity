@@ -447,7 +447,7 @@ export default function Home() {
           {/* Center hero */}
           <div style={{ textAlign: 'center', minWidth: 0 }}>
             <div style={{ position: 'relative', width: '100%', maxWidth: 500, margin: '0 auto' }}>
-              <img src="/xx.png" alt="ANT1GRAVITY" style={{ width: '100%', display: 'block', WebkitMaskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', maskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', mixBlendMode: 'luminosity', filter: 'drop-shadow(0 0 25px rgba(0,212,255,0.4)) brightness(1.05)' }}
+              <img src="/logo-banner.png" alt="ANT1GRAVITY" style={{ width: '100%', display: 'block', WebkitMaskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', maskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', mixBlendMode: 'luminosity', filter: 'drop-shadow(0 0 25px rgba(0,212,255,0.4)) brightness(1.05)' }}
                 onError={e => { e.target.parentElement.style.display = 'none'; document.getElementById('hero-text').style.display = 'block'; }} />
             </div>
             <div id="hero-text" style={{ display: 'none', fontFamily: 'Rajdhani', fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 700, color: 'white', letterSpacing: '0.12em', lineHeight: 1, textShadow: '0 0 40px rgba(0,212,255,0.3)' }}>

@@ -33,7 +33,8 @@
       "Bash(curl -s -X POST http://localhost:3001/api/admin/users -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"test\\\\\",\\\\\"password\\\\\":\\\\\"123456\\\\\"}\")",
       "Bash(node app.js)",
       "Bash(curl -s http://localhost:3000/api/rankings/top)",
-      "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")"
+      "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")",
+      "Bash(node migrate.js)"
     ]
   }
 }

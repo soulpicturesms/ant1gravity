@@ -1,39 +1,38 @@
 const express = require('express');
-const { db } = require('../database');
+const { supabase } = require('../supabase');
 const { requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-// Público: verificar jugador
 router.get('/check', async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ error: 'Falta username' });
-  const entry = await db.blacklist.findOneAsync({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+  const { data: entry } = await supabase.from('blacklist').select('*').ilike('username', username).maybeSingle();
   if (entry) return res.json({ blacklisted: true, reason: entry.reason, date: entry.created_at });
-  // Check if user exists in guild
-  const member = await db.users.findOneAsync({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+  const { data: member } = await supabase.from('users').select('id').ilike('username', username).maybeSingle();
   res.json({ blacklisted: false, isMember: !!member });
 });
 
-// Público: ver toda la blacklist
 router.get('/', async (req, res) => {
-  const list = await db.blacklist.findAsync({}).sort({ created_at: -1 });
-  res.json(list.map(b => ({ ...b, id: b._id })));
+  const { data } = await supabase.from('blacklist').select('*').order('created_at', { ascending: false });
+  res.json(data || []);
 });
 
-// Admin: agregar a blacklist
 router.post('/', requireAdmin, async (req, res) => {
   const { username, reason } = req.body;
   if (!username) return res.status(400).json({ error: 'Falta username' });
-  const exists = await db.blacklist.findOneAsync({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+  const { data: exists } = await supabase.from('blacklist').select('id').ilike('username', username).maybeSingle();
   if (exists) return res.status(400).json({ error: 'Ya está en la blacklist' });
-  const admin = await db.users.findOneAsync({ _id: req.user.id });
-  const entry = await db.blacklist.insertAsync({ username, reason: reason || 'Sin motivo especificado', added_by: req.user.id, added_by_name: admin?.username, created_at: new Date().toISOString() });
-  res.json({ id: entry._id });
+  const { data: admin } = await supabase.from('users').select('username').eq('id', req.user.id).maybeSingle();
+  const { data, error } = await supabase.from('blacklist').insert({
+    username, reason: reason || 'Sin motivo especificado',
+    added_by: req.user.id, added_by_name: admin?.username,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
-// Admin: quitar de blacklist
 router.delete('/:id', requireAdmin, async (req, res) => {
-  await db.blacklist.removeAsync({ _id: req.params.id }, {});
+  await supabase.from('blacklist').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 

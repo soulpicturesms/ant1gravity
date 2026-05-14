@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "commonjs",
   "dependencies": {
-    "@seald-io/nedb": "^4.0.4",
+    "@supabase/supabase-js": "^2.105.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

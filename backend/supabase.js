@@ -1,14 +1,18 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+  { auth: { persistSession: false } }
+);
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('⚠️  Faltan variables SUPABASE_URL y SUPABASE_SERVICE_KEY en .env');
+async function uploadFile(bucket, filename, buffer, mimetype) {
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(filename, buffer, { contentType: mimetype, upsert: true });
+  if (error) throw new Error(error.message);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(filename);
+  return data.publicUrl;
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false }
-});
-
-module.exports = { supabase };
+module.exports = { supabase, uploadFile };

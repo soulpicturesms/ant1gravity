@@ -3,7 +3,6 @@
 -- Ejecutar en: Supabase Dashboard > SQL Editor
 -- =============================================
 
--- Habilitar extensión UUID
 create extension if not exists "pgcrypto";
 
 -- ── USERS ──────────────────────────────────
@@ -110,6 +109,63 @@ create table if not exists coin_transactions (
   created_at timestamptz default now()
 );
 
+-- ── BLACKLIST ──────────────────────────────
+create table if not exists blacklist (
+  id           text primary key default gen_random_uuid()::text,
+  username     text not null,
+  reason       text,
+  added_by     text references users(id) on delete set null,
+  added_by_name text,
+  created_at   timestamptz default now()
+);
+
+-- ── CREDIT REQUESTS ────────────────────────
+create table if not exists credit_requests (
+  id           text primary key default gen_random_uuid()::text,
+  user_id      text references users(id) on delete cascade,
+  username     text,
+  coins        integer not null,
+  status       text default 'pending' check (status in ('pending','completed','rejected')),
+  admin_notes  text,
+  processed_at timestamptz,
+  processed_by text,
+  created_at   timestamptz default now()
+);
+
+-- ── RANKINGS CACHE ─────────────────────────
+create table if not exists rankings_cache (
+  type       text primary key,
+  data       jsonb default '[]',
+  total      integer default 0,
+  updated_at timestamptz default now()
+);
+
+-- ── GIVEAWAYS ──────────────────────────────
+create table if not exists giveaways (
+  id              text primary key default gen_random_uuid()::text,
+  title           text not null,
+  prizes          jsonb not null default '[]',
+  duration        integer not null,
+  status          text default 'waiting' check (status in ('waiting','active','finished','cancelled','closed')),
+  participants    jsonb default '[]',
+  winners         jsonb default '[]',
+  created_by      text references users(id) on delete set null,
+  created_by_name text,
+  started_at      timestamptz,
+  ends_at         timestamptz,
+  created_at      timestamptz default now()
+);
+
+-- ── MEDIA ──────────────────────────────────
+create table if not exists media (
+  id          text primary key default gen_random_uuid()::text,
+  key         text not null,
+  url         text not null,
+  caption     text default '',
+  "order"     integer default 0,
+  uploaded_at timestamptz default now()
+);
+
 -- ── DISABLE RLS (usamos JWT propio) ────────
 alter table users disable row level security;
 alter table news disable row level security;
@@ -119,6 +175,11 @@ alter table builds disable row level security;
 alter table equipment_presets disable row level security;
 alter table death_reports disable row level security;
 alter table coin_transactions disable row level security;
+alter table blacklist disable row level security;
+alter table credit_requests disable row level security;
+alter table rankings_cache disable row level security;
+alter table giveaways disable row level security;
+alter table media disable row level security;
 
 -- ── SEED: PRESETS DE EQUIPO ────────────────
 insert into equipment_presets (name, slot, coin_value, tier) values
@@ -149,8 +210,5 @@ values (
 ) on conflict do nothing;
 
 -- ── STORAGE BUCKETS ────────────────────────
--- Ejecutar en Supabase Dashboard > Storage > New bucket
--- O descomentar estas líneas si tu versión de Supabase lo soporta:
--- insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true) on conflict do nothing;
--- insert into storage.buckets (id, name, public) values ('screenshots', 'screenshots', true) on conflict do nothing;
--- insert into storage.buckets (id, name, public) values ('builds', 'builds', true) on conflict do nothing;
+-- Crear manualmente en: Supabase Dashboard > Storage > New bucket (marcar como Public)
+-- Buckets necesarios: avatars, builds, screenshots, media

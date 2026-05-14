@@ -1,87 +1,71 @@
 const express = require('express');
-const { db } = require('../database');
+const { supabase } = require('../supabase');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-// Público: ver log de transacciones de coins
 router.get('/log', async (req, res) => {
-  const txs = await db.transactions.findAsync({}).sort({ created_at: -1 }).limit(200);
-  res.json(txs.map(t => ({ ...t, id: t._id })));
+  const { data } = await supabase.from('coin_transactions').select('*').order('created_at', { ascending: false }).limit(200);
+  res.json(data || []);
 });
 
-// User: solicitar canje de crédito
 router.post('/request', requireAuth, async (req, res) => {
-  const user = await db.users.findOneAsync({ _id: req.user.id });
+  const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).maybeSingle();
   if (!user) return res.status(404).json({ error: 'No encontrado' });
   if ((user.coins || 0) <= 0) return res.status(400).json({ error: 'No tenés coins para canjear' });
-
-  const pending = await db.credit_requests.findOneAsync({ user_id: req.user.id, status: 'pending' });
+  const { data: pending } = await supabase.from('credit_requests').select('id').eq('user_id', req.user.id).eq('status', 'pending').maybeSingle();
   if (pending) return res.status(400).json({ error: 'Ya tenés una solicitud pendiente' });
-
-  const request = await db.credit_requests.insertAsync({
-    user_id: req.user.id,
-    username: user.username,
-    coins: user.coins,
-    status: 'pending',
-    admin_notes: null,
-    created_at: new Date().toISOString()
-  });
-  res.json({ id: request._id, coins: user.coins });
+  const { data, error } = await supabase.from('credit_requests').insert({
+    user_id: req.user.id, username: user.username, coins: user.coins, status: 'pending',
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, coins: user.coins });
 });
 
-// User: ver mis solicitudes
 router.get('/my-requests', requireAuth, async (req, res) => {
-  const requests = await db.credit_requests.findAsync({ user_id: req.user.id }).sort({ created_at: -1 });
-  res.json(requests.map(r => ({ ...r, id: r._id })));
+  const { data } = await supabase.from('credit_requests').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+  res.json(data || []);
 });
 
-// Admin: ver solicitudes pendientes
 router.get('/requests', requireAdmin, async (req, res) => {
   const { status } = req.query;
-  const query = status ? { status } : {};
-  const requests = await db.credit_requests.findAsync(query).sort({ created_at: -1 });
-  res.json(requests.map(r => ({ ...r, id: r._id })));
+  let query = supabase.from('credit_requests').select('*').order('created_at', { ascending: false });
+  if (status) query = query.eq('status', status);
+  const { data } = await query;
+  res.json(data || []);
 });
 
-// Admin: contar pendientes (para badge)
 router.get('/pending-count', requireAdmin, async (req, res) => {
-  const count = await db.credit_requests.countAsync({ status: 'pending' });
-  res.json({ count });
+  const { count } = await supabase.from('credit_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+  res.json({ count: count || 0 });
 });
 
-// Admin: aprobar y borrar crédito (entregó el silver en juego)
 router.post('/requests/:id/complete', requireAdmin, async (req, res) => {
   const { admin_notes } = req.body;
-  const request = await db.credit_requests.findOneAsync({ _id: req.params.id });
+  const { data: request } = await supabase.from('credit_requests').select('*').eq('id', req.params.id).maybeSingle();
   if (!request) return res.status(404).json({ error: 'No encontrado' });
   if (request.status !== 'pending') return res.status(400).json({ error: 'No está pendiente' });
-
-  const admin = await db.users.findOneAsync({ _id: req.user.id });
-  const user = await db.users.findOneAsync({ _id: request.user_id });
-
-  // Deducir coins del usuario
-  await db.users.updateAsync({ _id: request.user_id }, { $set: { coins: Math.max(0, (user?.coins || 0) - request.coins) } });
-
-  // Marcar como completado
-  await db.credit_requests.updateAsync({ _id: req.params.id }, { $set: { status: 'completed', admin_notes: admin_notes || null, processed_at: new Date().toISOString(), processed_by: req.user.id } });
-
-  // Log público
-  await db.transactions.insertAsync({
+  const { data: admin } = await supabase.from('users').select('username').eq('id', req.user.id).maybeSingle();
+  const { data: user } = await supabase.from('users').select('coins').eq('id', request.user_id).maybeSingle();
+  await supabase.from('users').update({ coins: Math.max(0, (user?.coins || 0) - request.coins) }).eq('id', request.user_id);
+  await supabase.from('credit_requests').update({
+    status: 'completed', admin_notes: admin_notes || null,
+    processed_at: new Date().toISOString(), processed_by: req.user.id,
+  }).eq('id', req.params.id);
+  await supabase.from('coin_transactions').insert({
     user_id: request.user_id, username: request.username,
     amount: -request.coins, type: 'redeem',
     reason: `Canje de crédito entregado en juego por ${admin?.username}`,
-    admin_id: req.user.id, created_at: new Date().toISOString()
+    admin_id: req.user.id,
   });
-
   res.json({ ok: true });
 });
 
-// Admin: rechazar solicitud
 router.post('/requests/:id/reject', requireAdmin, async (req, res) => {
   const { admin_notes } = req.body;
-  const request = await db.credit_requests.findOneAsync({ _id: req.params.id });
-  if (!request) return res.status(404).json({ error: 'No encontrado' });
-  await db.credit_requests.updateAsync({ _id: req.params.id }, { $set: { status: 'rejected', admin_notes: admin_notes || null, processed_at: new Date().toISOString(), processed_by: req.user.id } });
+  await supabase.from('credit_requests').update({
+    status: 'rejected', admin_notes: admin_notes || null,
+    processed_at: new Date().toISOString(), processed_by: req.user.id,
+  }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 

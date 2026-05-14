@@ -1,64 +1,57 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { db } = require('../database');
+const { supabase, uploadFile } = require('../supabase');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-
 const router = express.Router();
 
-const screensDir = path.join(__dirname, '../uploads/screenshots');
-if (!fs.existsSync(screensDir)) fs.mkdirSync(screensDir, { recursive: true });
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: screensDir,
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-  }),
-  limits: { fileSize: 20 * 1024 * 1024 }
-});
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 router.get('/presets', requireAuth, async (req, res) => {
-  const presets = await db.presets.findAsync({}).sort({ slot: 1, coin_value: -1 });
-  res.json(presets.map(p => ({ ...p, id: p._id })));
+  const { data } = await supabase.from('equipment_presets').select('*').order('slot').order('coin_value', { ascending: false });
+  res.json(data || []);
 });
 
 router.post('/report', requireAuth, upload.single('screenshot'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Se requiere screenshot' });
-  const user = await db.users.findOneAsync({ _id: req.user.id });
-  const report = await db.reports.insertAsync({
-    user_id: req.user.id, username: user?.username, avatar: user?.avatar,
-    screenshot_url: `/uploads/screenshots/${req.file.filename}`,
-    description: req.body.description || null, status: 'pending',
-    coins_awarded: 0, claimed: false, created_at: new Date().toISOString()
-  });
-  res.json({ id: report._id });
+  const { data: user } = await supabase.from('users').select('username,avatar_url').eq('id', req.user.id).maybeSingle();
+  let screenshot_url;
+  try {
+    screenshot_url = await uploadFile('screenshots', `${Date.now()}-${req.file.originalname}`, req.file.buffer, req.file.mimetype);
+  } catch (e) { return res.status(500).json({ error: e.message }); }
+  const { data, error } = await supabase.from('death_reports').insert({
+    user_id: req.user.id, username: user?.username, avatar_url: user?.avatar_url,
+    screenshot_url, description: req.body.description || null,
+    status: 'pending', coins_awarded: 0, claimed: false,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
 router.get('/my-reports', requireAuth, async (req, res) => {
-  const reports = await db.reports.findAsync({ user_id: req.user.id }).sort({ created_at: -1 });
-  res.json(reports.map(r => ({ ...r, id: r._id })));
+  const { data } = await supabase.from('death_reports').select('*').eq('user_id', req.user.id).order('created_at', { ascending: false });
+  res.json(data || []);
 });
 
 router.post('/report/:id/claim', requireAuth, async (req, res) => {
-  const report = await db.reports.findOneAsync({ _id: req.params.id, user_id: req.user.id });
+  const { data: report } = await supabase.from('death_reports').select('*').eq('id', req.params.id).eq('user_id', req.user.id).maybeSingle();
   if (!report) return res.status(404).json({ error: 'No encontrado' });
   if (report.status !== 'approved') return res.status(400).json({ error: 'No aprobado aún' });
   if (report.claimed) return res.status(400).json({ error: 'Ya reclamado' });
-  await db.reports.updateAsync({ _id: req.params.id }, { $set: { claimed: true } });
+  await supabase.from('death_reports').update({ claimed: true }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 router.get('/admin/reports', requireAdmin, async (req, res) => {
   const { status } = req.query;
-  const query = status ? { status } : {};
-  const reports = await db.reports.findAsync(query).sort({ created_at: -1 });
-  res.json(reports.map(r => ({ ...r, id: r._id })));
+  let query = supabase.from('death_reports').select('*').order('created_at', { ascending: false });
+  if (status) query = query.eq('status', status);
+  const { data } = await query;
+  res.json(data || []);
 });
 
 router.post('/admin/report/:id/award', requireAdmin, async (req, res) => {
   const { preset_ids, custom_amount, admin_notes } = req.body;
-  const report = await db.reports.findOneAsync({ _id: req.params.id });
+  const { data: report } = await supabase.from('death_reports').select('*').eq('id', req.params.id).maybeSingle();
   if (!report) return res.status(404).json({ error: 'No encontrado' });
 
   let totalCoins = parseInt(custom_amount) || 0;
@@ -66,40 +59,54 @@ router.post('/admin/report/:id/award', requireAdmin, async (req, res) => {
 
   if (preset_ids?.length > 0) {
     for (const pid of preset_ids) {
-      const preset = await db.presets.findOneAsync({ _id: pid });
+      const { data: preset } = await supabase.from('equipment_presets').select('*').eq('id', pid).maybeSingle();
       if (preset) { totalCoins += preset.coin_value; itemNames.push(`${preset.name} (${preset.coin_value})`); }
     }
   }
 
-  await db.reports.updateAsync({ _id: req.params.id }, { $set: { status: 'approved', coins_awarded: totalCoins, items_lost: itemNames.join(', ') || null, admin_notes: admin_notes || null, reviewed_by: req.user.id, reviewed_at: new Date().toISOString() } });
+  await supabase.from('death_reports').update({
+    status: 'approved', coins_awarded: totalCoins,
+    items_lost: itemNames.join(', ') || null, admin_notes: admin_notes || null,
+    reviewed_by: req.user.id, reviewed_at: new Date().toISOString(),
+  }).eq('id', req.params.id);
 
-  const u = await db.users.findOneAsync({ _id: report.user_id });
-  await db.users.updateAsync({ _id: report.user_id }, { $set: { coins: (u?.coins || 0) + totalCoins } });
-  await db.transactions.insertAsync({ user_id: report.user_id, username: report.username, amount: totalCoins, type: 'award', reason: `Reequipo Reporte #${req.params.id.slice(-6)}`, admin_id: req.user.id, report_id: req.params.id, created_at: new Date().toISOString() });
+  const { data: u } = await supabase.from('users').select('coins').eq('id', report.user_id).maybeSingle();
+  await supabase.from('users').update({ coins: (u?.coins || 0) + totalCoins }).eq('id', report.user_id);
+  await supabase.from('coin_transactions').insert({
+    user_id: report.user_id, username: report.username, amount: totalCoins,
+    type: 'award', reason: `Reequipo Reporte #${req.params.id.slice(-6)}`,
+    admin_id: req.user.id, report_id: req.params.id,
+  });
 
   res.json({ ok: true, coins_awarded: totalCoins });
 });
 
 router.post('/admin/report/:id/reject', requireAdmin, async (req, res) => {
   const { admin_notes } = req.body;
-  await db.reports.updateAsync({ _id: req.params.id }, { $set: { status: 'rejected', admin_notes: admin_notes || null, reviewed_by: req.user.id, reviewed_at: new Date().toISOString() } });
+  await supabase.from('death_reports').update({
+    status: 'rejected', admin_notes: admin_notes || null,
+    reviewed_by: req.user.id, reviewed_at: new Date().toISOString(),
+  }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 router.post('/admin/presets', requireAdmin, async (req, res) => {
   const { name, slot, coin_value, tier } = req.body;
-  const p = await db.presets.insertAsync({ name, slot, coin_value: parseInt(coin_value), tier: tier || 'T8', created_at: new Date().toISOString() });
-  res.json({ id: p._id });
+  const { data, error } = await supabase.from('equipment_presets').insert({
+    name, slot, coin_value: parseInt(coin_value), tier: tier || 'T8',
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
 router.put('/admin/presets/:id', requireAdmin, async (req, res) => {
   const { name, slot, coin_value, tier } = req.body;
-  await db.presets.updateAsync({ _id: req.params.id }, { $set: { name, slot, coin_value: parseInt(coin_value), tier } });
+  await supabase.from('equipment_presets').update({ name, slot, coin_value: parseInt(coin_value), tier }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 router.delete('/admin/presets/:id', requireAdmin, async (req, res) => {
-  await db.presets.removeAsync({ _id: req.params.id }, {});
+  await supabase.from('equipment_presets').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 

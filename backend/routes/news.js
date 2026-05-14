@@ -1,29 +1,39 @@
 const express = require('express');
-const { db } = require('../database');
+const { supabase } = require('../supabase');
 const { requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
+const fmt = n => ({ ...n, pinned: n.pinned ? 1 : 0 });
+
 router.get('/', async (req, res) => {
-  const news = await db.news.findAsync({}).sort({ pinned: -1, created_at: -1 }).limit(50);
-  res.json(news.map(n => ({ ...n, id: n._id })));
+  const { data } = await supabase.from('news').select('*').order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(50);
+  res.json((data || []).map(fmt));
 });
 
 router.post('/', requireAdmin, async (req, res) => {
   const { title, content, image_url, pinned, category } = req.body;
   if (!title || !content) return res.status(400).json({ error: 'Título y contenido requeridos' });
-  const user = await db.users.findOneAsync({ _id: req.user.id });
-  const post = await db.news.insertAsync({ title, content, image_url: image_url || null, pinned: !!pinned, category: category || 'general', author_id: req.user.id, author_name: user?.username, created_at: new Date().toISOString() });
-  res.json({ id: post._id });
+  const { data: user } = await supabase.from('users').select('username').eq('id', req.user.id).maybeSingle();
+  const { data, error } = await supabase.from('news').insert({
+    title, content, image_url: image_url || null,
+    pinned: !!pinned, category: category || 'general',
+    author_id: req.user.id, author_name: user?.username,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
 router.put('/:id', requireAdmin, async (req, res) => {
   const { title, content, image_url, pinned, category } = req.body;
-  await db.news.updateAsync({ _id: req.params.id }, { $set: { title, content, image_url: image_url || null, pinned: !!pinned, category: category || 'general' } });
+  await supabase.from('news').update({
+    title, content, image_url: image_url || null,
+    pinned: !!pinned, category: category || 'general',
+  }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 router.delete('/:id', requireAdmin, async (req, res) => {
-  await db.news.removeAsync({ _id: req.params.id }, {});
+  await supabase.from('news').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 

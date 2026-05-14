@@ -1,55 +1,61 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { db } = require('../database');
+const { supabase, uploadFile } = require('../supabase');
 const { requireAdmin } = require('../middleware/auth');
-
 const router = express.Router();
 
-const buildsDir = path.join(__dirname, '../uploads/builds');
-if (!fs.existsSync(buildsDir)) fs.mkdirSync(buildsDir, { recursive: true });
-
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: buildsDir,
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 router.get('/', async (req, res) => {
   const { category } = req.query;
-  const query = category ? { category } : {};
-  const builds = await db.builds.findAsync(query).sort({ featured: -1, created_at: -1 });
-  res.json(builds.map(b => ({ ...b, id: b._id })));
+  let query = supabase.from('builds').select('*').order('featured', { ascending: false }).order('created_at', { ascending: false });
+  if (category) query = query.eq('category', category);
+  const { data } = await query;
+  res.json(data || []);
 });
 
 router.get('/:id', async (req, res) => {
-  const build = await db.builds.findOneAsync({ _id: req.params.id });
-  if (!build) return res.status(404).json({ error: 'No encontrado' });
-  res.json({ ...build, id: build._id });
+  const { data } = await supabase.from('builds').select('*').eq('id', req.params.id).maybeSingle();
+  if (!data) return res.status(404).json({ error: 'No encontrado' });
+  res.json(data);
 });
 
 router.post('/', requireAdmin, upload.single('image'), async (req, res) => {
   const { title, category, description, items } = req.body;
   if (!title || !category) return res.status(400).json({ error: 'Título y categoría requeridos' });
-  const user = await db.users.findOneAsync({ _id: req.user.id });
-  const image_url = req.file ? `/uploads/builds/${req.file.filename}` : null;
-  const build = await db.builds.insertAsync({ title, category, description: description || null, items: items || null, image_url, author_id: req.user.id, author_name: user?.username, featured: false, created_at: new Date().toISOString() });
-  res.json({ id: build._id });
+  const { data: user } = await supabase.from('users').select('username').eq('id', req.user.id).maybeSingle();
+  let image_url = null;
+  if (req.file) {
+    try {
+      image_url = await uploadFile('builds', `${Date.now()}-${req.file.originalname}`, req.file.buffer, req.file.mimetype);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+  const { data, error } = await supabase.from('builds').insert({
+    title, category, description: description || null, items: items || null,
+    image_url, author_id: req.user.id, author_name: user?.username, featured: false,
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id });
 });
 
 router.put('/:id', requireAdmin, upload.single('image'), async (req, res) => {
   const { title, category, description, items, featured } = req.body;
-  const existing = await db.builds.findOneAsync({ _id: req.params.id });
-  const image_url = req.file ? `/uploads/builds/${req.file.filename}` : existing?.image_url;
-  await db.builds.updateAsync({ _id: req.params.id }, { $set: { title, category, description: description || null, items: items || null, image_url, featured: featured === 'true' } });
+  const { data: existing } = await supabase.from('builds').select('image_url').eq('id', req.params.id).maybeSingle();
+  let image_url = existing?.image_url;
+  if (req.file) {
+    try {
+      image_url = await uploadFile('builds', `${Date.now()}-${req.file.originalname}`, req.file.buffer, req.file.mimetype);
+    } catch (e) { return res.status(500).json({ error: e.message }); }
+  }
+  await supabase.from('builds').update({
+    title, category, description: description || null, items: items || null,
+    image_url, featured: featured === 'true',
+  }).eq('id', req.params.id);
   res.json({ ok: true });
 });
 
 router.delete('/:id', requireAdmin, async (req, res) => {
-  await db.builds.removeAsync({ _id: req.params.id }, {});
+  await supabase.from('builds').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 

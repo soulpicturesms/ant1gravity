@@ -1,3 +1,12 @@
-// Vercel serverless entry point
 const app = require('../backend/app');
-module.exports = app;
+const { initDatabase } = require('../backend/database');
+
+let initialized = false;
+
+module.exports = async (req, res) => {
+  if (!initialized) {
+    await initDatabase();
+    initialized = true;
+  }
+  return app(req, res);
+};

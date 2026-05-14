@@ -1,62 +1,52 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { db } = require('../database');
+const { supabase, uploadFile } = require('../supabase');
 const { requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
-const mediaDir = path.join(__dirname, '../uploads/media');
-if (!fs.existsSync(mediaDir)) fs.mkdirSync(mediaDir, { recursive: true });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: mediaDir,
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-  }),
-  limits: { fileSize: 10 * 1024 * 1024 },
-});
-
-// Public: get weekly prize image
 router.get('/weekly-prize', async (req, res) => {
-  const doc = await db.media.findOneAsync({ key: 'weekly_prize' });
-  res.json(doc || null);
+  const { data } = await supabase.from('media').select('*').eq('key', 'weekly_prize').maybeSingle();
+  res.json(data || null);
 });
 
-// Admin: upload weekly prize image
 router.post('/weekly-prize', requireAdmin, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió imagen' });
-  const url = `/uploads/media/${req.file.filename}`;
-  await db.media.removeAsync({ key: 'weekly_prize' }, { multi: true });
-  await db.media.insertAsync({ key: 'weekly_prize', url, uploaded_at: new Date().toISOString() });
-  res.json({ url });
+  try {
+    const url = await uploadFile('media', `weekly-prize-${Date.now()}`, req.file.buffer, req.file.mimetype);
+    await supabase.from('media').delete().eq('key', 'weekly_prize');
+    await supabase.from('media').insert({ key: 'weekly_prize', url });
+    res.json({ url });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Admin: delete weekly prize image
 router.delete('/weekly-prize', requireAdmin, async (req, res) => {
-  await db.media.removeAsync({ key: 'weekly_prize' }, { multi: true });
+  await supabase.from('media').delete().eq('key', 'weekly_prize');
   res.json({ ok: true });
 });
 
-// Public: get banner slides
 router.get('/banners', async (req, res) => {
-  const docs = await db.media.findAsync({ key: 'banner' }).sort({ order: 1, uploaded_at: 1 });
-  res.json(docs);
+  const { data } = await supabase.from('media').select('*').eq('key', 'banner').order('order').order('uploaded_at');
+  res.json(data || []);
 });
 
-// Admin: upload banner slide
 router.post('/banners', requireAdmin, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se subió imagen' });
-  const { caption } = req.body;
-  const url = `/uploads/media/${req.file.filename}`;
-  const count = await db.media.countAsync({ key: 'banner' });
-  const doc = await db.media.insertAsync({ key: 'banner', url, caption: caption || '', order: count, uploaded_at: new Date().toISOString() });
-  res.json({ ...doc, id: doc._id });
+  try {
+    const { caption } = req.body;
+    const url = await uploadFile('media', `banner-${Date.now()}`, req.file.buffer, req.file.mimetype);
+    const { count } = await supabase.from('media').select('*', { count: 'exact', head: true }).eq('key', 'banner');
+    const { data, error } = await supabase.from('media').insert({
+      key: 'banner', url, caption: caption || '', order: count || 0,
+    }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Admin: delete banner slide
 router.delete('/banners/:id', requireAdmin, async (req, res) => {
-  await db.media.removeAsync({ _id: req.params.id }, {});
+  await supabase.from('media').delete().eq('id', req.params.id);
   res.json({ ok: true });
 });
 
