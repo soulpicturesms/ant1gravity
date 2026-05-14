@@ -8,7 +8,7 @@ const CACHE_TTL     = 24 * 60 * 60 * 1000;
 let spellMapCache   = { data: null, ts: 0 };
 let itemSpellsCache = { data: null, ts: 0 };
 
-// Build map: baseId → { q, w, e, passive } spell uniquenames
+// Build map: baseId → { q, w, e, passive } — each is an ARRAY of spell uniquenames
 async function getItemSpellMap() {
   if (itemSpellsCache.data && Date.now() - itemSpellsCache.ts < CACHE_TTL) return itemSpellsCache.data;
 
@@ -29,7 +29,7 @@ async function getItemSpellMap() {
   addToLookup(items.weapon);
   addToLookup(items.equipmentitem);
 
-  // Resolve craftingspelllist, following @reference chains (armor items point to lower tiers)
+  // Resolve craftingspelllist, following @reference chains
   function resolveSpellList(item) {
     let spellList = item.craftingspelllist;
     let depth = 0;
@@ -40,11 +40,11 @@ async function getItemSpellMap() {
     return spellList;
   }
 
-  // Parse spell slots from craftingspelllist:
-  // - Weapons:   @slots="1"→Q, "2"→W, "3"→E, no @slots→passive
-  // - Armor:     no @slots on any entry; non-PASSIVE_* → Q (one active slot), PASSIVE_* → passive
+  // Returns { q: string[], w: string[], e: string[], passive: string[] }
+  // Weapons: @slots="1"→Q, "2"→W, "3"→E, no @slots + PASSIVE_* → passive
+  // Armor:   no @slots on any spell; PASSIVE_* → passive, others → q
   function parseSlots(item) {
-    const result = { q: null, w: null, e: null, passive: null };
+    const result = { q: [], w: [], e: [], passive: [] };
     const spellList = resolveSpellList(item);
     if (!spellList?.craftspell) return result;
 
@@ -54,13 +54,12 @@ async function getItemSpellMap() {
       if (!id) continue;
       const slotNum = spell['@slots'];
 
-      if (slotNum === '1') { if (!result.q) result.q = id; }
-      else if (slotNum === '2') { if (!result.w) result.w = id; }
-      else if (slotNum === '3') { if (!result.e) result.e = id; }
+      if (slotNum === '1') result.q.push(id);
+      else if (slotNum === '2') result.w.push(id);
+      else if (slotNum === '3') result.e.push(id);
       else {
-        // No @slots: passive or armor active ability
-        if (id.startsWith('PASSIVE_')) { if (!result.passive) result.passive = id; }
-        else { if (!result.q) result.q = id; }
+        if (id.startsWith('PASSIVE_')) result.passive.push(id);
+        else result.q.push(id);
       }
     }
     return result;
@@ -76,7 +75,9 @@ async function getItemSpellMap() {
       const baseId = uname.replace(/^T\d+_/, '');
       if (baseId === uname || map[baseId]) continue;
       const slots = parseSlots(item);
-      if (slots.q || slots.w || slots.e || slots.passive) map[baseId] = slots;
+      if (slots.q.length || slots.w.length || slots.e.length || slots.passive.length) {
+        map[baseId] = slots;
+      }
     }
   };
 
@@ -106,34 +107,34 @@ async function getSpellInfoMap() {
   return map;
 }
 
+function enrichSpell(spellId, spellMap) {
+  if (!spellId) return null;
+  const info = spellMap[spellId] || {};
+  const uisprite = info.uisprite || spellId;
+  return {
+    uniquename: spellId,
+    uisprite,
+    iconUrl: `https://render.albiononline.com/v1/spell/${uisprite}.png`,
+  };
+}
+
 // GET /api/spells/item?id=MAIN_SWORD
-// Returns: { q, w, e, passive } each: { uniquename, uisprite, iconUrl } | null
+// Returns: { q, w, e, passive } each is an ARRAY of spell objects (all options for that slot)
 router.get('/item', async (req, res) => {
   const { id } = req.query;
-  if (!id) return res.json({ q: null, w: null, e: null, passive: null });
+  if (!id) return res.json({ q: [], w: [], e: [], passive: [] });
 
   try {
     const [itemMap, spellMap] = await Promise.all([getItemSpellMap(), getSpellInfoMap()]);
 
     const slots = itemMap[id];
-    if (!slots) return res.json({ q: null, w: null, e: null, passive: null });
-
-    const enrich = (spellId) => {
-      if (!spellId) return null;
-      const info = spellMap[spellId] || {};
-      const uisprite = info.uisprite || spellId;
-      return {
-        uniquename: spellId,
-        uisprite,
-        iconUrl: `https://render.albiononline.com/v1/spell/${uisprite}.png`,
-      };
-    };
+    if (!slots) return res.json({ q: [], w: [], e: [], passive: [] });
 
     res.json({
-      q:       enrich(slots.q),
-      w:       enrich(slots.w),
-      e:       enrich(slots.e),
-      passive: enrich(slots.passive),
+      q:       slots.q.map(s => enrichSpell(s, spellMap)).filter(Boolean),
+      w:       slots.w.map(s => enrichSpell(s, spellMap)).filter(Boolean),
+      e:       slots.e.map(s => enrichSpell(s, spellMap)).filter(Boolean),
+      passive: slots.passive.map(s => enrichSpell(s, spellMap)).filter(Boolean),
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

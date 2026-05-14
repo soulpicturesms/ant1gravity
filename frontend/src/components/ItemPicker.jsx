@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../api/api';
 import { ITEM_SKILLS } from '../data/item-skills';
-import { SpellRow } from './SpellIcon';
+import { SpellIcon } from './SpellIcon';
 
 const RENDER = 'https://render.albiononline.com/v1/item';
 const TIERS = [4, 5, 6, 7, 8];
@@ -75,6 +75,46 @@ function SkillsPanel({ baseId }) {
   );
 }
 
+const SLOT_LABELS = { q: 'Q', w: 'W', e: 'E', passive: '★' };
+
+function SpellSlotPicker({ options, selected, onChange }) {
+  const slots = ['q', 'w', 'e', 'passive'].filter(k => options[k]?.length);
+  if (!slots.length) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {slots.map(k => (
+        <div key={k}>
+          <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+            {SLOT_LABELS[k]}
+          </div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {options[k].map(spell => {
+              const isActive = selected[k]?.uniquename === spell.uniquename;
+              return (
+                <div
+                  key={spell.uniquename}
+                  onClick={() => onChange(prev => ({ ...prev, [k]: spell }))}
+                  style={{
+                    cursor: 'pointer',
+                    borderRadius: 7,
+                    padding: 2,
+                    border: `2px solid ${isActive ? '#00d4ff' : 'transparent'}`,
+                    background: isActive ? 'rgba(0,212,255,0.1)' : 'transparent',
+                    boxShadow: isActive ? '0 0 8px rgba(0,212,255,0.4)' : 'none',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <SpellIcon spell={spell} slot={k} size={34} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ItemPreview({ item, tier, enchant = 0 }) {
   const [ok, setOk] = useState(true);
   const url = item ? itemUrl(item.id, tier) : null;
@@ -112,7 +152,8 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
   const [selected, setSelected] = useState(null);
   const [tier, setTier]         = useState(8);
   const [enchant, setEnchant]   = useState(0);
-  const [spellData, setSpellData] = useState(null);
+  const [spellOptions, setSpellOptions]   = useState(null);  // { q:[], w:[], e:[], passive:[] }
+  const [selectedSpells, setSelectedSpells] = useState({});   // { q: spellObj|null, ... }
   const [spellsLoading, setSpellsLoading] = useState(false);
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
@@ -147,30 +188,34 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
 
   const handleSelectItem = async (item) => {
     setSelected(item);
-    setSpellData(null);
-    // Auto-select highest available tier
+    setSpellOptions(null);
+    setSelectedSpells({});
     const tiers = item.tiers?.length ? item.tiers : TIERS;
-    const maxTier = Math.max(...tiers);
-    setTier(maxTier);
+    setTier(Math.max(...tiers));
     setEnchant(0);
-    // Fetch spell icons (weapons/armor only)
     if (!NO_ENCHANT.has(slot)) {
       setSpellsLoading(true);
       try {
-        const spells = await api.getItemSpells(item.id);
-        const hasAny = spells && (spells.q || spells.w || spells.e || spells.passive);
-        setSpellData(hasAny ? spells : null);
-      } catch {
-        setSpellData(null);
-      } finally {
-        setSpellsLoading(false);
-      }
+        const opts = await api.getItemSpells(item.id);
+        const hasAny = opts && ['q','w','e','passive'].some(k => opts[k]?.length);
+        if (hasAny) {
+          setSpellOptions(opts);
+          // Auto-select first option of each slot
+          const auto = {};
+          for (const k of ['q','w','e','passive']) {
+            if (opts[k]?.length) auto[k] = opts[k][0];
+          }
+          setSelectedSpells(auto);
+        }
+      } catch { /* ignore */ }
+      finally { setSpellsLoading(false); }
     }
   };
 
   const handleConfirm = () => {
     if (!selected) return;
-    onSelect({ id: selected.id, name: selected.name, code: buildCode(selected.id, tier, enchant), spells: spellData || undefined });
+    const spells = Object.values(selectedSpells).some(Boolean) ? selectedSpells : undefined;
+    onSelect({ id: selected.id, name: selected.name, code: buildCode(selected.id, tier, enchant), spells });
   };
 
   return (
@@ -356,14 +401,14 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
               </div>
             )}
 
-            {/* Skills */}
+            {/* Skills selector */}
             {selected && (
-              <div style={{ flex: 1, marginBottom: 16 }}>
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
                 <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
                   Skills {spellsLoading && <span style={{ color: '#3a3a5a' }}>···</span>}
                 </div>
-                {spellData
-                  ? <SpellRow spells={spellData} size={36} gap={6} />
+                {spellOptions
+                  ? <SpellSlotPicker options={spellOptions} selected={selectedSpells} onChange={setSelectedSpells} />
                   : !spellsLoading && <SkillsPanel baseId={selected.id} />
                 }
               </div>
