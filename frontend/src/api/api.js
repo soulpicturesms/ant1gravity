@@ -38,24 +38,19 @@ export const api = {
   // Item search
   searchItems: (slot, q) => req(`/api/items/search?slot=${slot}&q=${encodeURIComponent(q || '')}`),
 
-  // Builds
+  // Builds (legacy)
   getBuilds: (category) => req(`/api/builds${category ? `?category=${category}` : ''}`),
   getBuild: (id) => req(`/api/builds/${id}`),
   createBuild: (form) => req('/api/builds', { method: 'POST', headers: { Authorization: `Bearer ${getToken()}` }, body: form }),
   updateBuild: (id, form) => req(`/api/builds/${id}`, { method: 'PUT', headers: { Authorization: `Bearer ${getToken()}` }, body: form }),
   deleteBuild: (id) => req(`/api/builds/${id}`, { method: 'DELETE', headers: headers() }),
 
-  // Reequip
-  getPresets: () => req('/api/reequip/presets', { headers: headers() }),
-  submitReport: (form) => req('/api/reequip/report', { method: 'POST', headers: { Authorization: `Bearer ${getToken()}` }, body: form }),
-  getMyReports: () => req('/api/reequip/my-reports', { headers: headers() }),
-  claimReport: (id) => req(`/api/reequip/report/${id}/claim`, { method: 'POST', headers: headers() }),
-  getAdminReports: (status) => req(`/api/reequip/admin/reports${status ? `?status=${status}` : ''}`, { headers: headers() }),
-  awardCoins: (id, body) => req(`/api/reequip/admin/report/${id}/award`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
-  rejectReport: (id, body) => req(`/api/reequip/admin/report/${id}/reject`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
-  createPreset: (body) => req('/api/reequip/admin/presets', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
-  updatePreset: (id, body) => req(`/api/reequip/admin/presets/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
-  deletePreset: (id) => req(`/api/reequip/admin/presets/${id}`, { method: 'DELETE', headers: headers() }),
+  // Contents (new build system)
+  getContents: (category) => req(`/api/contents${category ? `?category=${category}` : ''}`),
+  getContent: (id) => req(`/api/contents/${id}`),
+  createContent: (body) => req('/api/contents', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  updateContent: (id, body) => req(`/api/contents/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+  deleteContent: (id) => req(`/api/contents/${id}`, { method: 'DELETE', headers: headers() }),
 
   // Blacklist
   checkPlayer: (username) => req(`/api/blacklist/check?username=${encodeURIComponent(username)}`),
@@ -92,6 +87,26 @@ export const api = {
   getBanners: () => req('/api/media/banners'),
   uploadBanner: (form) => req('/api/media/banners', { method: 'POST', headers: { Authorization: `Bearer ${getToken()}` }, body: form }),
   deleteBanner: (id) => req(`/api/media/banners/${id}`, { method: 'DELETE', headers: headers() }),
+
+  // Killboard
+  getKills:  () => req('/api/killboard/kills'),
+  getDeaths: () => req('/api/killboard/deaths'),
+
+  // Profile
+  updateProfile: (body) => req('/api/auth/profile', { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
+
+  // Killboard - personal
+  getMyDeaths: () => req('/api/killboard/my-deaths', { headers: headers() }),
+
+  // Reequip - death-based flow
+  getDeathPrices: (items) => req(`/api/reequip/prices?items=${encodeURIComponent(items)}`, { headers: headers() }),
+  submitDeathRequest: (body) => req('/api/reequip/death-request', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  getMyDeathRequests: () => req('/api/reequip/my-death-requests', { headers: headers() }),
+  claimDeathRequest: (id) => req(`/api/reequip/death-request/${id}/claim`, { method: 'POST', headers: headers() }),
+  getAdminDeathRequests: (status) => req(`/api/reequip/admin/death-requests${status && status !== 'all' ? `?status=${status}` : ''}`, { headers: headers() }),
+  approveDeathRequest: (id, body) => req(`/api/reequip/admin/death-requests/${id}/approve`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  rejectDeathRequest: (id, body) => req(`/api/reequip/admin/death-requests/${id}/reject`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  getDeathStats: () => req('/api/reequip/admin/death-stats', { headers: headers() }),
 
   // Admin
   getAdminStats: () => req('/api/admin/stats', { headers: headers() }),

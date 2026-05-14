@@ -5,8 +5,6 @@ function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const SLOT_OPTIONS = ['head', 'chest', 'feet', 'main_hand', 'off_hand', 'cape', 'mount', 'food', 'potion'];
-const SLOT_LABELS = { head: 'Cabeza', chest: 'Pecho', feet: 'Pies', main_hand: 'Mano Principal', off_hand: 'Mano Secundaria', cape: 'Capa', mount: 'Montura', food: 'Comida', potion: 'Poción' };
 const ROLE_LABELS = { admin: 'Admin', officer: 'Officer', member: 'Miembro' };
 const ROLE_BADGES = { admin: 'badge-admin', officer: 'badge-officer', member: 'badge-member' };
 
@@ -25,7 +23,6 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
   const [members, setMembers] = useState([]);
   const [news, setNews] = useState([]);
-  const [presets, setPresets] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [activities, setActivities] = useState([]);
   const [blacklist, setBlacklist] = useState([]);
@@ -52,8 +49,6 @@ export default function Admin() {
   // Forms
   const [newsForm, setNewsForm] = useState({ title: '', content: '', category: 'general', pinned: false });
   const [editingNews, setEditingNews] = useState(null);
-  const [presetForm, setPresetForm] = useState({ name: '', slot: 'head', coin_value: 0, tier: 'T8' });
-  const [editingPreset, setEditingPreset] = useState(null);
   const [activityForm, setActivityForm] = useState({ name: '', type: 'CTA', date: '', description: '' });
   const [coinAdjust, setCoinAdjust] = useState({ user_id: '', amount: 0, reason: '' });
   const [coinMode, setCoinMode] = useState('add');
@@ -68,7 +63,6 @@ export default function Admin() {
     api.getAdminStats().then(setStats);
     api.getMembers().then(setMembers);
     api.getNews().then(setNews);
-    api.getPresets().then(setPresets);
     api.getTransactions().then(setTransactions);
     api.getActivities().then(setActivities);
     api.getBlacklist().then(setBlacklist);
@@ -93,20 +87,6 @@ export default function Admin() {
   const deleteNews = async (id) => {
     if (!confirm('¿Eliminar esta noticia?')) return;
     await api.deleteNews(id); loadAll(); notify(true, 'Noticia eliminada');
-  };
-
-  const savePreset = async () => {
-    try {
-      if (editingPreset) { await api.updatePreset(editingPreset.id, presetForm); setEditingPreset(null); }
-      else await api.createPreset(presetForm);
-      setPresetForm({ name: '', slot: 'head', coin_value: 0, tier: 'T8' });
-      loadAll(); notify(true, 'Preset guardado');
-    } catch (e) { notify(false, e.message); }
-  };
-
-  const deletePreset = async (id) => {
-    if (!confirm('¿Eliminar este preset?')) return;
-    await api.deletePreset(id); loadAll(); notify(true, 'Preset eliminado');
   };
 
   const saveActivity = async () => {
@@ -232,7 +212,6 @@ export default function Admin() {
     { id: 'overview', label: '📊 Overview' },
     { id: 'news', label: '📰 Noticias' },
     { id: 'members', label: '👥 Miembros' },
-    { id: 'presets', label: '⚡ Presets Equipo' },
     { id: 'activities', label: '🛡️ Actividades' },
     { id: 'coins', label: '💰 Coins' },
     { id: 'blacklist', label: '🚫 Blacklist' },
@@ -416,57 +395,6 @@ export default function Admin() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Equipment Presets */}
-      {tab === 'presets' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24, alignItems: 'start' }}>
-          <div className="card">
-            <div className="card-title">{editingPreset ? 'Editar Preset' : 'Nuevo Preset'}</div>
-            <div className="form-group"><label>Nombre del Item</label><input className="input" value={presetForm.name} onChange={e => setPresetForm(p => ({ ...p, name: e.target.value }))} placeholder="Ej: Cultist Cowl" /></div>
-            <div className="form-group">
-              <label>Slot</label>
-              <select className="select" value={presetForm.slot} onChange={e => setPresetForm(p => ({ ...p, slot: e.target.value }))}>
-                {SLOT_OPTIONS.map(s => <option key={s} value={s}>{SLOT_LABELS[s]}</option>)}
-              </select>
-            </div>
-            <div className="form-group"><label>Valor en Coins</label><input type="number" className="input" value={presetForm.coin_value} onChange={e => setPresetForm(p => ({ ...p, coin_value: parseInt(e.target.value) || 0 }))} min="0" /></div>
-            <div className="form-group">
-              <label>Tier</label>
-              <select className="select" value={presetForm.tier} onChange={e => setPresetForm(p => ({ ...p, tier: e.target.value }))}>
-                {['T4', 'T5', 'T6', 'T7', 'T8'].map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {editingPreset && <button className="btn btn-secondary btn-sm" onClick={() => { setEditingPreset(null); setPresetForm({ name: '', slot: 'head', coin_value: 0, tier: 'T8' }); }}>Cancelar</button>}
-              <button className="btn btn-primary" onClick={savePreset}>Guardar</button>
-            </div>
-          </div>
-
-          <div>
-            {SLOT_OPTIONS.map(slot => {
-              const slotPresets = presets.filter(p => p.slot === slot);
-              if (slotPresets.length === 0) return null;
-              return (
-                <div key={slot} style={{ marginBottom: 20 }}>
-                  <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#00d4ff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{SLOT_LABELS[slot]}</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {slotPresets.map(p => (
-                      <div key={p.id} style={{ background: '#13131f', border: '1px solid #1e1e30', borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>⚡ {p.coin_value} · {p.tier}</div>
-                        </div>
-                        <button className="btn-icon" style={{ padding: '3px 7px', fontSize: '0.8rem' }} onClick={() => { setEditingPreset(p); setPresetForm({ name: p.name, slot: p.slot, coin_value: p.coin_value, tier: p.tier }); }}>✏️</button>
-                        <button className="btn-icon" style={{ padding: '3px 7px', fontSize: '0.8rem', borderColor: '#ff335544', color: '#ff6688' }} onClick={() => deletePreset(p.id)}>×</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
