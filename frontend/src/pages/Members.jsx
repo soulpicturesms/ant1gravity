@@ -154,7 +154,7 @@ export default function Members() {
                   </td>
                   <td><span className={`badge ${ROLE_BADGES[m.role]}`}>{ROLE_LABELS[m.role]}</span></td>
                   <td style={{ color: '#9090b0' }}>{m.total_activities}</td>
-                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {m.coins}</td>
+                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</td>
                 </tr>
               ))}
               {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#4a4a6a', padding: 32 }}>Sin resultados</td></tr>}
