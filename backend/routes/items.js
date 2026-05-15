@@ -11,7 +11,7 @@ const SLOT_PATTERNS = {
   mainhand: /^(MAIN_|2H_|HALLOWFALL|LOSTBOW|MISTPIERCER|WILDSTAFF|SPIRITHUNTER)/,
   offhand:  /^OFF_/,
   cape:     /^CAPE/,
-  mount:    /^MOUNT_/,
+  mount:    /^(MOUNT_|UNIQUE_MOUNT_)/,
   bag:      /^BAG/,
   food:     /^(MEAL_|BREAD_|BEEF_|PORK_|GOAT_|FISH_SALAD|RATIONS)/,
   potion:   /^POTION_/,
@@ -66,10 +66,11 @@ async function getItems() {
 
     // Strip tier prefix
     const baseId = baseUnique.replace(/^T\d+_/, '');
-    if (baseId === baseUnique) continue; // no tier prefix = not gear
+    const isUnique = baseId === baseUnique; // no tier prefix (e.g. UNIQUE_MOUNT_*)
+    if (isUnique && !baseUnique.startsWith('UNIQUE_')) continue;
 
-    const tierNum = parseInt(uname.match(/^T(\d+)_/)?.[1] || '0');
-    if (tierNum < 2) continue;
+    const tierNum = isUnique ? 8 : parseInt(uname.match(/^T(\d+)_/)?.[1] || '0');
+    if (!isUnique && tierNum < 2) continue;
 
     if (!seen.has(baseId)) {
       seen.set(baseId, { id: baseId, name: '', nameTier: 0, tiers: new Set(), enchants: new Set() });
