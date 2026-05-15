@@ -28,16 +28,38 @@ async function getItemSpellMap() {
   };
   addToLookup(items.weapon);
   addToLookup(items.equipmentitem);
+  addToLookup(items.transformationweapon);
 
-  // Resolve craftingspelllist, following @reference chains
-  function resolveSpellList(item) {
-    let spellList = item.craftingspelllist;
-    let depth = 0;
-    while (spellList?.['@reference'] && depth < 8) {
-      spellList = byName[spellList['@reference']]?.craftingspelllist;
-      depth++;
+  // Resolve craftingspelllist, applying @reference + removespell + craftspell overrides.
+  // Shapeshifter variants use this pattern: reference base SET1, remove one transform, add their own.
+  function resolveSpellList(item, depth = 0) {
+    if (depth > 8) return null;
+    const sl = item.craftingspelllist;
+    if (!sl) return null;
+    if (!sl['@reference']) return sl;
+
+    // Follow reference recursively to get base spells
+    const baseItem = byName[sl['@reference']];
+    const baseSl = baseItem ? resolveSpellList(baseItem, depth + 1) : null;
+    if (!baseSl?.craftspell) return sl;
+
+    // Start from base spells
+    let spells = Array.isArray(baseSl.craftspell) ? [...baseSl.craftspell] : [baseSl.craftspell];
+
+    // Apply removespell (shapeshifter variants swap out a transform skill)
+    if (sl.removespell) {
+      const removes = Array.isArray(sl.removespell) ? sl.removespell : [sl.removespell];
+      const removeSet = new Set(removes.map(s => s['@uniquename']));
+      spells = spells.filter(s => !removeSet.has(s['@uniquename']));
     }
-    return spellList;
+
+    // Apply additional craftspell overrides
+    if (sl.craftspell) {
+      const adds = Array.isArray(sl.craftspell) ? sl.craftspell : [sl.craftspell];
+      spells = [...spells, ...adds];
+    }
+
+    return { craftspell: spells };
   }
 
   // Returns { q: string[], w: string[], e: string[], passive: string[] }
@@ -88,6 +110,7 @@ async function getItemSpellMap() {
 
   processGroup(items.weapon);
   processGroup(items.equipmentitem);
+  processGroup(items.transformationweapon);
 
   itemSpellsCache = { data: map, ts: Date.now() };
   return map;
