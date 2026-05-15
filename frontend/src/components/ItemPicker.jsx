@@ -10,11 +10,17 @@ const ENCHANTS = [0, 1, 2, 3, 4];
 // Slots that don't support enchantment
 const NO_ENCHANT = new Set(['mount', 'bag', 'food', 'potion']);
 
+function isUniqueItem(id) {
+  return id.startsWith('UNIQUE_');
+}
+
 function itemUrl(id, tier) {
+  if (isUniqueItem(id)) return `${RENDER}/${id}.png`;
   return `${RENDER}/T${tier}_${id}.png`;
 }
 
 function buildCode(id, tier, enchant) {
+  if (isUniqueItem(id)) return id;
   return enchant > 0 ? `T${tier}_${id}@${enchant}` : `T${tier}_${id}`;
 }
 
