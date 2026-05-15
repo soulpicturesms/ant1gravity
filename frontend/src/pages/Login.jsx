@@ -15,7 +15,7 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      const { token, user } = await api.login(form);
+      const { token, user } = await api.login({ ...form, username: form.username.trim() });
       login(token, user);
       navigate('/');
     } catch (err) {
@@ -43,11 +43,11 @@ export default function Login() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Usuario</label>
-              <input className="input" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="Tu nombre en el gremio" required autoFocus />
+              <input className="input" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))} placeholder="Tu nombre en el gremio" required autoFocus autoComplete="username" />
             </div>
             <div className="form-group">
               <label>Contraseña</label>
-              <input className="input" type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" required />
+              <input className="input" type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} placeholder="••••••••" required autoComplete="current-password" />
             </div>
             <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
               {loading ? 'Ingresando...' : 'Ingresar'}
