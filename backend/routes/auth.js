@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const { data: user } = await supabase.from('users').select('*').eq('username', username).maybeSingle();
+  const { data: user } = await supabase.from('users').select('*').ilike('username', username?.trim()).maybeSingle();
   if (!user || !bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: 'Credenciales incorrectas' });
   const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
   res.json({ token, user: safe(user) });
