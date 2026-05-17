@@ -147,16 +147,42 @@ router.get('/battles/:id', async (req, res) => {
       return res.json(cached.data);
     }
 
-    const [battleRes, eventsRes] = await Promise.all([
-      fetch(`${ALBION_API}/battles/${id}`, { signal: AbortSignal.timeout(15000) }),
-      fetch(`${ALBION_API}/events?battleId=${id}&offset=0&limit=51&sort=recent`, { signal: AbortSignal.timeout(15000) }),
-    ]);
-
+    // Fetch battle detail first
+    const battleRes = await fetch(`${ALBION_API}/battles/${id}`, { signal: AbortSignal.timeout(15000) });
     if (!battleRes.ok) throw new Error(`Albion API ${battleRes.status} al obtener batalla`);
     const battle = await battleRes.json();
-    const events = eventsRes.ok ? await eventsRes.json() : [];
 
-    const payload = { battle, events: Array.isArray(events) ? events : [] };
+    const startTime = new Date(battle.startTime).getTime();
+    const endTime   = new Date(battle.endTime || battle.timeout).getTime();
+    const guildIds  = Object.keys(battle.guilds || {});
+
+    // Fetch events per guild involved in the battle (max 10 guilds to avoid hammering the API)
+    const guildsToFetch = guildIds.slice(0, 10);
+    const eventSets = await Promise.allSettled(
+      guildsToFetch.map(gid =>
+        fetch(`${ALBION_API}/events?guildId=${gid}&offset=0&limit=51&sort=recent`, { signal: AbortSignal.timeout(12000) })
+          .then(r => r.ok ? r.json() : [])
+          .catch(() => [])
+      )
+    );
+
+    // Merge, deduplicate, and filter to the battle time window
+    const seen = new Set();
+    const events = [];
+    for (const result of eventSets) {
+      if (result.status !== 'fulfilled') continue;
+      for (const ev of (Array.isArray(result.value) ? result.value : [])) {
+        if (!ev?.EventId || seen.has(ev.EventId)) continue;
+        const ts = new Date(ev.TimeStamp).getTime();
+        if (ts >= startTime && ts <= endTime) {
+          seen.add(ev.EventId);
+          events.push(ev);
+        }
+      }
+    }
+    events.sort((a, b) => new Date(b.TimeStamp) - new Date(a.TimeStamp));
+
+    const payload = { battle, events };
     battleDetailCache[id] = { data: payload, ts: Date.now() };
     res.json(payload);
   } catch (e) {
