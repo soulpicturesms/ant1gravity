@@ -179,6 +179,218 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
   );
 }
 
+// ─── Battles ──────────────────────────────────────────────────────────────────
+
+const GUILD_NAME = 'ANT1GRAVITY';
+
+function formatFameShort(n) {
+  if (!n) return '0';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return Math.round(n / 1_000) + 'K';
+  return String(n);
+}
+
+function battleDuration(start, end) {
+  const mins = Math.round((new Date(end) - new Date(start)) / 60000);
+  if (mins < 60) return `${mins}min`;
+  return `${Math.floor(mins / 60)}h ${mins % 60}min`;
+}
+
+function BattleCard({ battle, guildId }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const guilds = battle.guilds || {};
+  const ours = guilds[guildId] || null;
+  const enemies = Object.entries(guilds)
+    .filter(([id]) => id !== guildId)
+    .sort(([, a], [, b]) => (b.kills || 0) - (a.kills || 0));
+
+  const ourKills  = ours?.kills  ?? 0;
+  const ourDeaths = ours?.deaths ?? 0;
+  const kd = ourDeaths > 0 ? (ourKills / ourDeaths).toFixed(2) : ourKills > 0 ? '∞' : '—';
+  const kdColor = ourKills > ourDeaths ? '#00cc66' : ourKills < ourDeaths ? '#ff4466' : '#ffd700';
+
+  const totalPlayers = battle.numberOfPlayers ?? battle.totalKills ?? '?';
+  const location     = battle.clusterName || 'Zona desconocida';
+  const duration     = battle.startTime && battle.endTime
+    ? battleDuration(battle.startTime, battle.endTime) : null;
+
+  return (
+    <div
+      onClick={() => setExpanded(x => !x)}
+      style={{
+        background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+        border: `1px solid ${kdColor}22`,
+        borderLeft: `3px solid ${kdColor}`,
+        borderRadius: 10,
+        padding: '14px 18px',
+        cursor: 'pointer',
+        transition: 'border-color 0.2s',
+        userSelect: 'none',
+      }}
+    >
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        {/* Time + location */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#e0e0f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            ⚔️ {location}
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 2 }}>
+            {timeAgo(battle.startTime)}{duration && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {duration}</span>}
+            {totalPlayers && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• 👥 {totalPlayers} jugadores</span>}
+          </div>
+        </div>
+
+        {/* Our K/D */}
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#00cc66', lineHeight: 1 }}>{ourKills}</div>
+            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kills</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#ff4466', lineHeight: 1 }}>{ourDeaths}</div>
+            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Muertes</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: kdColor, lineHeight: 1 }}>{kd}</div>
+            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>K/D</div>
+          </div>
+          {ours?.killFame > 0 && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#ffd700', lineHeight: 1 }}>{formatFameShort(ours.killFame)}</div>
+              <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fame</div>
+            </div>
+          )}
+          <div style={{ color: '#4a4a6a', fontSize: '0.8rem', marginLeft: 4 }}>{expanded ? '▲' : '▼'}</div>
+        </div>
+      </div>
+
+      {/* Expanded: per-guild breakdown */}
+      {expanded && (
+        <div style={{ marginTop: 14, borderTop: '1px solid #1a1a28', paddingTop: 12 }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+            Gremios involucrados
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* Our guild first */}
+            {ours && (
+              <GuildRow name={ours.name || GUILD_NAME} data={ours} isOurs />
+            )}
+            {enemies.map(([id, g]) => (
+              <GuildRow key={id} name={g.name || id} data={g} isOurs={false} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GuildRow({ name, data, isOurs }) {
+  const kills  = data.kills  ?? 0;
+  const deaths = data.deaths ?? 0;
+  const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills > 0 ? '∞' : '0';
+  const kdColor = kills > deaths ? '#00cc66' : kills < deaths ? '#ff4466' : '#9090b0';
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      background: isOurs ? 'rgba(0,212,255,0.06)' : 'rgba(255,255,255,0.02)',
+      border: `1px solid ${isOurs ? 'rgba(0,212,255,0.2)' : '#1a1a28'}`,
+      borderRadius: 7, padding: '8px 12px',
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem',
+          color: isOurs ? '#00d4ff' : '#c0c0d8',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {isOurs && <span style={{ marginRight: 5 }}>★</span>}{name}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+        {[
+          { label: 'K', value: kills,  color: '#00cc66' },
+          { label: 'M', value: deaths, color: '#ff4466' },
+          { label: 'K/D', value: kd, color: kdColor },
+          ...(data.killFame ? [{ label: 'Fame', value: formatFameShort(data.killFame), color: '#ffd700' }] : []),
+        ].map(s => (
+          <div key={s.label} style={{ textAlign: 'center', minWidth: 32 }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: '0.55rem', color: '#4a4a6a', textTransform: 'uppercase' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BattleStatsBar({ battles, guildId }) {
+  const withOurs = battles.filter(b => b.guilds?.[guildId]);
+  const totalK = withOurs.reduce((s, b) => s + (b.guilds[guildId]?.kills ?? 0), 0);
+  const totalD = withOurs.reduce((s, b) => s + (b.guilds[guildId]?.deaths ?? 0), 0);
+  const kd = totalD > 0 ? (totalK / totalD).toFixed(2) : totalK > 0 ? '∞' : '—';
+  const wins = withOurs.filter(b => {
+    const o = b.guilds[guildId];
+    return o && (o.kills ?? 0) > (o.deaths ?? 0);
+  }).length;
+
+  return (
+    <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+      {[
+        { label: 'Batallas',  value: battles.length, color: '#00d4ff' },
+        { label: 'Victorias', value: wins,            color: '#00cc66' },
+        { label: 'K/D total', value: kd,              color: '#ffd700' },
+        { label: 'Kills tot.', value: totalK,         color: '#00cc66' },
+        { label: 'Muertes',   value: totalD,          color: '#ff4466' },
+      ].map(s => (
+        <div key={s.label} style={{ flex: '1 1 90px', background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)', border: '1px solid #1e1e30', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
+          <div style={{ fontSize: '0.65rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BattlesTab({ guildId }) {
+  const [battles, setBattles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.getBattles();
+      setBattles(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div className="loading"><div className="spinner" /> Cargando batallas...</div>;
+  if (error)   return <div className="alert alert-error">{error} <button onClick={load} style={{ background: 'none', border: 'none', color: '#ff8899', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>Reintentar</button></div>;
+  if (!battles.length) return <div className="empty"><div className="empty-icon">⚔️</div><p>Sin batallas recientes</p></div>;
+
+  return (
+    <>
+      <BattleStatsBar battles={battles} guildId={guildId} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {battles.map(b => <BattleCard key={b.id} battle={b} guildId={guildId} />)}
+      </div>
+    </>
+  );
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
 function StatsBar({ kills, deaths }) {
   const totalFame = kills.reduce((s, e) => s + (e.TotalVictimKillFame || 0), 0);
   const kd = deaths.length > 0 ? (kills.length / deaths.length).toFixed(2) : kills.length > 0 ? '∞' : '—';
@@ -198,6 +410,8 @@ function StatsBar({ kills, deaths }) {
     </div>
   );
 }
+
+const ALBION_GUILD_ID = 'Azsds8YiRyi6aGL1rOZRLg';
 
 export default function Killboard() {
   const { user } = useAuth();
@@ -270,9 +484,10 @@ export default function Killboard() {
     : base;
 
   const TABS = [
-    { key: 'kills',  label: `Kills (${kills.length})`,     color: '#00cc66' },
-    { key: 'deaths', label: `Muertes (${deaths.length})`,  color: '#ff4466' },
-    ...(user ? [{ key: 'mine', label: '⚙️ Mis Muertes', color: '#00d4ff' }] : []),
+    { key: 'kills',    label: `Kills (${kills.length})`,    color: '#00cc66' },
+    { key: 'deaths',   label: `Muertes (${deaths.length})`, color: '#ff4466' },
+    { key: 'battles',  label: '⚔️ Batallas',                color: '#a78bfa' },
+    ...(user ? [{ key: 'mine', label: '⚙️ Mis Muertes',    color: '#00d4ff' }] : []),
   ];
 
   return (
@@ -282,9 +497,9 @@ export default function Killboard() {
         <div className="accent-line" />
       </div>
 
-      {!loading && !error && tab !== 'mine' && <StatsBar kills={kills} deaths={deaths} />}
+      {!loading && !error && (tab === 'kills' || tab === 'deaths') && <StatsBar kills={kills} deaths={deaths} />}
 
-      {tab !== 'mine' && (
+      {(tab === 'kills' || tab === 'deaths') && (
         <div style={{ marginBottom: 16 }}>
           <input
             className="input"
@@ -311,7 +526,7 @@ export default function Killboard() {
             {t.label}
           </button>
         ))}
-        {tab !== 'mine' && (
+        {(tab === 'kills' || tab === 'deaths') && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
             {lastUpdate && <span style={{ fontSize: '0.72rem', color: '#4a4a6a' }}>{lastUpdate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>}
             <button onClick={load} disabled={loading} style={{ padding: '7px 14px', borderRadius: 6, fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', cursor: loading ? 'default' : 'pointer', border: '1px solid #1e1e30', background: 'transparent', color: '#6a6a8a' }}>
@@ -344,6 +559,9 @@ export default function Killboard() {
           )}
         </>
       )}
+
+      {/* Batallas */}
+      {tab === 'battles' && <BattlesTab guildId={ALBION_GUILD_ID} />}
 
       {/* Mis Muertes */}
       {tab === 'mine' && (

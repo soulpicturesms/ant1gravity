@@ -8,10 +8,13 @@ const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
 const CACHE_TTL_EVENTS  = 2 * 60 * 1000;
 const CACHE_TTL_MEMBERS = 10 * 60 * 1000;
 
+const CACHE_TTL_BATTLES = 5 * 60 * 1000;
+
 const cache = {
   kills:   { data: null, ts: 0 },
   deaths:  { data: null, ts: 0 },
   members: { data: null, ts: 0 },
+  battles: { data: null, ts: 0 },
 };
 
 async function getMembers() {
@@ -112,6 +115,21 @@ router.get('/my-deaths', requireAuth, async (req, res) => {
 
     myDeathsCache[charName] = { data: Array.isArray(deaths) ? deaths : [], ts: Date.now() };
     res.json({ deaths: myDeathsCache[charName].data, character: charName });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.get('/battles', async (req, res) => {
+  try {
+    if (cache.battles.data && Date.now() - cache.battles.ts < CACHE_TTL_BATTLES) {
+      return res.json(cache.battles.data);
+    }
+    const r = await fetch(`${ALBION_API}/battles?guildId=${GUILD_ID}&offset=0&limit=20&range=week&sort=recent`);
+    if (!r.ok) throw new Error(`Albion API ${r.status}`);
+    const data = await r.json();
+    cache.battles = { data, ts: Date.now() };
+    res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

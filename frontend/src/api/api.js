@@ -91,8 +91,9 @@ export const api = {
   deleteBanner: (id) => req(`/api/media/banners/${id}`, { method: 'DELETE', headers: headers() }),
 
   // Killboard
-  getKills:  () => req('/api/killboard/kills'),
-  getDeaths: () => req('/api/killboard/deaths'),
+  getKills:   () => req('/api/killboard/kills'),
+  getDeaths:  () => req('/api/killboard/deaths'),
+  getBattles: () => req('/api/killboard/battles'),
 
   // Killboard - personal
   getMyDeaths: () => req('/api/killboard/my-deaths', { headers: headers() }),
