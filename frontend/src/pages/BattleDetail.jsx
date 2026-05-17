@@ -76,8 +76,12 @@ const TH = ({ children, right }) => (
   </th>
 );
 
-const TR = ({ children, highlight }) => (
-  <tr style={{ background: highlight ? 'rgba(0,212,255,0.05)' : 'transparent', borderBottom: '1px solid #12121e' }}>
+const TR = ({ children, highlight, accent }) => (
+  <tr style={{
+    background: highlight ? 'rgba(0,212,255,0.05)' : accent ? `${accent}0d` : 'transparent',
+    borderBottom: '1px solid #12121e',
+    borderLeft: accent ? `3px solid ${accent}88` : '3px solid transparent',
+  }}>
     {children}
   </tr>
 );
@@ -277,9 +281,10 @@ function KillsTable({ events, startTime, guildId }) {
           {filtered.map(ev => {
             const killerOurs = ev.Killer?.GuildId === guildId;
             const victimOurs = ev.Victim?.GuildId === guildId;
+            const accent = killerOurs ? '#00cc66' : victimOurs ? '#ff4466' : null;
             const ts = startTime ? fmtTs(startTime, ev.TimeStamp) : timeAgo(ev.TimeStamp);
             return (
-              <TR key={ev.EventId}>
+              <TR key={ev.EventId} accent={accent}>
                 <td style={{ padding: '8px 12px', color: '#5a5a7a', fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{ts}</td>
                 <td style={{ padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
