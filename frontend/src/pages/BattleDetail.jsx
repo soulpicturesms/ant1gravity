@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 
@@ -364,19 +364,30 @@ export default function BattleDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
+  const fetchData = useCallback(() => {
     api.getBattle(id)
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    setLoading(true);
+    fetchData();
+  }, [fetchData]);
+
+  // Auto-refresh every 2 min while battle is live
+  useEffect(() => {
+    if (!data?.isLive) return;
+    const interval = setInterval(fetchData, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [data?.isLive, fetchData]);
+
   if (loading) return <div className="page"><div className="loading"><div className="spinner" /> Cargando batalla...</div></div>;
   if (error)   return <div className="page"><div className="alert alert-error">{error}</div></div>;
   if (!data)   return null;
 
-  const { battle, events } = data;
+  const { battle, events, isLive } = data;
   const guilds = battle.guilds || {};
   const alliances = battle.alliances || {};
 
@@ -414,8 +425,16 @@ export default function BattleDetail() {
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: '#e0e0f0', lineHeight: 1.2 }}>
-              ⚔️ {titleVs}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: '#e0e0f0', lineHeight: 1.2 }}>
+                ⚔️ {titleVs}
+              </span>
+              {isLive && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,51,51,0.15)', border: '1px solid rgba(255,51,51,0.4)', borderRadius: 6, padding: '3px 10px' }}>
+                  <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#ff3333', animation: 'livePulse 1.4s ease-in-out infinite' }} />
+                  <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', color: '#ff3333', letterSpacing: '0.1em' }}>LIVE</span>
+                </div>
+              )}
             </div>
             <div style={{ fontSize: '0.78rem', color: '#5a5a7a', marginTop: 6, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {location && <span>📍 {location}</span>}

@@ -8,7 +8,7 @@ const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
 const CACHE_TTL_EVENTS  = 2 * 60 * 1000;
 const CACHE_TTL_MEMBERS = 10 * 60 * 1000;
 
-const CACHE_TTL_BATTLES = 5 * 60 * 1000;
+const CACHE_TTL_BATTLES = 60 * 1000;
 
 const cache = {
   kills:   { data: null, ts: 0 },
@@ -143,7 +143,7 @@ router.get('/battles/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const cached = battleDetailCache[id];
-    if (cached && Date.now() - cached.ts < CACHE_TTL_DETAIL) {
+    if (cached && Date.now() - cached.ts < (cached.ttl ?? CACHE_TTL_DETAIL)) {
       return res.json(cached.data);
     }
 
@@ -182,8 +182,11 @@ router.get('/battles/:id', async (req, res) => {
     }
     events.sort((a, b) => new Date(b.TimeStamp) - new Date(a.TimeStamp));
 
-    const payload = { battle, events };
-    battleDetailCache[id] = { data: payload, ts: Date.now() };
+    const isLive = battle.timeout && new Date(battle.timeout) > new Date();
+    const payload = { battle, events, isLive: !!isLive };
+    // Cache live battles for only 30s so fresh kills appear quickly
+    const ttl = isLive ? 30 * 1000 : CACHE_TTL_DETAIL;
+    battleDetailCache[id] = { data: payload, ts: Date.now(), ttl };
     res.json(payload);
   } catch (e) {
     res.status(500).json({ error: e.message });

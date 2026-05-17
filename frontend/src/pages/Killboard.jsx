@@ -184,6 +184,18 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
 
 const GUILD_NAME = 'ANT1GRAVITY';
 
+function LiveDot() {
+  return (
+    <span style={{
+      display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+      background: '#ff3333',
+      boxShadow: '0 0 0 0 rgba(255,51,51,0.6)',
+      animation: 'livePulse 1.4s ease-in-out infinite',
+      flexShrink: 0,
+    }} />
+  );
+}
+
 function formatFameShort(n) {
   if (!n) return '0';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -197,7 +209,7 @@ function battleDuration(start, end) {
   return `${Math.floor(mins / 60)}h ${mins % 60}min`;
 }
 
-function BattleCard({ battle, guildId }) {
+function BattleCard({ battle, guildId, live }) {
   const navigate = useNavigate();
 
   const guilds = battle.guilds || {};
@@ -228,9 +240,11 @@ function BattleCard({ battle, guildId }) {
     <div
       onClick={() => navigate(`/killboard/battles/${battle.id}`)}
       style={{
-        background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
-        border: `1px solid ${kdColor}22`,
-        borderLeft: `3px solid ${kdColor}`,
+        background: live
+          ? 'linear-gradient(135deg, #110a0a, #160d0d)'
+          : 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+        border: `1px solid ${live ? '#ff333333' : kdColor + '22'}`,
+        borderLeft: `3px solid ${live ? '#ff3333' : kdColor}`,
         borderRadius: 10,
         padding: '14px 18px',
         cursor: 'pointer',
@@ -243,8 +257,12 @@ function BattleCard({ battle, guildId }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         {/* Title + meta */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#e0e0f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            ⚔️ {titleVs}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+            {live && <LiveDot />}
+            {live && <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.72rem', color: '#ff3333', letterSpacing: '0.1em', flexShrink: 0 }}>LIVE</span>}
+            <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#e0e0f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              ⚔️ {titleVs}
+            </span>
           </div>
           <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 2 }}>
             {timeAgo(battle.startTime)}
@@ -310,17 +328,33 @@ function BattleStatsBar({ battles, guildId }) {
   );
 }
 
+const REFRESH_INTERVAL = 2 * 60 * 1000; // 2 min
+
+function isLiveBattle(b) {
+  return b.timeout && new Date(b.timeout) > new Date();
+}
+
 function BattlesTab({ guildId }) {
   const [battles, setBattles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const data = await api.getBattles();
-      setBattles(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      // Live battles first, then by most recent
+      list.sort((a, b) => {
+        const aLive = isLiveBattle(a) ? 1 : 0;
+        const bLive = isLiveBattle(b) ? 1 : 0;
+        if (bLive !== aLive) return bLive - aLive;
+        return new Date(b.startTime) - new Date(a.startTime);
+      });
+      setBattles(list);
+      setLastUpdate(new Date());
     } catch (e) {
       setError(e.message);
     } finally {
@@ -330,15 +364,43 @@ function BattlesTab({ guildId }) {
 
   useEffect(() => { load(); }, [load]);
 
+  // Auto-refresh every 2 minutes
+  useEffect(() => {
+    const interval = setInterval(() => load(true), REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [load]);
+
   if (loading) return <div className="loading"><div className="spinner" /> Cargando batallas...</div>;
-  if (error)   return <div className="alert alert-error">{error} <button onClick={load} style={{ background: 'none', border: 'none', color: '#ff8899', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>Reintentar</button></div>;
+  if (error)   return <div className="alert alert-error">{error} <button onClick={() => load()} style={{ background: 'none', border: 'none', color: '#ff8899', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>Reintentar</button></div>;
   if (!battles.length) return <div className="empty"><div className="empty-icon">⚔️</div><p>Sin batallas recientes</p></div>;
+
+  const liveCount = battles.filter(isLiveBattle).length;
 
   return (
     <>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {liveCount > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,60,60,0.12)', border: '1px solid rgba(255,60,60,0.3)', borderRadius: 6, padding: '4px 10px' }}>
+              <LiveDot />
+              <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem', color: '#ff4444' }}>
+                {liveCount} en vivo
+              </span>
+            </div>
+          )}
+          {lastUpdate && (
+            <span style={{ fontSize: '0.7rem', color: '#4a4a6a' }}>
+              Actualizado {lastUpdate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
+        </div>
+        <button onClick={() => load()} style={{ background: 'none', border: '1px solid #1e1e30', borderRadius: 6, color: '#6a6a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.82rem', padding: '5px 12px' }}>
+          ↻ Actualizar
+        </button>
+      </div>
       <BattleStatsBar battles={battles} guildId={guildId} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {battles.map(b => <BattleCard key={b.id} battle={b} guildId={guildId} />)}
+        {battles.map(b => <BattleCard key={b.id} battle={b} guildId={guildId} live={isLiveBattle(b)} />)}
       </div>
     </>
   );
