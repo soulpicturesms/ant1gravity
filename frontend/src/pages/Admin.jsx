@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import AlbionStatsTab from './AlbionStatsTab';
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -247,6 +248,7 @@ export default function Admin() {
     { id: 'giveaway', label: '🎰 Sorteos' },
     { id: 'media', label: '🖼️ Premios Semanales' },
     { id: 'banners', label: '🎨 Slideshow' },
+    { id: 'albion-stats', label: '📈 Stats Albion' },
   ];
 
   return (
@@ -860,6 +862,9 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* Albion Stats */}
+      {tab === 'albion-stats' && <AlbionStatsTab />}
 
       {/* Banners Slideshow */}
       {tab === 'banners' && (

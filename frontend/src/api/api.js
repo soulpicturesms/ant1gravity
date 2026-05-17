@@ -29,6 +29,7 @@ export const api = {
   // Members
   getMembers: () => req('/api/members'),
   getRankings: () => req('/api/members/rankings'),
+  getAlbionStats: () => req('/api/members/albion-stats', { headers: headers() }),
   getActivities: () => req('/api/members/activities', { headers: headers() }),
   createActivity: (body) => req('/api/members/activities', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   markAttendance: (id, user_ids) => req(`/api/members/activities/${id}/attend`, { method: 'POST', headers: headers(), body: JSON.stringify({ user_ids }) }),

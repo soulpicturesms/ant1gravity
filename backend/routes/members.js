@@ -79,4 +79,77 @@ router.put('/:id/role', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ─── Albion live stats ────────────────────────────────────────────────────────
+const ALBION_API  = 'https://gameinfo.albiononline.com/api/gameinfo';
+const GUILD_ID    = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
+const CACHE_TTL_ALBION = 30 * 60 * 1000;
+let albionStatsCache = { data: null, ts: 0 };
+
+async function fetchInBatches(items, fn, size = 5) {
+  const results = [];
+  for (let i = 0; i < items.length; i += size) {
+    const settled = await Promise.allSettled(items.slice(i, i + size).map(fn));
+    results.push(...settled);
+  }
+  return results;
+}
+
+router.get('/albion-stats', requireAdmin, async (req, res) => {
+  try {
+    if (albionStatsCache.data && Date.now() - albionStatsCache.ts < CACHE_TTL_ALBION) {
+      return res.json(albionStatsCache.data);
+    }
+
+    const membersRes = await fetch(`${ALBION_API}/guilds/${GUILD_ID}/members`, { signal: AbortSignal.timeout(15000) });
+    if (!membersRes.ok) throw new Error(`Albion API ${membersRes.status}`);
+    const members = await membersRes.json();
+
+    const settled = await fetchInBatches(members, m =>
+      fetch(`${ALBION_API}/players/${m.Id}`, { signal: AbortSignal.timeout(10000) })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null)
+    );
+
+    const stats = [];
+    for (const r of settled) {
+      if (r.status !== 'fulfilled' || !r.value) continue;
+      const p = r.value;
+      const ls = p.LifetimeStatistics || {};
+      stats.push({
+        id:          p.Id,
+        name:        p.Name,
+        killFame:    p.KillFame    || 0,
+        deathFame:   p.DeathFame   || 0,
+        pve:         ls.PvE?.Total         || 0,
+        gathering:   ls.Gathering?.All?.Total || 0,
+        crafting:    ls.Crafting?.Total    || 0,
+        fishing:     ls.FishingFame        || 0,
+        farming:     ls.FarmingFame        || 0,
+        gatheringByType: {
+          fiber: ls.Gathering?.Fiber?.Total || 0,
+          hide:  ls.Gathering?.Hide?.Total  || 0,
+          ore:   ls.Gathering?.Ore?.Total   || 0,
+          rock:  ls.Gathering?.Rock?.Total  || 0,
+          wood:  ls.Gathering?.Wood?.Total  || 0,
+        },
+      });
+    }
+
+    const sort = key => [...stats].sort((a, b) => b[key] - a[key]);
+    const data = {
+      byKillFame:  sort('killFame'),
+      byPve:       sort('pve'),
+      byGathering: sort('gathering'),
+      byCrafting:  sort('crafting'),
+      raw:         stats,
+      fetchedAt:   new Date().toISOString(),
+    };
+
+    albionStatsCache = { data, ts: Date.now() };
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
