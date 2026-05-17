@@ -93,7 +93,8 @@ export const api = {
   // Killboard
   getKills:   () => req('/api/killboard/kills'),
   getDeaths:  () => req('/api/killboard/deaths'),
-  getBattles: () => req('/api/killboard/battles'),
+  getBattles:  () => req('/api/killboard/battles'),
+  getBattle:   (id) => req(`/api/killboard/battles/${id}`),
 
   // Killboard - personal
   getMyDeaths: () => req('/api/killboard/my-deaths', { headers: headers() }),

@@ -135,4 +135,33 @@ router.get('/battles', async (req, res) => {
   }
 });
 
+// Detail cache: battleId → { data, ts }
+const battleDetailCache = {};
+const CACHE_TTL_DETAIL = 10 * 60 * 1000;
+
+router.get('/battles/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const cached = battleDetailCache[id];
+    if (cached && Date.now() - cached.ts < CACHE_TTL_DETAIL) {
+      return res.json(cached.data);
+    }
+
+    const [battleRes, eventsRes] = await Promise.all([
+      fetch(`${ALBION_API}/battles/${id}`, { signal: AbortSignal.timeout(15000) }),
+      fetch(`${ALBION_API}/events?battleId=${id}&offset=0&limit=51&sort=recent`, { signal: AbortSignal.timeout(15000) }),
+    ]);
+
+    if (!battleRes.ok) throw new Error(`Albion API ${battleRes.status} al obtener batalla`);
+    const battle = await battleRes.json();
+    const events = eventsRes.ok ? await eventsRes.json() : [];
+
+    const payload = { battle, events: Array.isArray(events) ? events : [] };
+    battleDetailCache[id] = { data: payload, ts: Date.now() };
+    res.json(payload);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

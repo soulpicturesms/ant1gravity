@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -197,7 +198,7 @@ function battleDuration(start, end) {
 }
 
 function BattleCard({ battle, guildId }) {
-  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const guilds = battle.guilds || {};
   const ours = guilds[guildId] || null;
@@ -210,14 +211,22 @@ function BattleCard({ battle, guildId }) {
   const kd = ourDeaths > 0 ? (ourKills / ourDeaths).toFixed(2) : ourKills > 0 ? '∞' : '—';
   const kdColor = ourKills > ourDeaths ? '#00cc66' : ourKills < ourDeaths ? '#ff4466' : '#ffd700';
 
-  const totalPlayers = battle.numberOfPlayers ?? battle.totalKills ?? '?';
-  const location     = battle.clusterName || 'Zona desconocida';
-  const duration     = battle.startTime && battle.endTime
-    ? battleDuration(battle.startTime, battle.endTime) : null;
+  const totalPlayers = battle.numberOfPlayers ?? '?';
+  const duration = battle.startTime && battle.endTime ? battleDuration(battle.startTime, battle.endTime) : null;
+
+  // Build title: "OurGuild vs Enemy1, Enemy2"
+  const ourName   = ours?.name || GUILD_NAME;
+  const enemyNames = enemies.slice(0, 2).map(([, g]) => g.name).filter(Boolean).join(', ');
+  const extraCount = enemies.length > 2 ? ` y ${enemies.length - 2} más` : '';
+  const titleVs = enemyNames
+    ? `${ourName} vs ${enemyNames}${extraCount}`
+    : ourName;
+
+  const location = battle.clusterName || battle.cluster || null;
 
   return (
     <div
-      onClick={() => setExpanded(x => !x)}
+      onClick={() => navigate(`/killboard/battles/${battle.id}`)}
       style={{
         background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
         border: `1px solid ${kdColor}22`,
@@ -225,24 +234,27 @@ function BattleCard({ battle, guildId }) {
         borderRadius: 10,
         padding: '14px 18px',
         cursor: 'pointer',
-        transition: 'border-color 0.2s',
+        transition: 'background 0.15s',
         userSelect: 'none',
       }}
+      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, #0c0c1a, #0f0f22)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, #0a0a16, #0d0d1e)'}
     >
-      {/* Top row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        {/* Time + location */}
+        {/* Title + meta */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#e0e0f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            ⚔️ {location}
+            ⚔️ {titleVs}
           </div>
           <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 2 }}>
-            {timeAgo(battle.startTime)}{duration && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {duration}</span>}
+            {timeAgo(battle.startTime)}
+            {duration && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {duration}</span>}
+            {location && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {location}</span>}
             {totalPlayers && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• 👥 {totalPlayers} jugadores</span>}
           </div>
         </div>
 
-        {/* Our K/D */}
+        {/* K/D stats */}
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexShrink: 0 }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#00cc66', lineHeight: 1 }}>{ourKills}</div>
@@ -262,71 +274,13 @@ function BattleCard({ battle, guildId }) {
               <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fame</div>
             </div>
           )}
-          <div style={{ color: '#4a4a6a', fontSize: '0.8rem', marginLeft: 4 }}>{expanded ? '▲' : '▼'}</div>
+          <div style={{ color: '#4a4a6a', fontSize: '0.8rem', marginLeft: 4 }}>→</div>
         </div>
       </div>
-
-      {/* Expanded: per-guild breakdown */}
-      {expanded && (
-        <div style={{ marginTop: 14, borderTop: '1px solid #1a1a28', paddingTop: 12 }}
-          onClick={e => e.stopPropagation()}
-        >
-          <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-            Gremios involucrados
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {/* Our guild first */}
-            {ours && (
-              <GuildRow name={ours.name || GUILD_NAME} data={ours} isOurs />
-            )}
-            {enemies.map(([id, g]) => (
-              <GuildRow key={id} name={g.name || id} data={g} isOurs={false} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function GuildRow({ name, data, isOurs }) {
-  const kills  = data.kills  ?? 0;
-  const deaths = data.deaths ?? 0;
-  const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills > 0 ? '∞' : '0';
-  const kdColor = kills > deaths ? '#00cc66' : kills < deaths ? '#ff4466' : '#9090b0';
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 10,
-      background: isOurs ? 'rgba(0,212,255,0.06)' : 'rgba(255,255,255,0.02)',
-      border: `1px solid ${isOurs ? 'rgba(0,212,255,0.2)' : '#1a1a28'}`,
-      borderRadius: 7, padding: '8px 12px',
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem',
-          color: isOurs ? '#00d4ff' : '#c0c0d8',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {isOurs && <span style={{ marginRight: 5 }}>★</span>}{name}
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
-        {[
-          { label: 'K', value: kills,  color: '#00cc66' },
-          { label: 'M', value: deaths, color: '#ff4466' },
-          { label: 'K/D', value: kd, color: kdColor },
-          ...(data.killFame ? [{ label: 'Fame', value: formatFameShort(data.killFame), color: '#ffd700' }] : []),
-        ].map(s => (
-          <div key={s.label} style={{ textAlign: 'center', minWidth: 32 }}>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: '0.55rem', color: '#4a4a6a', textTransform: 'uppercase' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function BattleStatsBar({ battles, guildId }) {
   const withOurs = battles.filter(b => b.guilds?.[guildId]);
@@ -415,7 +369,8 @@ const ALBION_GUILD_ID = 'Azsds8YiRyi6aGL1rOZRLg';
 
 export default function Killboard() {
   const { user } = useAuth();
-  const [tab, setTab] = useState('kills');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(searchParams.get('tab') || 'kills');
   const [kills, setKills]   = useState([]);
   const [deaths, setDeaths] = useState([]);
   const [loading, setLoading]     = useState(true);
