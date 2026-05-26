@@ -22,5 +22,6 @@ app.use('/api/items',     require('./routes/items'));
 app.use('/api/market',    require('./routes/market'));
 app.use('/api/spells',    require('./routes/spells'));
 app.use('/api/killboard', require('./routes/killboard'));
+app.use('/api/ruleta',   require('./routes/ruleta'));
 
 module.exports = app;

@@ -110,6 +110,10 @@ export const api = {
   rejectDeathRequest: (id, body) => req(`/api/reequip/admin/death-requests/${id}/reject`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   getDeathStats: () => req('/api/reequip/admin/death-stats', { headers: headers() }),
 
+  // Ruleta
+  getRuletaPrizes: () => req('/api/ruleta/prizes'),
+  setRuletaPrizes: (prizes) => req('/api/ruleta/prizes', { method: 'PUT', headers: headers(), body: JSON.stringify({ prizes }) }),
+
   // Admin
   getAdminStats: () => req('/api/admin/stats', { headers: headers() }),
   getTransactions: () => req('/api/admin/transactions', { headers: headers() }),
