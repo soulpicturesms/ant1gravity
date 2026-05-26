@@ -12,6 +12,7 @@ import Admin from './pages/Admin';
 import Profile from './pages/Profile';
 import Killboard from './pages/Killboard';
 import BattleDetail from './pages/BattleDetail';
+import Ruleta from './pages/Ruleta';
 
 function PendingScreen() {
   const { logout } = useAuth();
@@ -62,6 +63,7 @@ function AppRoutes() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/killboard" element={<Killboard />} />
         <Route path="/killboard/battles/:id" element={<BattleDetail />} />
+        <Route path="/ruleta" element={<Ruleta />} />
       </Routes>
       <footer style={{ borderTop: '1px solid #1e1e30', padding: '20px', textAlign: 'center', color: '#4a4a6a', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
         ANT1GRAVITY © 2026
