@@ -203,9 +203,60 @@ export default function Ruleta() {
 
   return (
     <div className="page">
-      <div className="section-header">
-        <h2>RULETA</h2>
-        <div className="accent-line" />
+
+      {/* Guild branding header */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: 12, paddingBottom: 28, marginBottom: 4,
+        borderBottom: '1px solid #1e1e30',
+      }}>
+        {/* Logo */}
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            position: 'absolute', inset: -12, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,212,255,0.18) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite',
+          }} />
+          <img
+            src="/logo-icon.png"
+            alt="ANT1GRAVITY"
+            style={{
+              width: 90, height: 90, objectFit: 'contain',
+              filter: 'drop-shadow(0 0 18px rgba(0,212,255,0.7))',
+              position: 'relative', zIndex: 1,
+            }}
+            onError={e => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div style={{
+            display: 'none', width: 90, height: 90, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #00aacc, #0044aa)',
+            alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.6rem', color: 'white',
+            border: '3px solid #00d4ff44', boxShadow: '0 0 24px rgba(0,212,255,0.4)',
+          }}>AG</div>
+        </div>
+
+        {/* Guild name */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2.2rem',
+            letterSpacing: '0.18em', color: 'white', lineHeight: 1,
+          }}>
+            ANT<span style={{ color: '#00d4ff' }}>1</span>GRAVITY
+          </div>
+          <div style={{
+            fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem',
+            letterSpacing: '0.35em', color: '#6a6a8a', marginTop: 4,
+            textTransform: 'uppercase',
+          }}>
+            Ruleta de Monturas
+          </div>
+        </div>
+
+        <div className="accent-line" style={{ width: 120, margin: '4px 0 0' }} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
