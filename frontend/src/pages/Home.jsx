@@ -312,6 +312,7 @@ function AlbionRankingsSidebar() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pvp');
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     api.getAlbionStats().then(setData).catch(() => {}).finally(() => setLoading(false));
@@ -320,6 +321,8 @@ function AlbionRankingsSidebar() {
   const medals = ['🥇', '🥈', '🥉'];
   const tab = SIDEBAR_TABS.find(t => t.key === activeTab);
 
+  const handleTabChange = (key) => { setActiveTab(key); setExpanded(false); };
+
   return (
     <div className="card">
       <div className="card-title">🏆 Rankings en Vivo</div>
@@ -327,7 +330,7 @@ function AlbionRankingsSidebar() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 14, flexWrap: 'wrap' }}>
         {SIDEBAR_TABS.map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
+          <button key={t.key} onClick={() => handleTabChange(t.key)} style={{
             padding: '4px 10px', borderRadius: 5, cursor: 'pointer',
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
             border: `1px solid ${activeTab === t.key ? t.color + '66' : '#1e1e30'}`,
@@ -341,32 +344,48 @@ function AlbionRankingsSidebar() {
       {loading && <div style={{ color: '#4a4a6a', fontSize: '0.82rem', padding: '8px 0' }}>Cargando stats...</div>}
 
       {data && (() => {
-        const list = (data[tab.dataKey] || []).slice(0, 5);
-        const maxVal = list[0]?.[tab.statKey] || 1;
-        return list.length === 0
-          ? <div style={{ color: '#4a4a6a', fontSize: '0.82rem' }}>Sin datos</div>
-          : list.map((p, i) => {
-              const pct = (p[tab.statKey] / maxVal) * 100;
-              const top3 = i < 3;
-              return (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: i < list.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                  <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: top3 ? '1.05rem' : '0.88rem', width: 26, textAlign: 'center', color: top3 ? undefined : '#5a5a7a', flexShrink: 0 }}>
-                    {top3 ? medals[i] : '#' + (i + 1)}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: top3 ? '#e0e0f0' : '#a0a0c0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.name}
+        const full = data[tab.dataKey] || [];
+        const list = expanded ? full : full.slice(0, 10);
+        const maxVal = full[0]?.[tab.statKey] || 1;
+        return (
+          <>
+            {list.length === 0
+              ? <div style={{ color: '#4a4a6a', fontSize: '0.82rem' }}>Sin datos</div>
+              : list.map((p, i) => {
+                  const pct = (p[tab.statKey] / maxVal) * 100;
+                  const top3 = i < 3;
+                  return (
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: i < list.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: top3 ? '1.05rem' : '0.88rem', width: 26, textAlign: 'center', color: top3 ? undefined : '#5a5a7a', flexShrink: 0 }}>
+                        {top3 ? medals[i] : '#' + (i + 1)}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: top3 ? '#e0e0f0' : '#a0a0c0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.name}
+                        </div>
+                        <div style={{ height: 3, background: '#1a1a28', borderRadius: 2, marginTop: 3, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: pct + '%', background: tab.color, borderRadius: 2 }} />
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.82rem', color: tab.color, fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0, minWidth: 52, textAlign: 'right' }}>
+                        {fmtFame(p[tab.statKey])}
+                      </span>
                     </div>
-                    <div style={{ height: 3, background: '#1a1a28', borderRadius: 2, marginTop: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: pct + '%', background: tab.color, borderRadius: 2 }} />
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.82rem', color: tab.color, fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0, minWidth: 52, textAlign: 'right' }}>
-                    {fmtFame(p[tab.statKey])}
-                  </span>
-                </div>
-              );
-            });
+                  );
+                })
+            }
+            {full.length > 10 && (
+              <button onClick={() => setExpanded(e => !e)} style={{
+                width: '100%', marginTop: 12, padding: '7px 0', borderRadius: 6, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.03)', border: '1px solid #1e1e30',
+                fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
+                color: '#6a6a8a', letterSpacing: '0.05em', transition: 'all 0.15s',
+              }}>
+                {expanded ? '▲ Ver menos' : `▼ Ver todos (${full.length})`}
+              </button>
+            )}
+          </>
+        );
       })()}
 
       {data?.fetchedAt && (
