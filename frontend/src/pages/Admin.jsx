@@ -281,9 +281,6 @@ export default function Admin() {
             <StatCard label="Builds" value={stats.totalBuilds} icon="⚔️" />
             <StatCard label="Coins Entregadas" value={stats.totalCoinsAwarded} color="#ffd700" icon="⚡" />
           </div>
-          <div className="alert alert-info">
-            <strong>Credenciales por defecto:</strong> admin / admin123 — Cambia la contraseña en producción.
-          </div>
         </div>
       )}
 
