@@ -61,6 +61,7 @@ export default function Admin() {
   const [newUserForm, setNewUserForm] = useState({ username: '', password: '', role: 'member' });
   const [statsEdit, setStatsEdit] = useState({ user_id: '', pvp_fame: '', pvp_kills: '', cta_attendance: '', total_activities: '' });
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [pendingBuilds, setPendingBuilds] = useState([]);
   const [editingUsername, setEditingUsername] = useState({}); // { [id]: newName }
 
   const notify = (ok, msg) => { if (ok) setMsg(msg); else setErr(msg); setTimeout(() => { setMsg(''); setErr(''); }, 4000); };
@@ -78,6 +79,7 @@ export default function Admin() {
     api.getBanners().then(b => setBanners(Array.isArray(b) ? b : [])).catch(() => {});
     api.getRankingsTop().then(setRankingsInfo).catch(() => {});
     api.getPendingUsers().then(setPendingUsers).catch(() => {});
+    api.getPendingBuilds().then(setPendingBuilds).catch(() => {});
   };
 
   useEffect(() => { loadAll(); }, []);
@@ -239,6 +241,7 @@ export default function Admin() {
   const tabs = [
     { id: 'overview', label: '📊 Overview' },
     { id: 'pending', label: pendingUsers.length > 0 ? `⏳ Pendientes (${pendingUsers.length})` : '⏳ Pendientes' },
+    { id: 'builds-pending', label: pendingBuilds.length > 0 ? `⚔️ Builds (${pendingBuilds.length})` : '⚔️ Builds' },
     { id: 'news', label: '📰 Noticias' },
     { id: 'members', label: '👥 Miembros' },
     ...(isStrictAdmin ? [{ id: 'coins', label: '💰 Coins' }] : []),
@@ -860,6 +863,66 @@ export default function Admin() {
               <div className="empty"><div className="empty-icon">🖼️</div><p>Sin imagen cargada</p></div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Pending Builds */}
+      {tab === 'builds-pending' && (
+        <div>
+          <div className="section-header"><h2>Builds Pendientes de Aprobación</h2><div className="accent-line" /></div>
+          {pendingBuilds.length === 0 ? (
+            <div className="empty"><div className="empty-icon">✅</div><p>No hay builds pendientes de revisión</p></div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {pendingBuilds.map(b => (
+                <div key={b.id} className="card" style={{ border: '1px solid rgba(255,170,0,0.3)', background: 'rgba(255,170,0,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.15rem', color: '#ffaa00' }}>
+                        ⚔️ {b.name}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#6a6a8a', marginTop: 4 }}>
+                        Categoría: <span style={{ color: '#9090b0' }}>{b.category}</span>
+                        {b.author_name && <> · Enviado por: <span style={{ color: '#00d4ff' }}>{b.author_name}</span></>}
+                        {' · '}{formatDate(b.created_at)}
+                      </div>
+                      {b.description && (
+                        <div style={{ fontSize: '0.83rem', color: '#9090b0', marginTop: 6, maxWidth: 500 }}>{b.description}</div>
+                      )}
+                      {b.variants?.length > 0 && (
+                        <div style={{ fontSize: '0.78rem', color: '#6a6a8a', marginTop: 6 }}>
+                          {b.variants.length} variante{b.variants.length !== 1 ? 's' : ''}: {b.variants.map(v => v.role).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button className="btn btn-success btn-sm"
+                        onClick={async () => {
+                          try {
+                            await api.approveContent(b.id);
+                            setPendingBuilds(prev => prev.filter(x => x.id !== b.id));
+                            notify(true, `Build "${b.name}" aprobada`);
+                          } catch (e) { notify(false, e.message); }
+                        }}>
+                        ✅ Aprobar
+                      </button>
+                      <button className="btn btn-danger btn-sm"
+                        onClick={async () => {
+                          if (!confirm(`¿Rechazar y eliminar la build "${b.name}"?`)) return;
+                          try {
+                            await api.deleteContent(b.id);
+                            setPendingBuilds(prev => prev.filter(x => x.id !== b.id));
+                            notify(true, `Build "${b.name}" rechazada`);
+                          } catch (e) { notify(false, e.message); }
+                        }}>
+                        ✕ Rechazar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

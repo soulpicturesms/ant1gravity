@@ -474,7 +474,7 @@ export default function Home() {
         {/* Quick stats */}
         <div className="stats-bar">
           <div className="card stat-box">
-            <div className="stat-value">{rankings?.byFame?.length ?? '—'}</div>
+            <div className="stat-value">{rankings?.total ?? '—'}</div>
             <div className="stat-label">Miembros</div>
           </div>
           <UtcClock />

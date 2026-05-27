@@ -54,6 +54,8 @@ export const api = {
   createContent: (body) => req('/api/contents', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   updateContent: (id, body) => req(`/api/contents/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
   deleteContent: (id) => req(`/api/contents/${id}`, { method: 'DELETE', headers: headers() }),
+  getPendingBuilds: () => req('/api/contents/pending', { headers: headers() }),
+  approveContent: (id) => req(`/api/contents/${id}/approve`, { method: 'POST', headers: headers() }),
 
   // Blacklist
   checkPlayer: (username) => req(`/api/blacklist/check?username=${encodeURIComponent(username)}`),

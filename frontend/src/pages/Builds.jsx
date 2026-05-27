@@ -528,7 +528,7 @@ function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPick
 }
 
 /* ── CONTENT CREATOR / EDITOR ── */
-function ContentCreator({ initial, onSave, onDelete, onClose }) {
+function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
   const isEdit = !!initial;
   const [name, setName]           = useState(initial?.name || '');
   const [category, setCategory]   = useState(initial?.category || 'ZVZ');
@@ -594,7 +594,7 @@ function ContentCreator({ initial, onSave, onDelete, onClose }) {
         {/* Header */}
         <div style={{ padding: '16px 22px', borderBottom: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: 'white', letterSpacing: '0.05em', flex: 1 }}>
-            {isEdit ? 'Editar Contenido' : 'Nuevo Contenido'}
+            {isEdit ? 'Editar Contenido' : isAdmin ? 'Nuevo Contenido' : 'Proponer Build'}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
         </div>
@@ -654,14 +654,19 @@ function ContentCreator({ initial, onSave, onDelete, onClose }) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 22px', borderTop: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          {isEdit && (
+        <div style={{ padding: '14px 22px', borderTop: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+          {isEdit && isAdmin && (
             <button onClick={onDelete} style={{ background: 'rgba(255,50,50,0.1)', border: '1px solid rgba(255,50,50,0.2)', borderRadius: 7, color: '#ff5555', cursor: 'pointer', padding: '8px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem' }}>Eliminar</button>
+          )}
+          {!isAdmin && !isEdit && (
+            <div style={{ fontSize: '0.75rem', color: '#6a6a8a', fontFamily: 'Rajdhani' }}>
+              ⏳ Tu build será revisada por un admin antes de publicarse
+            </div>
           )}
           <div style={{ flex: 1 }} />
           <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #2a2a3a', borderRadius: 7, color: '#6a6a8a', cursor: 'pointer', padding: '8px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem' }}>Cancelar</button>
           <button onClick={handleSave} disabled={saving || !name.trim()} style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,100,180,0.15))', border: '1px solid rgba(0,212,255,0.4)', borderRadius: 7, color: '#00d4ff', cursor: 'pointer', padding: '8px 22px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.05em' }}>
-            {saving ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Crear Contenido'}
+            {saving ? 'Enviando...' : isEdit ? 'Guardar Cambios' : isAdmin ? 'Crear Contenido' : 'Enviar para Revisión'}
           </button>
         </div>
       </div>
@@ -684,7 +689,7 @@ function ContentCreator({ initial, onSave, onDelete, onClose }) {
 ══════════════════════════════════════════ */
 export default function Builds() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'officer';
 
   const [contents, setContents]   = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -720,13 +725,13 @@ export default function Builds() {
             </h1>
             <div style={{ fontSize: '0.8rem', color: '#4a4a6a', marginTop: 2 }}>Guías de equipamiento por contenido</div>
           </div>
-          {isAdmin && (
+          {user && (
             <button onClick={() => setModal({ type: 'create' })} style={{
               background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,100,180,0.1))',
               border: '1px solid rgba(0,212,255,0.3)', borderRadius: 8,
               color: '#00d4ff', cursor: 'pointer', padding: '9px 20px',
               fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.06em',
-            }}>+ Nuevo Contenido</button>
+            }}>{isAdmin ? '+ Nuevo Contenido' : '+ Proponer Build'}</button>
           )}
         </div>
 
@@ -783,6 +788,7 @@ export default function Builds() {
       {(modal?.type === 'create' || modal?.type === 'edit') && (
         <ContentCreator
           initial={modal.type === 'edit' ? modal.content : null}
+          isAdmin={isAdmin}
           onSave={() => { setModal(null); load(); }}
           onDelete={() => handleDelete(modal.content.id)}
           onClose={() => setModal(null)}

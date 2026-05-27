@@ -16,8 +16,9 @@ router.get('/', async (req, res) => {
 
 router.get('/rankings', async (req, res) => {
   const { data: all } = await supabase.from('users').select('*');
-  const users = (all || []).map(safe);
+  const users = (all || []).map(safe).filter(u => u.role !== 'pending');
   res.json({
+    total:        users.length,
     byFame:       [...users].sort((a,b) => b.pvp_fame - a.pvp_fame).slice(0,10),
     byKills:      [...users].sort((a,b) => b.pvp_kills - a.pvp_kills).slice(0,10),
     byCta:        [...users].sort((a,b) => b.cta_attendance - a.cta_attendance).slice(0,10),
