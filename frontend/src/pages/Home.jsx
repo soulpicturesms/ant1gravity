@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import AlbionStatsTab from './AlbionStatsTab';
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -13,6 +12,14 @@ function formatNum(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toLocaleString();
+}
+
+function fmtFame(n) {
+  if (!n) return '0';
+  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
+  if (n >= 1_000_000)     return (n / 1_000_000).toFixed(2) + 'M';
+  if (n >= 1_000)         return (n / 1_000).toFixed(1) + 'K';
+  return String(n);
 }
 
 function CategoryBadge({ cat }) {
@@ -293,52 +300,80 @@ function GiveawayWidget() {
   );
 }
 
-/* ── TOP RANKINGS (from TXT or member DB) ── */
-function TopRankings({ memberRankings }) {
-  const [txtTop, setTxtTop] = useState(null);
+/* ── ALBION RANKINGS SIDEBAR ── */
+const SIDEBAR_TABS = [
+  { key: 'pvp',       label: '⚔️ PvP',    dataKey: 'byKillFame',  statKey: 'killFame',  color: '#ff4466' },
+  { key: 'pve',       label: '🐉 PvE',    dataKey: 'byPve',       statKey: 'pve',       color: '#a78bfa' },
+  { key: 'gathering', label: '⛏️ Recol.', dataKey: 'byGathering', statKey: 'gathering', color: '#00e8c0' },
+  { key: 'crafting',  label: '🔨 Craft',  dataKey: 'byCrafting',  statKey: 'crafting',  color: '#ffd700' },
+];
+
+function AlbionRankingsSidebar() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('pvp');
 
   useEffect(() => {
-    api.getRankingsTop().then(setTxtTop).catch(() => {});
+    api.getAlbionStats().then(setData).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const medals = ['🥇', '🥈', '🥉'];
-
-  const hasTxtData = txtTop && (txtTop.byFame?.length || txtTop.byKills?.length || txtTop.byPveFame?.length);
-
-  const sections = hasTxtData ? [
-    { title: 'Top PvP Semanal',   data: txtTop.byFame,    fmt: v => v?.value?.toLocaleString('es-AR') },
-    { title: 'Top Recolección Semanal', data: txtTop.byKills, fmt: v => v?.value?.toLocaleString('es-AR') },
-    { title: 'Top Fama Semanal',  data: txtTop.byPveFame, fmt: v => v?.value?.toLocaleString('es-AR') },
-  ] : memberRankings ? [
-    { title: 'Top PvP Semanal',   data: memberRankings.byFame?.slice(0, 3),  fmt: v => formatNum(v?.pvp_fame) },
-    { title: 'Top Recolección Semanal', data: memberRankings.byKills?.slice(0, 3), fmt: v => v?.pvp_kills?.toLocaleString() },
-    { title: 'Top Fama Semanal',  data: memberRankings.byCta?.slice(0, 3),   fmt: v => formatNum(v?.cta_attendance) },
-  ] : null;
-
-  if (!sections) return null;
-
-  const nameKey = hasTxtData ? 'name' : 'username';
+  const tab = SIDEBAR_TABS.find(t => t.key === activeTab);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {txtTop && (
-        <div style={{ fontSize: '0.72rem', color: '#4a4a6a', textAlign: 'right' }}>
-          📄 Actualizado: {formatDate(txtTop.uploaded_at)} · {txtTop.total} jugadores
+    <div className="card">
+      <div className="card-title">🏆 Rankings en Vivo</div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 14, flexWrap: 'wrap' }}>
+        {SIDEBAR_TABS.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
+            padding: '4px 10px', borderRadius: 5, cursor: 'pointer',
+            fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
+            border: `1px solid ${activeTab === t.key ? t.color + '66' : '#1e1e30'}`,
+            background: activeTab === t.key ? t.color + '18' : 'transparent',
+            color: activeTab === t.key ? t.color : '#6a6a8a',
+            transition: 'all 0.15s',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {loading && <div style={{ color: '#4a4a6a', fontSize: '0.82rem', padding: '8px 0' }}>Cargando stats...</div>}
+
+      {data && (() => {
+        const list = (data[tab.dataKey] || []).slice(0, 5);
+        const maxVal = list[0]?.[tab.statKey] || 1;
+        return list.length === 0
+          ? <div style={{ color: '#4a4a6a', fontSize: '0.82rem' }}>Sin datos</div>
+          : list.map((p, i) => {
+              const pct = (p[tab.statKey] / maxVal) * 100;
+              const top3 = i < 3;
+              return (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: i < list.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: top3 ? '1.05rem' : '0.88rem', width: 26, textAlign: 'center', color: top3 ? undefined : '#5a5a7a', flexShrink: 0 }}>
+                    {top3 ? medals[i] : '#' + (i + 1)}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: top3 ? '#e0e0f0' : '#a0a0c0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {p.name}
+                    </div>
+                    <div style={{ height: 3, background: '#1a1a28', borderRadius: 2, marginTop: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: pct + '%', background: tab.color, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.82rem', color: tab.color, fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0, minWidth: 52, textAlign: 'right' }}>
+                    {fmtFame(p[tab.statKey])}
+                  </span>
+                </div>
+              );
+            });
+      })()}
+
+      {data?.fetchedAt && (
+        <div style={{ fontSize: '0.68rem', color: '#3a3a5a', textAlign: 'right', marginTop: 10 }}>
+          ↻ {new Date(data.fetchedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
-      {sections.map(({ title, data, key, fmt }) => (
-        <div key={title} className="card">
-          <div className="card-title">🏆 {title}</div>
-          {(!data || data.length === 0) && <div style={{ color: '#4a4a6a', fontSize: '0.82rem' }}>Sin datos</div>}
-          {data?.map((m, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < data.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', width: 28 }}>{medals[i]}</span>
-              <span style={{ flex: 1, fontSize: '0.9rem', fontWeight: 600 }}>{m[nameKey]}</span>
-              <span style={{ fontSize: '0.85rem', color: '#00d4ff', fontFamily: 'Rajdhani', fontWeight: 700 }}>{fmt(m)}</span>
-            </div>
-          ))}
-        </div>
-      ))}
     </div>
   );
 }
@@ -535,15 +570,7 @@ export default function Home() {
 
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <TopRankings memberRankings={rankings} />
-          </div>
-        </div>
-
-        {/* Live Rankings */}
-        <div style={{ marginTop: 32 }}>
-          <div className="section-header"><h2>Rankings en Vivo</h2><div className="accent-line" /></div>
-          <div className="card" style={{ marginTop: 16 }}>
-            <AlbionStatsTab />
+            <AlbionRankingsSidebar />
           </div>
         </div>
       </div>
