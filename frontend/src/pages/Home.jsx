@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import AlbionStatsTab from './AlbionStatsTab';
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -535,6 +536,14 @@ export default function Home() {
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <TopRankings memberRankings={rankings} />
+          </div>
+        </div>
+
+        {/* Live Rankings */}
+        <div style={{ marginTop: 32 }}>
+          <div className="section-header"><h2>Rankings en Vivo</h2><div className="accent-line" /></div>
+          <div className="card" style={{ marginTop: 16 }}>
+            <AlbionStatsTab />
           </div>
         </div>
       </div>

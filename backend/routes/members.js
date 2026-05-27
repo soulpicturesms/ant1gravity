@@ -95,7 +95,7 @@ async function fetchInBatches(items, fn, size = 5) {
   return results;
 }
 
-router.get('/albion-stats', requireAdmin, async (req, res) => {
+router.get('/albion-stats', async (req, res) => {
   try {
     if (albionStatsCache.data && Date.now() - albionStatsCache.ts < CACHE_TTL_ALBION) {
       return res.json(albionStatsCache.data);
