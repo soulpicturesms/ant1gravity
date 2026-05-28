@@ -112,6 +112,32 @@ class CasinoAudio {
     } catch (e) {}
   }
 
+  // ── CARD SHUFFLE ─────────────────────────────────────────────────
+  playCardShuffle() {
+    if (this.muted) return;
+    this.init();
+    if (this._play('cardShuffle', 0.8)) return;
+    // Fallback synthesis for shuffle
+    try {
+      const now = this.ctx.currentTime;
+      [0, 0.14, 0.28].forEach((t, i) => {
+        const at = now + t;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this._noiseBuffer(0.12);
+        const f = this.ctx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.setValueAtTime(1300 - i * 120, at);
+        f.frequency.exponentialRampToValueAtTime(320, at + 0.12);
+        f.Q.value = 1.0;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.06, at);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.11);
+        noise.connect(f); f.connect(g); g.connect(this.ctx.destination);
+        noise.start(at); noise.stop(at + 0.13);
+      });
+    } catch (e) {}
+  }
+
   // ── ROULETTE TICK ────────────────────────────────────────────────
   playRouletteTick() {
     if (this.muted) return;
