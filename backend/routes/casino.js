@@ -357,6 +357,7 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
 
   const totalBet = bets.reduce((s, b) => s + (parseInt(b.amount) || 0), 0);
   if (totalBet <= 0) return res.status(400).json({ error: 'Apuesta inválida' });
+  if (totalBet > 100000) return res.status(400).json({ error: 'Apuesta máxima total: 100.000 tokens' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
   if (!user || user.coins < totalBet) return res.status(400).json({ error: 'Tokens insuficientes' });
@@ -434,6 +435,7 @@ router.post('/plinko/drop', requireAuth, async (req, res) => {
   const risk = req.body.risk || 'medio';
 
   if (!bet || bet < 10) return res.status(400).json({ error: 'Apuesta mínima: 10 tokens' });
+  if (bet > 10000) return res.status(400).json({ error: 'Apuesta máxima: 10.000 tokens' });
   if (!['bajo', 'medio', 'alto'].includes(risk)) return res.status(400).json({ error: 'Riesgo inválido' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
@@ -526,6 +528,7 @@ const SLOTS_PAYTABLE = {
 router.post('/slots/spin', requireAuth, async (req, res) => {
   const bet = parseInt(req.body.bet);
   if (!bet || bet < 9) return res.status(400).json({ error: 'Apuesta mínima: 9 tokens (1 por línea)' });
+  if (bet > 10000) return res.status(400).json({ error: 'Apuesta máxima: 10.000 tokens' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
   if (!user || user.coins < bet) return res.status(400).json({ error: 'Tokens insuficientes' });
@@ -693,6 +696,19 @@ router.post('/slots/spin', requireAuth, async (req, res) => {
     jackpotAmount: jackpotWon ? finalPayout - totalPayout : jackpotAmount,
     balance: newBalance,
   });
+});
+
+// ── GAME HISTORY (per user, auth required) ────────────────────────────────────
+router.get('/history', requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from('coin_transactions')
+    .select('amount, reason, created_at')
+    .eq('type', 'casino')
+    .eq('user_id', req.user.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
 });
 
 // ── RECENT WINS (public) ──────────────────────────────────────────────────────

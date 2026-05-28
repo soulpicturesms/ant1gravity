@@ -506,6 +506,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
   const totalBet = bets.reduce((s, b) => s + b.amount, 0);
 
   const addBet = useCallback((type, value) => {
+    if (totalBet + chip > 100000) return setErr('Apuesta máxima total: 100.000 tokens');
     casinoAudio.playChip();
     setBets(prev => {
       const ex = prev.find(x => x.type===type && x.value===value);
@@ -513,7 +514,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
       return [...prev, { type, value, amount: chip }];
     });
     setSummary(null);
-  }, [chip]);
+  }, [chip, totalBet]);
 
   const stopSounds = useCallback(() => {
     clearTimeout(tickRef.current);

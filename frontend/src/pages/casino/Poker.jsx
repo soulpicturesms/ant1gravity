@@ -595,6 +595,7 @@ export default function Poker({ user }) {
   const canStart = isWaiting && players.length >= 2 && me;
   const isShowdown = state.phase === 'showdown';
   const minRaise = (state.currentBet || 0) + (state.minRaise || state.buyIn || 100);
+  const maxRaise = Math.min((me?.chips || 0) + (me?.roundBet || 0), (state.currentBet || 0) + 10000);
 
   return (
     <div className="casino-roul-view">
@@ -670,9 +671,9 @@ export default function Poker({ user }) {
               <input
                 type="number"
                 min={minRaise}
-                max={me?.chips || 10000}
+                max={maxRaise}
                 value={raiseAmt}
-                onChange={e => setRaiseAmt(e.target.value)}
+                onChange={e => setRaiseAmt(Math.min(maxRaise, parseInt(e.target.value) || minRaise))}
                 placeholder={minRaise}
                 disabled={!isMyTurn || actionLoading}
                 style={{
@@ -704,7 +705,7 @@ export default function Poker({ user }) {
                   disabled={!isMyTurn || actionLoading}
                   onClick={() => setRaiseAmt(prev => {
                     const currentVal = parseInt(prev) || minRaise;
-                    return Math.min(me?.chips || 10000, currentVal * 2);
+                    return Math.min(maxRaise, currentVal * 2);
                   })}
                   style={{
                     background: 'none', border: 'none', width: 34, color: 'var(--c-text3)',
@@ -869,7 +870,7 @@ export default function Poker({ user }) {
                 <button
                   onClick={() => setRaiseAmt(prev => {
                     const val = parseInt(prev) || minRaise;
-                    return Math.min(me?.chips || 10000, val + 100);
+                    return Math.min(maxRaise, val + 100);
                   })}
                   style={{
                     flex: 1, height: 34, background: 'var(--c-surface2)',

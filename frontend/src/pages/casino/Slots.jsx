@@ -333,8 +333,8 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
   };
 
   const half   = () => { if (!spinning) setBet(b => Math.max(9, Math.floor(b / 2) - (Math.floor(b / 2) % 9))); };
-  const double = () => { if (!spinning) setBet(b => Math.min(900, b * 2)); };
-  const maxBet = () => { if (!spinning) setBet(Math.min(900, Math.max(9, Math.floor(balance / 9) * 9))); };
+  const double = () => { if (!spinning) setBet(b => Math.min(9999, b * 2)); };
+  const maxBet = () => { if (!spinning) setBet(Math.min(9999, Math.max(9, Math.floor(balance / 9) * 9))); };
 
   return (
     <div className="casino-roul-view">
@@ -389,8 +389,8 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
           <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
               <input
-                type="number" min="9" step="9" value={bet} disabled={spinning}
-                onChange={e => setBet(Math.max(9, parseInt(e.target.value) || 9))}
+                type="number" min="9" step="9" max="9999" value={bet} disabled={spinning}
+                onChange={e => setBet(Math.max(9, Math.min(9999, parseInt(e.target.value) || 9)))}
                 style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.1rem', textAlign: 'right' }}
               />
               <span style={{ color: 'var(--c-text4)', fontSize: '0.68rem', marginLeft: 6 }}>TK</span>

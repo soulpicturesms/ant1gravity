@@ -243,6 +243,81 @@ function LiveWinsTicker() {
   );
 }
 
+function parseGameName(reason) {
+  if (!reason) return 'Casino';
+  if (reason.startsWith('Blackjack')) return 'Blackjack Pro';
+  if (reason.startsWith('Plinko')) return 'Plinko Zero-G';
+  if (reason.startsWith('Tragaperras')) return 'Anti-Gravity Slots';
+  if (reason.startsWith('Ruleta')) return 'Ruleta Americana';
+  return 'Casino';
+}
+
+function MyGameHistory() {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.casinoHistory()
+      .then(data => { setRows(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>Cargando historial...</div>
+  );
+
+  if (!rows.length) return (
+    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>Aún no has jugado ninguna partida.</div>
+  );
+
+  return (
+    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', borderRadius: '14px', overflow: 'hidden', marginTop: 16 }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+        <thead>
+          <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
+            {['Juego', 'Resultado', 'Neto', 'Fecha'].map((h, i) => (
+              <th key={i} style={{
+                padding: '10px 14px',
+                fontFamily: 'Unbounded, system-ui',
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--c-text4)',
+                textAlign: i >= 2 ? 'right' : 'left'
+              }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const isWin = r.amount > 0;
+            const isPush = r.amount === 0;
+            const netColor = isWin ? 'var(--c-accent2)' : isPush ? 'var(--c-text3)' : '#ff6b6b';
+            const date = new Date(r.created_at);
+            const dateStr = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+            const timeStr = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            return (
+              <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
+                <td style={{ padding: '10px 14px', color: 'var(--c-text2)' }}>{parseGameName(r.reason)}</td>
+                <td style={{ padding: '10px 14px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--c-text3)', fontSize: 12 }}>
+                  {r.reason || '—'}
+                </td>
+                <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: netColor }}>
+                  {isWin ? '+' : ''}{r.amount.toLocaleString('es-AR')}
+                </td>
+                <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--c-text4)', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
+                  {dateStr} {timeStr}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function Casino() {
   const { user } = useAuth();
   const [activeGame, setActiveGame] = useState(null);
@@ -564,6 +639,16 @@ export default function Casino() {
             <h2>Ganadores recientes <span className="c-acc">LIVE</span></h2>
           </div>
           <LiveWinsTicker />
+
+          {/* My game history — only shown when logged in */}
+          {user && (
+            <>
+              <div className="casino-section-head" style={{ marginTop: 32 }}>
+                <h2>Mi <span className="c-acc">historial</span></h2>
+              </div>
+              <MyGameHistory />
+            </>
+          )}
         </div>
       )}
 

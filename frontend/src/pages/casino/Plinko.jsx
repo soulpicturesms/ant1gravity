@@ -418,8 +418,8 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
   useEffect(() => { betRef.current = bet; }, [bet]);
 
   const half   = () => setBet(b => Math.max(10, Math.floor(b / 2)));
-  const double = () => setBet(b => Math.min(balance, b * 2));
-  const setMax = () => setBet(balance);
+  const double = () => setBet(b => Math.min(Math.min(balance, 10000), b * 2));
+  const setMax = () => setBet(Math.min(balance, 10000));
 
   return (
     <div className="casino-roul-view">
@@ -457,8 +457,8 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
           <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
               <input
-                type="number" min="10" value={bet} disabled={loading}
-                onChange={e => setBet(Math.max(10, parseInt(e.target.value) || 10))}
+                type="number" min="10" max="10000" value={bet} disabled={loading}
+                onChange={e => setBet(Math.max(10, Math.min(10000, parseInt(e.target.value) || 10)))}
                 style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.1rem', textAlign: 'right' }}
               />
               <span style={{ color: 'var(--c-text4)', fontSize: '0.68rem', marginLeft: 6 }}>TK</span>

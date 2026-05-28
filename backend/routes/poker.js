@@ -240,6 +240,7 @@ router.post('/rooms/:id/action', requireAuth, async (req,res) => {
     } else if(action==='raise') {
       const total=parseInt(amount);
       if(total<=state.currentBet) return res.status(400).json({error:'Raise debe ser mayor'});
+      if(total-state.currentBet>10000) return res.status(400).json({error:'Raise máximo: 10.000 tokens por acción'});
       const extra=total-player.roundBet;
       if(extra>player.chips) return res.status(400).json({error:'Chips insuficientes'});
       player.chips-=extra; player.roundBet=total; state.pot+=extra;

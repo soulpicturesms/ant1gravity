@@ -47,26 +47,27 @@ router.get('/me', requireAuth, async (req, res) => {
   const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).maybeSingle();
   if (!user) return res.status(404).json({ error: 'No encontrado' });
   
-  // Si tiene personaje vinculado pero no tiene avatar guardado, buscarlo en background
+  // Si tiene personaje vinculado pero no tiene avatar guardado, buscarlo de forma síncrona
   if (user.albion_character && !user.albion_avatar) {
-    (async () => {
-      try {
-        const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
-        const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(user.albion_character)}`);
-        if (searchRes.ok) {
-          const searchData = await searchRes.json();
-          const player = (searchData.players || []).find(p => p.Name.toLowerCase() === user.albion_character.toLowerCase());
-          if (player && (player.Avatar || player.AvatarRing)) {
-            await supabase.from('users').update({
-              albion_avatar: player.Avatar || null,
-              albion_ring: player.AvatarRing || null
-            }).eq('id', user.id);
-          }
+    try {
+      const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
+      const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(user.albion_character)}`);
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const player = (searchData.players || []).find(p => p.Name.toLowerCase() === user.albion_character.toLowerCase());
+        if (player && (player.Avatar || player.AvatarRing)) {
+          user.albion_avatar = player.Avatar || null;
+          user.albion_ring = player.AvatarRing || null;
+          
+          await supabase.from('users').update({
+            albion_avatar: user.albion_avatar,
+            albion_ring: user.albion_ring
+          }).eq('id', user.id);
         }
-      } catch (err) {
-        console.error('Error en fetch background de avatar Albion:', err.message);
       }
-    })();
+    } catch (err) {
+      console.error('Error al sincronizar avatar de Albion:', err.message);
+    }
   }
 
   res.json(safe(user));
