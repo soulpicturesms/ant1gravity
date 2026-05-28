@@ -64,21 +64,21 @@ function PlayerSeat({ player, isMe, isCurrent, myCards }) {
         boxShadow: isCurrent ? '0 0 18px rgba(255,215,0,0.35), 0 0 40px rgba(255,215,0,0.15)' : 'none',
         transition: 'all 0.3s',
       }}>
-        <div style={{ fontSize: '0.78rem', fontFamily: 'Inter', system-ui, fontWeight: 700, color: isCurrent ? '#ffd700' : isMe ? '#ff2d7a' : '#ecedf4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: '0.78rem', fontFamily: 'Inter, system-ui', fontWeight: 700, color: isCurrent ? '#ffd700' : isMe ? '#ff2d7a' : '#ecedf4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {isCurrent && <span style={{ marginRight: 3 }}>▶</span>}{player.username || '?'}{isMe ? ' (vos)' : ''}
         </div>
-        <div style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter', system-ui, fontWeight: 600 }}>
+        <div style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>
           ⚡ {(player.chips || 0).toLocaleString('es-AR')}
         </div>
-        {folded && <div style={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'Inter', system-ui, fontWeight: 700, marginTop: 1 }}>FOLD</div>}
-        {allIn  && <div style={{ fontSize: '0.6rem', color: '#ffd700', fontFamily: 'Inter', system-ui, fontWeight: 700, marginTop: 1 }}>ALL IN</div>}
+        {folded && <div style={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 1 }}>FOLD</div>}
+        {allIn  && <div style={{ fontSize: '0.6rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 1 }}>ALL IN</div>}
         {player.roundBet > 0 && !folded && (
-          <div style={{ fontSize: '0.6rem', color: '#ff2d7a', fontFamily: 'Inter', system-ui, marginTop: 1 }}>
+          <div style={{ fontSize: '0.6rem', color: '#ff2d7a', fontFamily: 'Inter, system-ui', marginTop: 1 }}>
             Bet: {player.roundBet.toLocaleString('es-AR')}
           </div>
         )}
         {player.bestHand?.name && (
-          <div style={{ fontSize: '0.62rem', color: '#ffd700', fontFamily: 'Inter', system-ui, fontWeight: 700, marginTop: 2 }}>
+          <div style={{ fontSize: '0.62rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 2 }}>
             {player.bestHand.name}
           </div>
         )}
@@ -127,7 +127,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
 
         {/* Phase badge */}
         {phase && phase !== 'waiting' && (
-          <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter', system-ui, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+          <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, system-ui', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
             {phase === 'preflop' ? '● PRE-FLOP' : phase === 'flop' ? '● FLOP' : phase === 'turn' ? '● TURN' : phase === 'river' ? '● RIVER' : phase.toUpperCase()}
           </div>
         )}
@@ -142,7 +142,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
         {/* Pot */}
         <div style={{ position: 'absolute', bottom: '20%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
           {pot > 0 && (
-            <div style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 20, padding: '4px 18px', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1rem', color: '#ffd700', whiteSpace: 'nowrap' }}>
+            <div style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 20, padding: '4px 18px', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', whiteSpace: 'nowrap' }}>
               🏆 {pot.toLocaleString('es-AR')} tokens
             </div>
           )}
@@ -151,7 +151,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
         {/* Showdown result on table */}
         {showdown?.winner && (
           <div style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1rem', color: '#ffd700', background: 'rgba(0,0,0,0.7)', padding: '5px 16px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', background: 'rgba(0,0,0,0.7)', padding: '5px 16px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>
               🏆 {showdown.winner.username} · {showdown.winner.handName}
             </div>
           </div>
@@ -177,7 +177,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
 
       {/* Empty seat indicator */}
       {ordered.length === 0 && (
-        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter', system-ui, fontSize: '1.1rem', zIndex: 2 }}>
+        <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter, system-ui', fontSize: '1.1rem', zIndex: 2 }}>
           Esperando jugadores...
         </div>
       )}
@@ -228,8 +228,8 @@ function RoomList({ onJoin }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.5rem', color: '#ff2d7a', letterSpacing: '0.08em' }}>♠ TEXAS HOLD'EM</div>
-          <div style={{ fontSize: '0.78rem', color: '#6f7088', fontFamily: 'Inter', system-ui }}>Multijugador · Tiempo real</div>
+          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.5rem', color: '#ff2d7a', letterSpacing: '0.08em' }}>♠ TEXAS HOLD'EM</div>
+          <div style={{ fontSize: '0.78rem', color: '#6f7088', fontFamily: 'Inter, system-ui' }}>Multijugador · Tiempo real</div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(s => !s)}>
           {showCreate ? '✕ Cancelar' : '+ Nueva Mesa'}
@@ -241,7 +241,7 @@ function RoomList({ onJoin }) {
       {/* Create form */}
       {showCreate && (
         <div className="card" style={{ border: '1px solid rgba(255,45,122,0.25)', background: 'rgba(255,45,122,0.05)', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a', marginBottom: 14 }}>Nueva Mesa</div>
+          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a', marginBottom: 14 }}>Nueva Mesa</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input className="input" placeholder="Nombre de la sala..." value={name} onChange={e => setName(e.target.value)} />
             <div style={{ display: 'flex', gap: 8 }}>
@@ -280,8 +280,8 @@ function RoomList({ onJoin }) {
           return (
             <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, border: '1px solid rgba(255,45,122,0.10)' }}>
               <div>
-                <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1rem', color: 'white' }}>{r.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 3, fontFamily: 'Inter', system-ui }}>
+                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: 'white' }}>{r.name}</div>
+                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 3, fontFamily: 'Inter, system-ui' }}>
                   Buy-in: {(s.buyIn || 100).toLocaleString('es-AR')} chips · {playerCount}/{s.maxPlayers || 6} jugadores
                   <span style={{ marginLeft: 8, color: isPlaying ? '#ffd700' : '#00cc66' }}>● {isPlaying ? 'En juego' : 'Esperando'}</span>
                 </div>
@@ -448,8 +448,8 @@ export default function Poker({ user }) {
       {/* Top bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <div>
-          <span style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a' }}>♠ {state.name || 'Mesa Poker'}</span>
-          <span style={{ marginLeft: 12, fontSize: '0.75rem', color: '#6f7088', fontFamily: 'Inter', system-ui }}>
+          <span style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a' }}>♠ {state.name || 'Mesa Poker'}</span>
+          <span style={{ marginLeft: 12, fontSize: '0.75rem', color: '#6f7088', fontFamily: 'Inter, system-ui' }}>
             Buy-in: {(state.buyIn || 100).toLocaleString('es-AR')} · {players.length}/{state.maxPlayers || 6} jugadores
           </span>
         </div>
@@ -460,7 +460,7 @@ export default function Poker({ user }) {
           }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', color: 'rgba(255,255,255,0.3)', padding: 4 }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
             {muted ? '🔇' : '🔊'}
           </button>
-          <button onClick={handleLeave} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6f7088', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Inter', system-ui }}>
+          <button onClick={handleLeave} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6f7088', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Inter, system-ui' }}>
             ← Salir
           </button>
         </div>
@@ -471,23 +471,23 @@ export default function Poker({ user }) {
       {/* Showdown banner */}
       {isShowdown && state.showdown?.winner && (
         <div style={{ textAlign: 'center', padding: '12px 20px', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.35)', borderRadius: 10, marginBottom: 10 }}>
-          <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.4rem', color: '#ffd700', marginBottom: 6 }}>
+          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.4rem', color: '#ffd700', marginBottom: 6 }}>
             🏆 {state.showdown.winner.username} gana · {state.showdown.winner.handName}!
           </div>
           {state.showdown.players?.length > 0 && (
             <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
               {state.showdown.players.map(p => (
                 <div key={p.userId} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#a5a6b8', fontFamily: 'Inter', system-ui }}>{p.username}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>{p.username}</div>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 4 }}>
                     {p.holeCards?.map((c, i) => <Card key={i} card={c} size="sm" />)}
                   </div>
-                  {p.bestHand && <div style={{ fontSize: '0.68rem', color: '#ff2d7a', marginTop: 3, fontFamily: 'Inter', system-ui, fontWeight: 700 }}>{p.bestHand.name}</div>}
+                  {p.bestHand && <div style={{ fontSize: '0.68rem', color: '#ff2d7a', marginTop: 3, fontFamily: 'Inter, system-ui', fontWeight: 700 }}>{p.bestHand.name}</div>}
                 </div>
               ))}
             </div>
           )}
-          <div style={{ fontSize: '0.75rem', color: '#4a4a6a', marginTop: 8, fontFamily: 'Inter', system-ui }}>Próxima mano en 5s...</div>
+          <div style={{ fontSize: '0.75rem', color: '#4a4a6a', marginTop: 8, fontFamily: 'Inter, system-ui' }}>Próxima mano en 5s...</div>
         </div>
       )}
 
@@ -506,12 +506,12 @@ export default function Poker({ user }) {
       {/* My cards (large display) */}
       {myCards.length > 0 && (
         <div style={{ textAlign: 'center', marginTop: -20, marginBottom: 12 }}>
-          <div style={{ fontSize: '0.68rem', color: '#6f7088', fontFamily: 'Inter', system-ui, fontWeight: 700, letterSpacing: '0.15em', marginBottom: 6 }}>TU MANO</div>
+          <div style={{ fontSize: '0.68rem', color: '#6f7088', fontFamily: 'Inter, system-ui', fontWeight: 700, letterSpacing: '0.15em', marginBottom: 6 }}>TU MANO</div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             {myCards.map((c, i) => <Card key={i} card={c} size="lg" />)}
           </div>
           {me?.chips !== undefined && (
-            <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#a5a6b8', fontFamily: 'Inter', system-ui }}>
+            <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>
               Chips: <span style={{ color: '#ffd700', fontWeight: 700 }}>⚡ {(me.chips || 0).toLocaleString('es-AR')}</span>
               {me.roundBet > 0 && <span style={{ marginLeft: 12 }}>Apuesta actual: <span style={{ color: '#ff2d7a' }}>{me.roundBet.toLocaleString('es-AR')}</span></span>}
             </div>
@@ -521,7 +521,7 @@ export default function Poker({ user }) {
 
       {/* Waiting for players */}
       {isWaiting && players.length < 2 && (
-        <div style={{ textAlign: 'center', padding: '16px', color: '#6f7088', fontFamily: 'Inter', system-ui, fontSize: '0.9rem' }}>
+        <div style={{ textAlign: 'center', padding: '16px', color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.9rem' }}>
           Esperando más jugadores... ({players.length}/2 mínimo)
         </div>
       )}
@@ -531,22 +531,22 @@ export default function Poker({ user }) {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
 
           {canStart && (
-            <button className="btn btn-primary" onClick={doStart} style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, padding: '10px 28px' }}>
+            <button className="btn btn-primary" onClick={doStart} style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, padding: '10px 28px' }}>
               🃏 Iniciar Partida
             </button>
           )}
 
           {isMyTurn && !actionLoading && (
             <>
-              <button onClick={() => doAction('fold')} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', borderRadius: 6, padding: '10px 22px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
+              <button onClick={() => doAction('fold')} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', borderRadius: 6, padding: '10px 22px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.3)'}
                 onMouseLeave={e => e.currentTarget.style.background='rgba(239,68,68,0.15)'}>
                 FOLD
               </button>
 
               {callAmt === 0
-                ? <button className="btn btn-secondary" onClick={() => doAction('check')} style={{ padding: '10px 22px', fontFamily: 'Inter', system-ui, fontWeight: 700 }}>CHECK</button>
-                : <button className="btn btn-secondary" onClick={() => doAction('call')} style={{ padding: '10px 22px', fontFamily: 'Inter', system-ui, fontWeight: 700 }}>CALL {callAmt.toLocaleString('es-AR')}</button>
+                ? <button className="btn btn-secondary" onClick={() => doAction('check')} style={{ padding: '10px 22px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>CHECK</button>
+                : <button className="btn btn-secondary" onClick={() => doAction('call')} style={{ padding: '10px 22px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>CALL {callAmt.toLocaleString('es-AR')}</button>
               }
 
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -554,15 +554,15 @@ export default function Poker({ user }) {
                   className="input" type="number" placeholder="Monto..."
                   min={(state.currentBet || 0) + (state.minRaise || state.buyIn || 100)}
                   value={raiseAmt} onChange={e => setRaiseAmt(e.target.value)}
-                  style={{ width: 100, fontFamily: 'Inter', system-ui, fontWeight: 700 }}
+                  style={{ width: 100, fontFamily: 'Inter, system-ui', fontWeight: 700 }}
                 />
                 <button className="btn btn-primary btn-sm" onClick={() => doAction('raise', raiseAmt)} disabled={!raiseAmt || parseInt(raiseAmt) <= state.currentBet}
-                  style={{ padding: '8px 16px', fontFamily: 'Inter', system-ui, fontWeight: 700 }}>
+                  style={{ padding: '8px 16px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>
                   RAISE
                 </button>
               </div>
 
-              <button onClick={() => doAction('allin')} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.45)', color: '#ffd700', borderRadius: 6, padding: '10px 18px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
+              <button onClick={() => doAction('allin')} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.45)', color: '#ffd700', borderRadius: 6, padding: '10px 18px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
                 onMouseEnter={e => e.currentTarget.style.background='rgba(255,215,0,0.25)'}
                 onMouseLeave={e => e.currentTarget.style.background='rgba(255,215,0,0.12)'}>
                 ALL IN ♠
@@ -570,10 +570,10 @@ export default function Poker({ user }) {
             </>
           )}
 
-          {actionLoading && <div style={{ color: '#6f7088', fontFamily: 'Inter', system-ui }}>...</div>}
+          {actionLoading && <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui' }}>...</div>}
 
           {!isMyTurn && !isWaiting && !isShowdown && (
-            <div style={{ color: '#6f7088', fontFamily: 'Inter', system-ui, fontSize: '0.88rem' }}>
+            <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.88rem' }}>
               Turno de: <span style={{ color: '#ffd700', fontWeight: 700 }}>{currentPlayer?.username}</span>...
             </div>
           )}
