@@ -191,4 +191,55 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
   res.json({ number, color, results, totalPayout, net, balance: user.coins + net });
 });
 
+// ── PLINKO ────────────────────────────────────────────────────────────────────
+const PLINKO_MULTIPLIERS = {
+  bajo:  [5.6, 1.6, 1.2, 1.0, 0.7, 0.5, 0.5, 0.5, 0.7, 1.0, 1.2, 1.6, 5.6],
+  medio: [13.0, 4.0, 1.5, 1.1, 0.7, 0.4, 0.2, 0.4, 0.7, 1.1, 1.5, 4.0, 13.0],
+  alto:  [33.0, 11.0, 3.0, 1.3, 0.5, 0.2, 0.0, 0.2, 0.5, 1.3, 3.0, 11.0, 33.0],
+};
+
+router.post('/plinko/drop', requireAuth, async (req, res) => {
+  const bet = parseInt(req.body.bet);
+  const risk = req.body.risk || 'medio';
+
+  if (!bet || bet < 10) return res.status(400).json({ error: 'Apuesta mínima: 10 tokens' });
+  if (!['bajo', 'medio', 'alto'].includes(risk)) return res.status(400).json({ error: 'Riesgo inválido' });
+
+  const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+  if (!user || user.coins < bet) return res.status(400).json({ error: 'Tokens insuficientes' });
+
+  const rows = 12;
+  const path = [];
+  let bucket = 0;
+
+  for (let i = 0; i < rows; i++) {
+    const choice = Math.random() < 0.5 ? 0 : 1;
+    path.push(choice);
+    bucket += choice;
+  }
+
+  const multipliers = PLINKO_MULTIPLIERS[risk];
+  const multiplier = multipliers[bucket];
+  const payout = Math.floor(bet * multiplier);
+  const net = payout - bet;
+
+  await supabase.from('users').update({ coins: user.coins + net }).eq('id', req.user.id);
+  await supabase.from('coin_transactions').insert({
+    user_id: req.user.id,
+    username: user.username,
+    amount: net,
+    type: 'casino',
+    reason: `Plinko — riesgo ${risk.toUpperCase()} (x${multiplier}) ${net >= 0 ? '+' : ''}${net}`,
+  });
+
+  res.json({
+    path,
+    bucket,
+    multiplier,
+    payout,
+    net,
+    balance: user.coins + net,
+  });
+});
+
 module.exports = router;
