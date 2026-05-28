@@ -264,30 +264,30 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
         const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
         const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
         const pocketArc = (2 * Math.PI) / 38;
+        const halfPocket = pocketArc * 0.5;
         
         // --- Realistic angular physics ---
-        // Gentle spring pull towards target pocket (very weak at first, strengthens over time)
         let diff = targetRelAngle - relAngleRef.current;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        const springStrength = Math.min(0.003 + bounceTimerRef.current * 0.0003, 0.04);
+        
+        // Spring pull: starts weak for natural bouncing, ramps up as energy decays
+        // so the ball is guaranteed to be in the correct pocket before settling
+        const energyFactor = 1 - bounceIntensityRef.current; // 0→1 as energy drops
+        const springStrength = 0.003 + energyFactor * energyFactor * 0.07;
         relAngleVelRef.current += diff * springStrength;
         
-        // Natural fret collision bounces - when ball crosses a pocket divider
+        // Natural fret collision bounces - only while energy is still high
         const relativeAngle = relAngleRef.current;
         const currentPocketFloat = (((relativeAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) / pocketArc;
         const currentPocket = Math.floor(currentPocketFloat);
         const posInPocket = currentPocketFloat - currentPocket;
         
-        // Detect fret crossing (near pocket boundaries) and bounce off
-        if (bounceIntensityRef.current > 0.02) {
+        if (bounceIntensityRef.current > 0.06) {
           if (posInPocket < 0.08 || posInPocket > 0.92) {
-            // Hit a fret! Reverse some angular velocity + add randomness
             if (Math.abs(relAngleVelRef.current) > 0.003) {
               relAngleVelRef.current *= -(0.3 + Math.random() * 0.3) * bounceIntensityRef.current;
-              // Random kick simulating uneven frets
               relAngleVelRef.current += (Math.random() - 0.5) * 0.04 * bounceIntensityRef.current;
               
-              // Trigger tick sound on fret hit
               if (currentPocket !== lastSlotRef.current) {
                 lastSlotRef.current = currentPocket;
                 casinoAudio.playRouletteTick();
@@ -296,42 +296,37 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
           }
         }
         
-        // Friction (angular)
-        relAngleVelRef.current *= 0.985 - (0.005 * (1 - bounceIntensityRef.current));
+        // Friction (angular) — increases as energy drops
+        const friction = 0.985 - (0.012 * energyFactor);
+        relAngleVelRef.current *= friction;
         relAngleRef.current += relAngleVelRef.current;
         ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
         
-        // --- Realistic radial bounce physics (gravity-like) ---
-        const pocketBottom = R - 16;  // deepest point in pocket
-        const pocketRim = R - 4;       // top rim of pockets
+        // --- Realistic radial bounce physics ---
+        const pocketBottom = R - 16;
+        const pocketRim = R - 4;
         
-        // Gravity pulls ball toward pocket bottom
         const radialGravity = -0.08 * bounceIntensityRef.current;
         ballRadiusVelRef.current += radialGravity;
-        
-        // Apply velocity
         ballRadiusRef.current += ballRadiusVelRef.current;
         
-        // Bounce off pocket bottom
         if (ballRadiusRef.current <= pocketBottom) {
           ballRadiusRef.current = pocketBottom;
           ballRadiusVelRef.current = Math.abs(ballRadiusVelRef.current) * (0.45 + Math.random() * 0.2) * bounceIntensityRef.current;
         }
-        
-        // Constrain to pocket rim
         if (ballRadiusRef.current > pocketRim) {
           ballRadiusRef.current = pocketRim;
           ballRadiusVelRef.current *= -0.5;
         }
         
-        // Energy dissipation - bounce intensity decays naturally
         bounceIntensityRef.current *= 0.993;
         ballRadiusVelRef.current *= 0.96;
         
-        // Transition to settling when energy is very low
+        // Transition to settling ONLY when energy is low AND ball is in/near target pocket
         if (bounceIntensityRef.current <= 0.025 && 
             Math.abs(relAngleVelRef.current) < 0.004 && 
-            Math.abs(ballRadiusVelRef.current) < 0.15) {
+            Math.abs(ballRadiusVelRef.current) < 0.15 &&
+            Math.abs(diff) < halfPocket) {
           ballStateRef.current = 'settling';
           bounceTimerRef.current = 0;
           casinoAudio.playRouletteSettle();
