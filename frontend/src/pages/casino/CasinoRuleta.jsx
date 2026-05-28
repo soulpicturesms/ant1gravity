@@ -69,34 +69,48 @@ function RouletteWheelSVG() {
 }
 
 function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) {
-  const wRef = useRef(null);
   const size = wheelSize;
   const half = size / 2;
 
-  // Ball screen angle is relative to the counter-clockwise rotation (-wheelRot)
-  const screenAngle = ballAngleRel - wheelRot;
-  const rad = (screenAngle * Math.PI) / 180;
-  const bx = half + Math.cos(rad) * ballRadius;
-  const by = half + Math.sin(rad) * ballRadius;
-
   return (
-    <div ref={wRef} style={{ width: size, height: size, position: 'relative', userSelect: 'none', filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))' }}>
+    <div style={{ width: size, height: size, position: 'relative', userSelect: 'none', filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))' }}>
       
-      {/* Rotated SVG wheel */}
-      <div style={{ width: '100%', height: '100%', transform: `rotate(${-wheelRot}deg)`, transition: 'transform 0s' }}>
+      {/* 1. Rotated Wheel Container (contains the wheel SVG + the ball) */}
+      <div style={{
+        width: '100%',
+        height: '100%',
+        transform: `rotate(${-wheelRot}deg)`,
+        transition: 'transform 0s',
+        position: 'relative'
+      }}>
         <RouletteWheelSVG />
+
+        {/* Floating ball inside the rotated wheel container - GPU accelerated (buttery smooth) */}
+        {ballRadius > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: 17,
+              height: 17,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 35%, #ffffff 0%, #dddddd 60%, #888888 100%)',
+              border: '0.75px solid #d3d3d3',
+              boxShadow: '0 3px 6px rgba(0,0,0,0.65)',
+              // Starts straight up (12 o'clock) and rotates by ballAngleRel inside the container
+              transform: `translate(-50%, -50%) rotate(${ballAngleRel}deg) translateY(-${ballRadius}px)`,
+              transformOrigin: 'center center',
+              pointerEvents: 'none',
+              zIndex: 3,
+              transition: 'none',
+            }}
+          />
+        )}
       </div>
 
-      {/* SVG Ball & Golden Turret */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-        <defs>
-          <radialGradient id="ball-grad" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="65%" stopColor="#eeeeee" />
-            <stop offset="100%" stopColor="#aaaaaa" />
-          </radialGradient>
-        </defs>
-
+      {/* 2. Static Overlay (pointer at the top, central golden turret) */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 4 }}>
         {/* Golden central turret head */}
         <circle cx={half} cy={half} r="18" fill="radial-gradient(circle, #f5c542, #8a640f)" stroke="#111" strokeWidth="1" opacity="0.1"/>
         <path d={`M${half-1},${half-12} L${half+1},${half-12} L${half+4},${half} L${half-4},${half} Z`} fill="#d4af37" opacity="0.8"/>
@@ -107,19 +121,6 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) 
 
         {/* Outer light pin pointer indicator */}
         <path d={`M${half},22 L${half-6},8 L${half+6},8 Z`} fill="#ff2d7a" filter="drop-shadow(0 0 6px #ff2d7a)"/>
-
-        {/* Floating white pearl ball (glowing radial gradient) */}
-        {ballRadius > 0 && (
-          <circle
-            cx={bx}
-            cy={by}
-            r="8.5"
-            fill="url(#ball-grad)"
-            stroke="#d3d3d3"
-            strokeWidth="0.75"
-            filter="drop-shadow(0 3px 6px rgba(0,0,0,0.7))"
-          />
-        )}
       </svg>
     </div>
   );
@@ -548,8 +549,8 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
 
       const initialWheelRot = wheelRot % 360;
       
-      // Screen angle starts as (relative angle - wheelRot)
-      const initialBallAngleScreen = (ballAngleRel - wheelRot) % 360;
+      // Convert current relative angle back to screen angle inside the coordinate frame
+      const initialBallAngleScreen = (wheelRot + ballAngleRel) % 360;
 
       rollRef.current = casinoAudio.playRouletteRoll();
       startTickSounds();
@@ -579,30 +580,44 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           return;
         }
 
+        // Decelerating wheel progress
         const t = elapsed / duration;
 
-        // Decelerating wheel rotation clockwise (positive)
-        const currentWheelRot = initialWheelRot + (360 * 3.5) * easeOutQuad(t);
+        // 1. Wheel rotation (clockwise, decelerating)
+        const wheelProgress = easeOutQuad(Math.min(elapsed / 4800, 1));
+        const currentWheelRot = initialWheelRot + wheelProgress * (360 * 3.5);
         setWheelRot(currentWheelRot);
 
-        // Physics: Ball deceleration & orbit decay spiral
-        let currentBallAngleRel;
-        let currentBallRadius;
+        // 2. Ball rotation & physics (orbits counter-clockwise, spirals, bounces)
+        let currentBallAngleRel = 0;
+        let currentBallRadius = 145 * ballRadiusScale;
 
-        if (t < 0.62) {
-          const ballT = t / 0.62;
-          const totalBallSpins = 360 * 6.5;
-          const ballAngleScreen = initialBallAngleScreen - totalBallSpins * easeOutQuad(ballT);
-          // Correct relative coordinate conversion (relative = screen + wheel)
-          currentBallAngleRel = ((ballAngleScreen + currentWheelRot) % 360 + 360) % 360;
-          currentBallRadius = (145 - 22 * easeOutCubic(ballT)) * ballRadiusScale;
+        if (elapsed < 3200) {
+          // Orbit & spiral phase
+          const tRatio = elapsed / 3200;
+          const ballProgress = easeOutCubic(tRatio);
+          const currentBallAngleScreen = initialBallAngleScreen - ballProgress * (360 * 6.5);
+          // Correct relative coordinate frame conversion
+          currentBallAngleRel = ((currentBallAngleScreen - currentWheelRot) % 360 + 360) % 360;
+          currentBallRadius = (145 - 35 * Math.pow(tRatio, 3)) * ballRadiusScale;
         } else {
-          const settleT = (t - 0.62) / 0.38;
-          const bounceAmp = 12 * Math.exp(-settleT * 2.8) * Math.sin(settleT * Math.PI * 4.5);
-          currentBallRadius = (110 + bounceAmp) * ballRadiusScale;
+          // Bounce & settle phase
+          const bounceT = (elapsed - 3200) / 2000;
+          const tRatio = 3200 / 3200;
+          const ballProgress = easeOutCubic(tRatio);
+          const ballAngleScreenStart = initialBallAngleScreen - ballProgress * (360 * 6.5);
+          const wheelRotStart = initialWheelRot + easeOutQuad(3200 / 4800) * (360 * 3.5);
+          const ballAngleRelStart = ((ballAngleScreenStart - wheelRotStart) % 360 + 360) % 360;
 
-          const bounceAngleAmp = 18 * Math.exp(-settleT * 3.2) * Math.cos(settleT * Math.PI * 4.5);
-          currentBallAngleRel = (targetAngleRel + bounceAngleAmp + 360) % 360;
+          // Shortest distance calculation
+          let diff = ballAngleRelStart - targetAngleRel;
+          diff = ((diff + 180) % 360 + 360) % 360 - 180;
+
+          const blend = Math.max(0, 1 - (elapsed - 3200) / 800); // Blend out diff in 800ms
+          const bounceOffset = 18 * Math.exp(-bounceT * 3.5) * Math.sin(bounceT * Math.PI * 7);
+
+          currentBallAngleRel = ((targetAngleRel + diff * blend + bounceOffset) % 360 + 360) % 360;
+          currentBallRadius = (110 + 35 * blend * blend + Math.abs(bounceOffset) * 0.45) * ballRadiusScale;
         }
 
         setBallAngleRel(currentBallAngleRel);
