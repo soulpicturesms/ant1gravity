@@ -140,6 +140,7 @@ export const api = {
   casinoSlotsJackpot: () => req('/api/casino/slots/jackpot', { headers: headers() }),
   casinoRecentWins: () => req('/api/casino/recent-wins'),
   casinoHistory: () => req('/api/casino/history', { headers: headers() }),
+  casinoBiggestLosses: () => req('/api/casino/biggest-losses'),
 
   // Poker (REST-based, no WebSocket)
   pokerGetRooms: () => req('/api/poker/rooms', { headers: headers() }),

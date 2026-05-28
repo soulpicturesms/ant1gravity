@@ -711,6 +711,19 @@ router.get('/history', requireAuth, async (req, res) => {
   res.json(data || []);
 });
 
+// ── BIGGEST LOSSES (public, room-wide) ────────────────────────────────────────
+router.get('/biggest-losses', async (req, res) => {
+  const { data, error } = await supabase
+    .from('coin_transactions')
+    .select('username, amount, reason, created_at')
+    .eq('type', 'casino')
+    .lt('amount', 0)
+    .order('amount', { ascending: true })
+    .limit(50);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
 // ── RECENT WINS (public) ──────────────────────────────────────────────────────
 router.get('/recent-wins', async (req, res) => {
   const { data, error } = await supabase

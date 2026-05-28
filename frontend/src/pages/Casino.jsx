@@ -125,123 +125,7 @@ function GameCard({ game, onClick }) {
   );
 }
 
-function parseWin(row) {
-  const { username, amount, reason, created_at } = row;
-  let game = 'Casino', bet = null, mult = null;
-
-  if (reason) {
-    if (reason.startsWith('Blackjack')) {
-      game = 'Blackjack Pro';
-      const betMatch = reason.match(/apuesta:\s*(\d+)/i);
-      if (betMatch) {
-        bet = parseInt(betMatch[1]);
-        mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null;
-      }
-    } else if (reason.startsWith('Plinko')) {
-      game = 'Plinko Zero-G';
-      const multMatch = reason.match(/\(x([\d.]+)\)/);
-      if (multMatch) mult = `${multMatch[1]}x`;
-      const betMatch = reason.match(/apuesta:\s*(\d+)/i);
-      if (betMatch) bet = parseInt(betMatch[1]);
-    } else if (reason.startsWith('Tragaperras')) {
-      game = 'Anti-Gravity Slots';
-      const betMatch = reason.match(/Apuesta:\s*(\d+)/);
-      const gainMatch = reason.match(/Ganancia:\s*(\d+)/);
-      if (betMatch) bet = parseInt(betMatch[1]);
-      if (betMatch && gainMatch) {
-        const gain = parseInt(gainMatch[1]);
-        mult = bet > 0 ? `${(gain / bet).toFixed(1)}x` : null;
-      }
-    } else if (reason.startsWith('Ruleta')) {
-      game = 'Ruleta Americana';
-    } else if (reason.startsWith('Blackjack Split')) {
-      game = 'Blackjack Pro';
-      const betMatch = reason.match(/apuesta total:\s*(\d+)/i);
-      if (betMatch) {
-        bet = parseInt(betMatch[1]);
-        mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null;
-      }
-    }
-  }
-
-  return { user: username || 'anónimo', game, bet, win: amount, mult };
-}
-
-function LiveWinsTicker() {
-  const [wins, setWins] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchWins = useCallback(() => {
-    api.casinoRecentWins()
-      .then(data => { setWins(data.map(parseWin)); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchWins();
-    const id = setInterval(fetchWins, 15000);
-    return () => clearInterval(id);
-  }, [fetchWins]);
-
-  if (loading) return (
-    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>
-      Cargando ganadores...
-    </div>
-  );
-
-  if (!wins.length) return (
-    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>
-      Aún no hay ganadores registrados. ¡Sé el primero!
-    </div>
-  );
-
-  return (
-    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', borderRadius: '14px', overflow: 'hidden', marginTop: 16 }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-        <thead>
-          <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
-            {["Jugador", "Juego", "Apuesta", "Multi", "Ganancia"].map((h, i) => (
-              <th key={i} style={{
-                padding: '10px 14px',
-                fontFamily: 'Unbounded, system-ui',
-                fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--c-text4)',
-                textAlign: i >= 2 ? 'right' : 'left'
-              }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {wins.map((w, i) => (
-            <tr key={i} style={{ borderBottom: i < wins.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
-              <td style={{ padding: '12px 14px', fontWeight: 600 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--c-surface3)', display: 'grid', placeItems: 'center', fontSize: 10, color: 'var(--c-text3)' }}>
-                    {w.user[0].toUpperCase()}
-                  </span>
-                  {w.user}
-                </span>
-              </td>
-              <td style={{ padding: '12px 14px', color: 'var(--c-text2)' }}>{w.game}</td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: 'var(--c-text3)' }}>
-                {w.bet != null ? w.bet.toLocaleString() : '—'}
-              </td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent)' }}>
-                {w.mult || '—'}
-              </td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent2)' }}>
-                +{w.win.toLocaleString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+// ── Shared helpers ────────────────────────────────────────────────────────────
 
 function parseGameName(reason) {
   if (!reason) return 'Casino';
@@ -252,68 +136,299 @@ function parseGameName(reason) {
   return 'Casino';
 }
 
-function MyGameHistory() {
+function parseWin(row) {
+  const { username, amount, reason } = row;
+  let game = parseGameName(reason), bet = null, mult = null;
+
+  if (reason) {
+    if (reason.startsWith('Blackjack Split')) {
+      const m = reason.match(/apuesta total:\s*(\d+)/i);
+      if (m) { bet = parseInt(m[1]); mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null; }
+    } else if (reason.startsWith('Blackjack')) {
+      const m = reason.match(/apuesta:\s*(\d+)/i);
+      if (m) { bet = parseInt(m[1]); mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null; }
+    } else if (reason.startsWith('Plinko')) {
+      const mm = reason.match(/\(x([\d.]+)\)/);
+      if (mm) mult = `${mm[1]}x`;
+      const mb = reason.match(/apuesta:\s*(\d+)/i);
+      if (mb) bet = parseInt(mb[1]);
+    } else if (reason.startsWith('Tragaperras')) {
+      const mb = reason.match(/Apuesta:\s*(\d+)/);
+      const mg = reason.match(/Ganancia:\s*(\d+)/);
+      if (mb) bet = parseInt(mb[1]);
+      if (mb && mg) mult = bet > 0 ? `${(parseInt(mg[1]) / bet).toFixed(1)}x` : null;
+    }
+  }
+  return { user: username || 'anónimo', game, bet, win: amount, mult };
+}
+
+const GAME_FILTERS = [
+  { id: 'all',       label: 'Todos' },
+  { id: 'Blackjack Pro',       label: 'Blackjack' },
+  { id: 'Plinko Zero-G',       label: 'Plinko' },
+  { id: 'Anti-Gravity Slots',  label: 'Slots' },
+  { id: 'Ruleta Americana',    label: 'Ruleta' },
+];
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: '4px 11px', borderRadius: 20, cursor: 'pointer',
+      background: active ? 'rgba(255,45,122,0.14)' : 'var(--c-surface3)',
+      border: `1px solid ${active ? 'rgba(255,45,122,0.45)' : 'var(--c-line2)'}`,
+      color: active ? 'var(--c-accent)' : 'var(--c-text3)',
+      fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.7rem',
+      letterSpacing: '0.04em', whiteSpace: 'nowrap', transition: 'all 0.15s',
+    }}>{children}</button>
+  );
+}
+
+const TH_STYLE = {
+  padding: '10px 14px', fontFamily: 'Unbounded, system-ui', fontSize: '9px',
+  fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--c-text4)',
+};
+const TD_MONO = { fontFamily: 'JetBrains Mono, monospace' };
+
+function UserAvatar({ name }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--c-surface3)', display: 'grid', placeItems: 'center', fontSize: 10, color: 'var(--c-text3)', flexShrink: 0 }}>
+        {name[0].toUpperCase()}
+      </span>
+      {name}
+    </span>
+  );
+}
+
+function EmptyState({ msg }) {
+  return <div style={{ padding: '28px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>{msg}</div>;
+}
+
+// ── Tab: Ganadores LIVE ───────────────────────────────────────────────────────
+
+function WinnersTab({ gameFilter }) {
+  const [wins, setWins] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetch = useCallback(() => {
+    api.casinoRecentWins()
+      .then(data => { setWins(data.map(parseWin)); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { fetch(); const id = setInterval(fetch, 15000); return () => clearInterval(id); }, [fetch]);
+
+  const rows = gameFilter === 'all' ? wins : wins.filter(w => w.game === gameFilter);
+
+  if (loading) return <EmptyState msg="Cargando ganadores..." />;
+  if (!rows.length) return <EmptyState msg={gameFilter === 'all' ? '¡Sé el primero en ganar!' : 'Sin ganadores en este juego aún.'} />;
+
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <thead>
+        <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
+          {['Jugador', 'Juego', 'Apuesta', 'Multi', 'Ganancia'].map((h, i) => (
+            <th key={i} style={{ ...TH_STYLE, textAlign: i >= 2 ? 'right' : 'left' }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((w, i) => (
+          <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
+            <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={w.user} /></td>
+            <td style={{ padding: '11px 14px', color: 'var(--c-text2)' }}>{w.game}</td>
+            <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, color: 'var(--c-text3)' }}>{w.bet != null ? w.bet.toLocaleString() : '—'}</td>
+            <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: 'var(--c-accent)' }}>{w.mult || '—'}</td>
+            <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: 'var(--c-accent2)' }}>+{w.win.toLocaleString()}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// ── Tab: Mi Historial ─────────────────────────────────────────────────────────
+
+function HistorialTab({ user, gameFilter, resultFilter }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     api.casinoHistory()
+      .then(data => { setRows(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [user]);
+
+  if (!user) return <EmptyState msg="Iniciá sesión para ver tu historial de partidas." />;
+  if (loading) return <EmptyState msg="Cargando historial..." />;
+
+  const filtered = rows.filter(r => {
+    const gMatch = gameFilter === 'all' || parseGameName(r.reason) === gameFilter;
+    const rMatch = resultFilter === 'all' || (resultFilter === 'wins' ? r.amount > 0 : r.amount < 0);
+    return gMatch && rMatch;
+  });
+
+  if (!filtered.length) return <EmptyState msg="Sin partidas con estos filtros." />;
+
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <thead>
+        <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
+          {['Juego', 'Detalle', 'Neto', 'Fecha'].map((h, i) => (
+            <th key={i} style={{ ...TH_STYLE, textAlign: i >= 2 ? 'right' : 'left' }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {filtered.map((r, i) => {
+          const isWin = r.amount > 0, isPush = r.amount === 0;
+          const netColor = isWin ? 'var(--c-accent2)' : isPush ? 'var(--c-text3)' : '#ff6b6b';
+          const date = new Date(r.created_at);
+          const stamp = `${date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+          return (
+            <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
+              <td style={{ padding: '10px 14px', color: 'var(--c-text2)', whiteSpace: 'nowrap' }}>{parseGameName(r.reason)}</td>
+              <td style={{ padding: '10px 14px', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--c-text3)', fontSize: 12 }}>{r.reason || '—'}</td>
+              <td style={{ padding: '10px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: netColor }}>{isWin ? '+' : ''}{r.amount.toLocaleString('es-AR')}</td>
+              <td style={{ padding: '10px 14px', textAlign: 'right', ...TD_MONO, color: 'var(--c-text4)', fontSize: 11 }}>{stamp}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// ── Tab: Mayores Pérdidas ─────────────────────────────────────────────────────
+
+const LOSS_THRESHOLDS = [
+  { value: 500,   label: '500+' },
+  { value: 1000,  label: '1k+' },
+  { value: 5000,  label: '5k+' },
+  { value: 10000, label: '10k+' },
+];
+
+function LossesTab({ gameFilter, minLoss }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.casinoBiggestLosses()
       .then(data => { setRows(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>Cargando historial...</div>
-  );
+  if (loading) return <EmptyState msg="Cargando pérdidas..." />;
 
-  if (!rows.length) return (
-    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>Aún no has jugado ninguna partida.</div>
-  );
+  const filtered = rows.filter(r => {
+    const gMatch = gameFilter === 'all' || parseGameName(r.reason) === gameFilter;
+    return gMatch && Math.abs(r.amount) >= minLoss;
+  });
+
+  if (!filtered.length) return <EmptyState msg="Sin pérdidas que superen ese umbral." />;
 
   return (
-    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', borderRadius: '14px', overflow: 'hidden', marginTop: 16 }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-        <thead>
-          <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
-            {['Juego', 'Resultado', 'Neto', 'Fecha'].map((h, i) => (
-              <th key={i} style={{
-                padding: '10px 14px',
-                fontFamily: 'Unbounded, system-ui',
-                fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--c-text4)',
-                textAlign: i >= 2 ? 'right' : 'left'
-              }}>{h}</th>
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <thead>
+        <tr style={{ background: 'var(--c-surface2)', borderBottom: '1px solid var(--c-line)' }}>
+          {['Jugador', 'Juego', 'Detalle', 'Pérdida', 'Fecha'].map((h, i) => (
+            <th key={i} style={{ ...TH_STYLE, textAlign: i >= 3 ? 'right' : 'left' }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {filtered.map((r, i) => {
+          const date = new Date(r.created_at);
+          const stamp = `${date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+          return (
+            <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
+              <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={r.username || 'anónimo'} /></td>
+              <td style={{ padding: '11px 14px', color: 'var(--c-text2)', whiteSpace: 'nowrap' }}>{parseGameName(r.reason)}</td>
+              <td style={{ padding: '11px 14px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--c-text3)', fontSize: 12 }}>{r.reason || '—'}</td>
+              <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: '#ff6b6b' }}>{r.amount.toLocaleString('es-AR')}</td>
+              <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, color: 'var(--c-text4)', fontSize: 11 }}>{stamp}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// ── Stats Panel (tabbed) ──────────────────────────────────────────────────────
+
+const TABS = [
+  { id: 'ganadores', label: '● Ganadores LIVE' },
+  { id: 'historial', label: 'Mi Historial' },
+  { id: 'perdidas',  label: 'Mayores Pérdidas' },
+];
+
+function StatsPanel({ user }) {
+  const [tab, setTab] = useState('ganadores');
+  const [gameFilter, setGameFilter] = useState('all');
+  const [resultFilter, setResultFilter] = useState('all');
+  const [minLoss, setMinLoss] = useState(1000);
+
+  const handleTab = (id) => { setTab(id); setGameFilter('all'); setResultFilter('all'); };
+
+  return (
+    <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', borderRadius: 14, overflow: 'hidden', marginTop: 32 }}>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--c-line)', background: 'var(--c-surface2)' }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => handleTab(t.id)} style={{
+            padding: '13px 18px',
+            background: 'none',
+            border: 'none',
+            borderBottom: tab === t.id ? '2px solid var(--c-accent)' : '2px solid transparent',
+            color: tab === t.id ? 'var(--c-accent)' : 'var(--c-text3)',
+            fontFamily: 'Unbounded, system-ui',
+            fontSize: '9px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            transition: 'all 0.15s',
+            whiteSpace: 'nowrap',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Filter bar */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 14px', borderBottom: '1px solid var(--c-line)', background: 'var(--c-bg1)', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.65rem', color: 'var(--c-text4)', fontFamily: 'Unbounded, system-ui', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: 4 }}>Juego</span>
+        {GAME_FILTERS.map(f => (
+          <FilterChip key={f.id} active={gameFilter === f.id} onClick={() => setGameFilter(f.id)}>{f.label}</FilterChip>
+        ))}
+
+        {tab === 'historial' && (
+          <>
+            <span style={{ width: 1, height: 18, background: 'var(--c-line2)', margin: '0 4px' }} />
+            {[{ id: 'all', label: 'Todos' }, { id: 'wins', label: 'Ganancias' }, { id: 'losses', label: 'Pérdidas' }].map(f => (
+              <FilterChip key={f.id} active={resultFilter === f.id} onClick={() => setResultFilter(f.id)}>{f.label}</FilterChip>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const isWin = r.amount > 0;
-            const isPush = r.amount === 0;
-            const netColor = isWin ? 'var(--c-accent2)' : isPush ? 'var(--c-text3)' : '#ff6b6b';
-            const date = new Date(r.created_at);
-            const dateStr = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-            const timeStr = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-            return (
-              <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
-                <td style={{ padding: '10px 14px', color: 'var(--c-text2)' }}>{parseGameName(r.reason)}</td>
-                <td style={{ padding: '10px 14px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--c-text3)', fontSize: 12 }}>
-                  {r.reason || '—'}
-                </td>
-                <td style={{ padding: '10px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: netColor }}>
-                  {isWin ? '+' : ''}{r.amount.toLocaleString('es-AR')}
-                </td>
-                <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--c-text4)', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
-                  {dateStr} {timeStr}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+          </>
+        )}
+
+        {tab === 'perdidas' && (
+          <>
+            <span style={{ width: 1, height: 18, background: 'var(--c-line2)', margin: '0 4px' }} />
+            <span style={{ fontSize: '0.65rem', color: 'var(--c-text4)', fontFamily: 'Unbounded, system-ui', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Mínimo</span>
+            {LOSS_THRESHOLDS.map(t => (
+              <FilterChip key={t.value} active={minLoss === t.value} onClick={() => setMinLoss(t.value)}>{t.label}</FilterChip>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Content */}
+      <div style={{ overflowX: 'auto' }}>
+        {tab === 'ganadores' && <WinnersTab gameFilter={gameFilter} />}
+        {tab === 'historial' && <HistorialTab user={user} gameFilter={gameFilter} resultFilter={resultFilter} />}
+        {tab === 'perdidas'  && <LossesTab gameFilter={gameFilter} minLoss={minLoss} />}
+      </div>
     </div>
   );
 }
@@ -634,21 +749,9 @@ export default function Casino() {
             ))}
           </div>
 
-          {/* Recent Winners ticker */}
-          <div className="casino-section-head" style={{ marginTop: 32 }}>
-            <h2>Ganadores recientes <span className="c-acc">LIVE</span></h2>
-          </div>
-          <LiveWinsTicker />
+          {/* Stats panel — tabbed */}
+          <StatsPanel user={user} />
 
-          {/* My game history — only shown when logged in */}
-          {user && (
-            <>
-              <div className="casino-section-head" style={{ marginTop: 32 }}>
-                <h2>Mi <span className="c-acc">historial</span></h2>
-              </div>
-              <MyGameHistory />
-            </>
-          )}
         </div>
       )}
 
