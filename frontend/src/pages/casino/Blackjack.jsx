@@ -217,12 +217,42 @@ export default function Blackjack({ balance, onBalanceChange }) {
       <div className="casino-roul-panel">
         <div className="casino-roul-panel__title">Blackjack Pro</div>
 
-        {/* Result summary */}
-        {isDone && result && (
+        {/* Result summary for Split */}
+        {isDone && game?.isSplit && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid var(--c-line2)',
+            borderRadius: 10, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
+            marginBottom: 10
+          }}>
+            <div style={{ fontFamily: "'Unbounded', system-ui", fontWeight: 800, fontSize: '0.65rem', color: 'var(--c-text3)', letterSpacing: '0.08em', textTransform: 'uppercase', borderBottom: '1px solid var(--c-line2)', paddingBottom: 6 }}>
+              Resultados Split
+            </div>
+            {game.handResults.map((resVal, handIdx) => {
+              const outcome = RESULTS[resVal] || RESULTS.lose;
+              return (
+                <div key={handIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--c-text3)', fontWeight: 600 }}>Mano {handIdx + 1}:</span>
+                  <span style={{ fontSize: '0.78rem', color: outcome.color, fontWeight: 700, fontFamily: 'Unbounded, system-ui' }}>{outcome.label}</span>
+                </div>
+              );
+            })}
+            <div style={{ borderTop: '1px solid var(--c-line2)', paddingTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--c-text)', fontWeight: 700 }}>Ganancia Total:</span>
+              <span style={{ fontSize: '0.9rem', color: game.payout > 0 ? '#6fff7d' : '#ff2d7a', fontWeight: 850, fontFamily: 'JetBrains Mono, monospace' }}>
+                {game.payout > 0 ? `+${game.payout.toLocaleString('es-AR')}` : '0'} TK
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Original Result summary */}
+        {isDone && game && !game.isSplit && result && (
           <div style={{
             background: `${result.color}10`,
             border: `1px solid ${result.color}35`,
             borderRadius: 10, padding: '12px 14px', textAlign: 'center',
+            marginBottom: 10
           }}>
             <div style={{ fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '1.1rem', color: result.color }}>
               {result.label}
@@ -291,24 +321,49 @@ export default function Blackjack({ balance, onBalanceChange }) {
               fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem',
               letterSpacing: '0.08em', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
             }}>PEDIR CARTA</button>
+            
             <button onClick={() => act('stand')} disabled={loading} style={{
               height: 48, borderRadius: 10, border: '1px solid var(--c-line3)',
               background: 'var(--c-surface2)',
               color: 'var(--c-text)', fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem',
               letterSpacing: '0.08em', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
             }}>PLANTARSE</button>
-            {game?.playerCards?.length === 2 && (
-              <button onClick={() => act('double')} disabled={loading || balance < bet} style={{
-                height: 48, borderRadius: 10, border: '1px solid rgba(245,197,66,0.35)',
-                background: 'rgba(245,197,66,0.10)',
-                color: '#f5c542', fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem',
-                letterSpacing: '0.06em',
-                cursor: loading || balance < bet ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => { if (!loading && balance >= bet) e.currentTarget.style.background = 'rgba(245,197,66,0.2)'; }}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,197,66,0.10)'}
-              >DOBLAR ×2</button>
-            )}
+
+            {(() => {
+              const activeHandCards = game?.isSplit ? game.hands[game.activeHandIdx] : game?.playerCards;
+              const activeHandBet = game?.isSplit ? game.handBets[game.activeHandIdx] : bet;
+              const canDouble = activeHandCards?.length === 2 && balance >= activeHandBet;
+              const canSplit = !game?.isSplit && game?.playerCards?.length === 2 && game?.playerCards[0].value === game?.playerCards[1].value && balance >= bet;
+
+              return (
+                <>
+                  {canDouble && (
+                    <button onClick={() => act('double')} disabled={loading} style={{
+                      height: 48, borderRadius: 10, border: '1px solid rgba(245,197,66,0.35)',
+                      background: 'rgba(245,197,66,0.10)',
+                      color: '#f5c542', fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem',
+                      letterSpacing: '0.06em',
+                      cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { if (!loading) e.currentTarget.style.background = 'rgba(245,197,66,0.2)'; }}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,197,66,0.10)'}
+                    >DOBLAR ×2</button>
+                  )}
+                  {canSplit && (
+                    <button onClick={() => act('split')} disabled={loading} style={{
+                      height: 48, borderRadius: 10, border: '1px solid rgba(255,45,122,0.35)',
+                      background: 'rgba(255,45,122,0.10)',
+                      color: '#ff2d7a', fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem',
+                      letterSpacing: '0.06em',
+                      cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { if (!loading) e.currentTarget.style.background = 'rgba(255,45,122,0.2)'; }}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,45,122,0.10)'}
+                    >DIVIDIR MANO</button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         ) : (
           <button onClick={handleStartClick} disabled={loading || bet < 10 || bet > balance} className="roul-spin-btn">
@@ -316,9 +371,9 @@ export default function Blackjack({ balance, onBalanceChange }) {
           </button>
         )}
 
-        <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6, marginTop: 14 }}>
           VS Casa · 21 · Blackjack paga 3:2<br/>
-          Doblar disponible con 2 cartas
+          Doblar / Dividir disponible en primer turno
         </div>
       </div>
 
@@ -518,14 +573,52 @@ export default function Blackjack({ balance, onBalanceChange }) {
                 isDone={isDone}
               />
               <div style={{ width: '40%', height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 auto', position: 'relative', zIndex: 2 }} />
-              <HandArea
-                cards={game.playerCards}
-                total={game.playerTotal}
-                label="Tu mano"
-                isPlayer={true}
-                isInitialDeal={isInitialDeal}
-                isDone={isDone}
-              />
+              
+              {game.isSplit ? (
+                <div style={{ display: 'flex', gap: 24, justifyContent: 'center', width: '100%', padding: '0 10px', position: 'relative', zIndex: 2 }}>
+                  <div style={{
+                    flex: 1, padding: '12px 8px 8px', borderRadius: 12,
+                    background: game.activeHandIdx === 0 && !isDone ? 'rgba(255, 45, 122, 0.04)' : 'transparent',
+                    border: game.activeHandIdx === 0 && !isDone ? '1px dashed rgba(255, 45, 122, 0.35)' : '1px solid transparent',
+                    boxShadow: game.activeHandIdx === 0 && !isDone ? '0 0 15px rgba(255, 45, 122, 0.08)' : 'none',
+                    transition: 'all 0.25s ease',
+                  }}>
+                    <HandArea
+                      cards={game.hands[0]}
+                      total={game.handTotals?.[0]}
+                      label="Mano 1"
+                      isPlayer={true}
+                      isInitialDeal={isInitialDeal}
+                      isDone={isDone}
+                    />
+                  </div>
+                  <div style={{
+                    flex: 1, padding: '12px 8px 8px', borderRadius: 12,
+                    background: game.activeHandIdx === 1 && !isDone ? 'rgba(255, 45, 122, 0.04)' : 'transparent',
+                    border: game.activeHandIdx === 1 && !isDone ? '1px dashed rgba(255, 45, 122, 0.35)' : '1px solid transparent',
+                    boxShadow: game.activeHandIdx === 1 && !isDone ? '0 0 15px rgba(255, 45, 122, 0.08)' : 'none',
+                    transition: 'all 0.25s ease',
+                  }}>
+                    <HandArea
+                      cards={game.hands[1]}
+                      total={game.handTotals?.[1]}
+                      label="Mano 2"
+                      isPlayer={true}
+                      isInitialDeal={isInitialDeal}
+                      isDone={isDone}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <HandArea
+                  cards={game.playerCards}
+                  total={game.playerTotal}
+                  label="Tu mano"
+                  isPlayer={true}
+                  isInitialDeal={isInitialDeal}
+                  isDone={isDone}
+                />
+              )}
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 0', position: 'relative', zIndex: 2 }}>

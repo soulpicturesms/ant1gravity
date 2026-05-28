@@ -70,9 +70,81 @@ router.post('/blackjack/start', requireAuth, async (req, res) => {
   });
 });
 
+router.post('/blackjack/split', requireAuth, async (req, res) => {
+  const s = sessions.get(req.body.sessionId);
+  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+  if (s.isSplit) return res.status(400).json({ error: 'Ya has dividido las cartas' });
+  if (s.playerCards.length !== 2 || s.playerCards[0].value !== s.playerCards[1].value)
+    return res.status(400).json({ error: 'Las cartas deben ser iguales para dividir' });
+
+  const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+  if (!user || user.coins < s.bet) return res.status(400).json({ error: 'Tokens insuficientes para dividir' });
+
+  // Deduct the second bet
+  await supabase.from('users').update({ coins: user.coins - s.bet }).eq('id', req.user.id);
+
+  s.isSplit = true;
+  s.hands = [ [s.playerCards[0]], [s.playerCards[1]] ];
+  s.handBets = [s.bet, s.bet];
+  s.activeHandIdx = 0;
+  
+  // Deal second card to hand 0
+  s.hands[0].push(s.deck.pop());
+
+  res.json({
+    isSplit: true,
+    hands: s.hands,
+    handBets: s.handBets,
+    activeHandIdx: 0,
+    handTotals: [handTotal(s.hands[0]), handTotal(s.hands[1])],
+    status: 'playing',
+    balance: user.coins - s.bet
+  });
+});
+
 router.post('/blackjack/hit', requireAuth, async (req, res) => {
   const s = sessions.get(req.body.sessionId);
   if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+
+  if (s.isSplit) {
+    s.hands[s.activeHandIdx].push(s.deck.pop());
+    const total = handTotal(s.hands[s.activeHandIdx]);
+    
+    if (total >= 21) {
+      if (s.activeHandIdx === 0) {
+        // Move to Hand 1
+        s.activeHandIdx = 1;
+        s.hands[1].push(s.deck.pop());
+        const total1 = handTotal(s.hands[1]);
+        if (total1 >= 21) {
+          // Both hands completed! Finish game
+          const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+          return res.json(await finishBlackjack(s.id, user, 'stand'));
+        }
+        return res.json({
+          isSplit: true,
+          hands: s.hands,
+          handBets: s.handBets,
+          activeHandIdx: 1,
+          handTotals: [handTotal(s.hands[0]), total1],
+          status: 'playing'
+        });
+      } else {
+        // Hand 1 completed, finish game
+        const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+        return res.json(await finishBlackjack(s.id, user, 'stand'));
+      }
+    }
+    
+    return res.json({
+      isSplit: true,
+      hands: s.hands,
+      handBets: s.handBets,
+      activeHandIdx: s.activeHandIdx,
+      handTotals: [handTotal(s.hands[0]), handTotal(s.hands[1])],
+      status: 'playing'
+    });
+  }
 
   s.playerCards.push(s.deck.pop());
   const total = handTotal(s.playerCards);
@@ -87,13 +159,75 @@ router.post('/blackjack/hit', requireAuth, async (req, res) => {
 router.post('/blackjack/stand', requireAuth, async (req, res) => {
   const s = sessions.get(req.body.sessionId);
   if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+
+  if (s.isSplit) {
+    if (s.activeHandIdx === 0) {
+      // Move to Hand 1
+      s.activeHandIdx = 1;
+      s.hands[1].push(s.deck.pop());
+      const total1 = handTotal(s.hands[1]);
+      if (total1 >= 21) {
+        // Hand 1 completes instantly. Finish game
+        return res.json(await finishBlackjack(s.id, user, 'stand'));
+      }
+      return res.json({
+        isSplit: true,
+        hands: s.hands,
+        handBets: s.handBets,
+        activeHandIdx: 1,
+        handTotals: [handTotal(s.hands[0]), total1],
+        status: 'playing'
+      });
+    } else {
+      // Both hands stood. Finish game
+      return res.json(await finishBlackjack(s.id, user, 'stand'));
+    }
+  }
+
   res.json(await finishBlackjack(s.id, user, 'stand'));
 });
 
 router.post('/blackjack/double', requireAuth, async (req, res) => {
   const s = sessions.get(req.body.sessionId);
-  if (!s || s.userId !== req.user.id || s.playerCards.length !== 2)
+  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+
+  if (s.isSplit) {
+    const activeHandCards = s.hands[s.activeHandIdx];
+    if (activeHandCards.length !== 2) return res.status(400).json({ error: 'No se puede doblar' });
+
+    const handBet = s.handBets[s.activeHandIdx];
+    const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+    if (!user || user.coins < handBet) return res.status(400).json({ error: 'Tokens insuficientes' });
+
+    await supabase.from('users').update({ coins: user.coins - handBet }).eq('id', req.user.id);
+    s.handBets[s.activeHandIdx] *= 2;
+    activeHandCards.push(s.deck.pop());
+    
+    // Double gets exactly one card and then finishes the hand
+    if (s.activeHandIdx === 0) {
+      s.activeHandIdx = 1;
+      s.hands[1].push(s.deck.pop());
+      const total1 = handTotal(s.hands[1]);
+      if (total1 >= 21) {
+        return res.json(await finishBlackjack(s.id, { ...user, coins: user.coins - handBet }, 'stand'));
+      }
+      return res.json({
+        isSplit: true,
+        hands: s.hands,
+        handBets: s.handBets,
+        activeHandIdx: 1,
+        handTotals: [handTotal(s.hands[0]), total1],
+        status: 'playing',
+        balance: user.coins - handBet
+      });
+    } else {
+      return res.json(await finishBlackjack(s.id, { ...user, coins: user.coins - handBet }, 'stand'));
+    }
+  }
+
+  if (s.playerCards.length !== 2)
     return res.status(400).json({ error: 'No se puede doblar' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
@@ -110,7 +244,76 @@ async function finishBlackjack(id, user, trigger) {
   const s = sessions.get(id);
   sessions.delete(id);
 
-  // Dealer plays to 17
+  if (s.isSplit) {
+    const tot0 = handTotal(s.hands[0]);
+    const tot1 = handTotal(s.hands[1]);
+    
+    // Dealer draws to 17 if at least one hand is active (<= 21)
+    const atLeastOneHandActive = tot0 <= 21 || tot1 <= 21;
+    while (atLeastOneHandActive && handTotal(s.dealerCards) < 17) {
+      s.dealerCards.push(s.deck.pop());
+    }
+    
+    const dealerTotal = handTotal(s.dealerCards);
+    
+    // Evaluate Hand 0
+    let res0 = 'lose', payout0 = 0;
+    if (tot0 <= 21) {
+      if (dealerTotal > 21 || tot0 > dealerTotal) {
+        res0 = 'win';
+        payout0 = s.handBets[0] * 2;
+      } else if (tot0 === dealerTotal) {
+        res0 = 'push';
+        payout0 = s.handBets[0];
+      }
+    } else {
+      res0 = 'bust';
+    }
+
+    // Evaluate Hand 1
+    let res1 = 'lose', payout1 = 0;
+    if (tot1 <= 21) {
+      if (dealerTotal > 21 || tot1 > dealerTotal) {
+        res1 = 'win';
+        payout1 = s.handBets[1] * 2;
+      } else if (tot1 === dealerTotal) {
+        res1 = 'push';
+        payout1 = s.handBets[1];
+      }
+    } else {
+      res1 = 'bust';
+    }
+
+    const totalPayout = payout0 + payout1;
+    const totalBet = s.handBets[0] + s.handBets[1];
+    const netGain = totalPayout - totalBet;
+
+    if (totalPayout > 0) {
+      await supabase.from('users').update({ coins: (user.coins || 0) + totalPayout }).eq('id', s.userId);
+    }
+
+    const labels = { win: 'Ganó', push: 'Empate', lose: 'Perdió', bust: 'Pasó' };
+    await supabase.from('coin_transactions').insert({
+      user_id: s.userId, username: user.username,
+      amount: netGain, type: 'casino',
+      reason: `Blackjack Split — Mano 1: ${labels[res0]}, Mano 2: ${labels[res1]} (apuesta total: ${totalBet})`,
+    });
+
+    return {
+      isSplit: true,
+      hands: s.hands,
+      handBets: s.handBets,
+      handTotals: [tot0, tot1],
+      handResults: [res0, res1],
+      dealerCards: s.dealerCards,
+      dealerTotal,
+      payout: totalPayout,
+      status: 'done',
+      balance: (user.coins || 0) + totalPayout,
+    };
+  }
+
+  // Dealer plays to 17 (standard non-split)
   while (trigger !== 'bust' && handTotal(s.dealerCards) < 17)
     s.dealerCards.push(s.deck.pop());
 
