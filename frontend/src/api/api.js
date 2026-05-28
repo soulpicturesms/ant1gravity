@@ -116,6 +116,24 @@ export const api = {
   getRuletaPrizes: () => req('/api/ruleta/prizes'),
   setRuletaPrizes: (prizes) => req('/api/ruleta/prizes', { method: 'PUT', headers: headers(), body: JSON.stringify({ prizes }) }),
 
+  // Token transfer
+  transferTokens: (body) => req('/api/tokens/transfer', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  getTransferHistory: () => req('/api/tokens/history', { headers: headers() }),
+
+  // Bet events
+  getBetEvents: () => req('/api/bets'),
+  getBetEvent: (id) => req(`/api/bets/${id}`, { headers: headers() }),
+  createBetEvent: (body) => req('/api/bets', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  lockBets: (id) => req(`/api/bets/${id}/lock`, { method: 'POST', headers: headers() }),
+  resolveBet: (id, body) => req(`/api/bets/${id}/resolve`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  cancelBet: (id, body = {}) => req(`/api/bets/${id}/cancel`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  placeBet: (id, body) => req(`/api/bets/${id}/bet`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+
+  // Casino - Blackjack
+  casinoBlackjack: (action, body) => req(`/api/casino/blackjack/${action}`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  // Casino - Roulette
+  casinoRuleta: (body) => req('/api/casino/roulette/spin', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+
   // Admin
   getAdminStats: () => req('/api/admin/stats', { headers: headers() }),
   getTransactions: () => req('/api/admin/transactions', { headers: headers() }),

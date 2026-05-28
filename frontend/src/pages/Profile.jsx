@@ -8,6 +8,14 @@ export default function Profile() {
   const [msg, setMsg] = useState('');
   const fileRef = useRef();
   const [myRequests, setMyRequests] = useState([]);
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAmt, setTransferAmt] = useState('');
+  const [transferNote, setTransferNote] = useState('');
+  const [transferMsg, setTransferMsg] = useState('');
+  const [transferErr, setTransferErr] = useState('');
+  const [transferring, setTransferring] = useState(false);
+  const [transferHistory, setTransferHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [creditMsg, setCreditMsg] = useState('');
   const [creditErr, setCreditErr] = useState('');
   const [requesting, setRequesting] = useState(false);
@@ -17,6 +25,7 @@ export default function Profile() {
     if (user) {
       api.getMyRequests().then(d => setMyRequests(Array.isArray(d) ? d : [])).catch(() => {});
       api.getRankingsTop().then(d => setWeeklyStats(d)).catch(() => {});
+      api.getTransferHistory().then(setTransferHistory).catch(() => {});
     }
   }, [user]);
 
@@ -32,6 +41,21 @@ export default function Profile() {
   };
 
   const hasPending = myRequests.some(r => r.status === 'pending');
+
+  const doTransfer = async (e) => {
+    e.preventDefault();
+    const amt = parseInt(transferAmt);
+    if (!transferTo.trim() || !amt || amt <= 0) return setTransferErr('Completá todos los campos');
+    setTransferring(true); setTransferMsg(''); setTransferErr('');
+    try {
+      const r = await api.transferTokens({ to_username: transferTo.trim(), amount: amt, note: transferNote.trim() });
+      setTransferMsg(`✅ ${amt.toLocaleString('es-AR')} tokens enviados a ${transferTo}`);
+      setTransferTo(''); setTransferAmt(''); setTransferNote('');
+      await refreshUser();
+      api.getTransferHistory().then(setTransferHistory).catch(() => {});
+    } catch (e) { setTransferErr(e.message); }
+    finally { setTransferring(false); }
+  };
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
@@ -122,6 +146,43 @@ export default function Profile() {
                 ));
               })()}
             </div>
+          </div>
+
+          {/* Token Transfer */}
+          <div className="card">
+            <div className="card-title" style={{ marginBottom: 14 }}>💸 Enviar Tokens</div>
+            {transferMsg && <div className="alert alert-success" style={{ marginBottom: 12 }}>{transferMsg}</div>}
+            {transferErr && <div className="alert alert-error" style={{ marginBottom: 12 }}>{transferErr}</div>}
+            <form onSubmit={doTransfer} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input className="input" placeholder="Nombre de usuario del destinatario..." value={transferTo} onChange={e => setTransferTo(e.target.value)} required />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input className="input" type="number" min="1" placeholder="Cantidad de tokens..." value={transferAmt} onChange={e => setTransferAmt(e.target.value)} style={{ flex: 1 }} required />
+                <button type="submit" className="btn btn-primary" disabled={transferring || !transferTo || !transferAmt}>
+                  {transferring ? '...' : 'Enviar →'}
+                </button>
+              </div>
+              <input className="input" placeholder="Motivo (opcional)..." value={transferNote} onChange={e => setTransferNote(e.target.value)} />
+            </form>
+            {transferHistory.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <button onClick={() => setShowHistory(h => !h)} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani', padding: 0 }}>
+                  {showHistory ? '▲ Ocultar' : '▼ Ver historial'} ({transferHistory.length})
+                </button>
+                {showHistory && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+                    {transferHistory.map(t => (
+                      <div key={t.id} style={{ background: '#0f0f18', border: '1px solid #1e1e30', borderRadius: 6, padding: '6px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: t.amount > 0 ? '#00cc66' : '#ff4466', fontSize: '0.88rem' }}>
+                          {t.amount > 0 ? '+' : ''}{t.amount.toLocaleString('es-AR')}
+                        </span>
+                        <span style={{ flex: 1, fontSize: '0.75rem', color: '#9090b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.reason}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#4a4a6a', flexShrink: 0 }}>{new Date(t.created_at).toLocaleDateString('es-ES')}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="card">

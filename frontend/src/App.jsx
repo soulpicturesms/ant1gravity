@@ -13,6 +13,9 @@ import Profile from './pages/Profile';
 import Killboard from './pages/Killboard';
 import BattleDetail from './pages/BattleDetail';
 import Ruleta from './pages/Ruleta';
+import Casino from './pages/Casino';
+import Apuestas from './pages/Apuestas';
+import { SocketProvider } from './context/SocketContext';
 
 function PendingScreen() {
   const { logout } = useAuth();
@@ -64,6 +67,8 @@ function AppRoutes() {
         <Route path="/killboard" element={<Killboard />} />
         <Route path="/killboard/battles/:id" element={<BattleDetail />} />
         <Route path="/ruleta" element={<Ruleta />} />
+        <Route path="/casino" element={<ProtectedRoute><Casino /></ProtectedRoute>} />
+        <Route path="/apuestas" element={<Apuestas />} />
       </Routes>
       <footer style={{ borderTop: '1px solid #1e1e30', padding: '20px', textAlign: 'center', color: '#4a4a6a', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
         ANT1GRAVITY © 2026
@@ -75,7 +80,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <SocketProvider>
+        <AppRoutes />
+      </SocketProvider>
     </AuthProvider>
   );
 }

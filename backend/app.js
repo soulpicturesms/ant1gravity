@@ -23,5 +23,8 @@ app.use('/api/market',    require('./routes/market'));
 app.use('/api/spells',    require('./routes/spells'));
 app.use('/api/killboard', require('./routes/killboard'));
 app.use('/api/ruleta',   require('./routes/ruleta'));
+app.use('/api/tokens',  require('./routes/tokens'));
+app.use('/api/bets',    require('./routes/bets'));
+app.use('/api/casino',  require('./routes/casino'));
 
 module.exports = app;
