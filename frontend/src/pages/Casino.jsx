@@ -38,7 +38,7 @@ export default function Casino() {
   );
 
   return (
-    <div className="page">
+    <div className="page" style={activeGame ? { maxWidth: '1400px' } : {}}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: 'clamp(1.8rem,5vw,2.8rem)', letterSpacing: '0.15em', color: 'white', lineHeight: 1 }}>

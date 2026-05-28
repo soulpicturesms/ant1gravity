@@ -640,3 +640,43 @@ tbody tr:last-child td { border-bottom: none; }
   animation: coin-float 1.2s ease-out forwards;
 }
 
+.roulette-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  width: 100%;
+}
+
+.roulette-wheel-col {
+  flex: 0 0 380px;
+  width: 380px;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.roulette-grid-col {
+  flex: 0 0 684px;
+  width: 684px;
+  max-width: 684px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 1120px) {
+  .roulette-layout {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+  .roulette-wheel-col, .roulette-grid-col {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+}

@@ -239,7 +239,8 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
         const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
         
         // Spring pull towards target pocket
-        const diff = targetRelAngle - relAngleRef.current;
+        let diff = targetRelAngle - relAngleRef.current;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
         relAngleVelRef.current += diff * 0.06;
         
         // Add random bounce noise representing pockets collision
@@ -758,7 +759,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 10px' }}>
+    <div style={{ width: '100%', maxWidth: 1300, margin: '0 auto', padding: '0 10px' }}>
       <div className="card" style={{ border: '1px solid rgba(255,215,0,0.2)', background: 'linear-gradient(135deg, #0d0d1e, #06060c)', padding: 24, boxShadow: '0 15px 40px rgba(0,0,0,0.7)' }}>
         
         {/* Header & Mute toggle */}
@@ -778,10 +779,10 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         {err && <div className="alert alert-error" style={{ marginBottom: 16 }}>{err}</div>}
 
         {/* 2-Column Side-by-Side Responsive Layout */}
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div className="roulette-layout">
           
           {/* Left Column: Large Wheel + Chips + Spin Controls */}
-          <div style={{ flex: '1 1 380px', maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="roulette-wheel-col">
             <RouletteWheel spinning={spinning} result={result} onSpinComplete={handleSpinComplete} />
             
             {/* Chip selector */}
@@ -810,7 +811,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
           </div>
 
           {/* Right Column: Wide Betting Grid + Result Summary */}
-          <div style={{ flex: '1 1 640px', maxWidth: 700, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div className="roulette-grid-col">
             
             {/* Win/Loss Summary Display */}
             {summary && (
