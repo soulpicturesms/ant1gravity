@@ -35,6 +35,69 @@ export default function Navbar() {
     { to: '/admin', label: 'Admin', admin: true },
   ];
 
+  const renderUserAvatar = (size) => {
+    if (user?.albion_avatar) {
+      return (
+        <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+          <div style={{ 
+            width: '100%', 
+            height: '100%', 
+            borderRadius: '50%', 
+            background: '#0f0f18', 
+            overflow: 'hidden',
+            position: 'relative',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <img 
+              src={`https://assets.albiononline.com/assets/images/killboard/avatar/${user.albion_avatar}.png`} 
+              alt="" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </div>
+          {user.albion_ring && (
+            <img 
+              src={`https://assets.albiononline.com/assets/images/killboard/ring/${user.albion_ring}.png`} 
+              alt="" 
+              style={{ 
+                position: 'absolute', 
+                inset: -Math.round(size * 0.05), 
+                width: `calc(100% + ${Math.round(size * 0.1)}px)`, 
+                height: `calc(100% + ${Math.round(size * 0.1)}px)`, 
+                zIndex: 2,
+                pointerEvents: 'none'
+              }} 
+            />
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="avatar" style={{ 
+        width: size, 
+        height: size, 
+        background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+        borderRadius: '50%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        fontFamily: 'Rajdhani', 
+        fontWeight: 700, 
+        color: 'white', 
+        overflow: 'hidden', 
+        border: '2px solid rgba(0,212,255,0.3)', 
+        flexShrink: 0,
+        fontSize: size > 35 ? '0.9rem' : '0.8rem'
+      }}>
+        {user?.avatar ? (
+          <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          user?.username?.[0]?.toUpperCase()
+        )}
+      </div>
+    );
+  };
+
   return (
     <nav style={{
       background: 'linear-gradient(to bottom, #0a0a12, #0f0f1a)',
@@ -113,9 +176,7 @@ export default function Navbar() {
                   <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', color: 'white', lineHeight: 1 }}>{user.username}</span>
                   <span style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</span>
                 </div>
-                <div className="avatar" style={{ width: 38, height: 38, background: 'linear-gradient(135deg, #00aacc, #0044aa)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '2px solid rgba(0,212,255,0.3)', flexShrink: 0 }}>
-                  {user.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.username[0].toUpperCase()}
-                </div>
+                {renderUserAvatar(38)}
               </Link>
               <button onClick={handleLogout} className="btn btn-secondary btn-sm desktop-nav">Salir</button>
             </>
@@ -152,9 +213,7 @@ export default function Navbar() {
         {user ? (
           <>
             <NavLink to="/profile" style={{ color: '#9090b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
-              <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #00aacc, #0044aa)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '2px solid rgba(0,212,255,0.3)', flexShrink: 0, fontSize: '0.85rem' }}>
-                {user.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.username[0].toUpperCase()}
-              </div>
+              {renderUserAvatar(32)}
               <div>
                 <div style={{ color: 'white', lineHeight: 1 }}>{user.username}</div>
                 <div style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</div>

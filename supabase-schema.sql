@@ -236,6 +236,11 @@ CREATE INDEX IF NOT EXISTS reequip_requests_user_idx    ON reequip_requests(user
 CREATE INDEX IF NOT EXISTS reequip_requests_status_idx  ON reequip_requests(status);
 CREATE INDEX IF NOT EXISTS reequip_requests_event_idx   ON reequip_requests(event_id);
 
+-- ── MIGRATION v3: ALBION AVATAR & RING BORDERS ──────────────────────────────
+-- Ejecutar en Supabase SQL Editor:
+ALTER TABLE users ADD COLUMN IF NOT EXISTS albion_avatar TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS albion_ring TEXT;
+
 -- ── STORAGE BUCKETS ────────────────────────
 -- Crear manualmente en: Supabase Dashboard > Storage > New bucket (marcar como Public)
 -- Buckets necesarios: avatars, builds, screenshots, media

@@ -46,14 +46,75 @@ router.post('/login', async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).maybeSingle();
   if (!user) return res.status(404).json({ error: 'No encontrado' });
+  
+  // Si tiene personaje vinculado pero no tiene avatar guardado, buscarlo en background
+  if (user.albion_character && !user.albion_avatar) {
+    (async () => {
+      try {
+        const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
+        const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(user.albion_character)}`);
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          const player = (searchData.players || []).find(p => p.Name.toLowerCase() === user.albion_character.toLowerCase());
+          if (player && (player.Avatar || player.AvatarRing)) {
+            await supabase.from('users').update({
+              albion_avatar: player.Avatar || null,
+              albion_ring: player.AvatarRing || null
+            }).eq('id', user.id);
+          }
+        }
+      } catch (err) {
+        console.error('Error en fetch background de avatar Albion:', err.message);
+      }
+    })();
+  }
+
   res.json(safe(user));
 });
 
 router.put('/profile', requireAuth, async (req, res) => {
   const { albion_character } = req.body;
   const value = albion_character?.trim() || null;
-  await supabase.from('users').update({ albion_character: value }).eq('id', req.user.id);
-  res.json({ ok: true, albion_character: value });
+  
+  let updateData = { albion_character: value };
+  
+  if (value) {
+    try {
+      const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
+      const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(value)}`);
+      if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        const player = (searchData.players || []).find(p => p.Name.toLowerCase() === value.toLowerCase());
+        if (player) {
+          updateData.albion_avatar = player.Avatar || null;
+          updateData.albion_ring = player.AvatarRing || null;
+        }
+      }
+    } catch (err) {
+      console.error('Error al obtener detalles del jugador en Albion:', err.message);
+    }
+  } else {
+    updateData.albion_avatar = null;
+    updateData.albion_ring = null;
+  }
+  
+  try {
+    const { error } = await supabase.from('users').update(updateData).eq('id', req.user.id);
+    if (error) {
+      console.warn('No se pudo guardar avatar/ring (probablemente faltan las columnas), reintentando solo con personaje:', error.message);
+      await supabase.from('users').update({ albion_character: value }).eq('id', req.user.id);
+    }
+  } catch (dbErr) {
+    console.error('Error en base de datos al actualizar perfil:', dbErr.message);
+    return res.status(500).json({ error: 'Error al actualizar el perfil' });
+  }
+
+  res.json({ 
+    ok: true, 
+    albion_character: value,
+    albion_avatar: updateData.albion_avatar,
+    albion_ring: updateData.albion_ring
+  });
 });
 
 router.post('/avatar', requireAuth, upload.single('avatar'), async (req, res) => {

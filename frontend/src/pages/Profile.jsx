@@ -21,13 +21,109 @@ export default function Profile() {
   const [requesting, setRequesting] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState(null);
 
+  const [editChar, setEditChar] = useState(false);
+  const [charNameInput, setCharNameInput] = useState('');
+  const [savingChar, setSavingChar] = useState(false);
+  const [charErr, setCharErr] = useState('');
+
   useEffect(() => {
     if (user) {
+      setCharNameInput(user.albion_character || '');
       api.getMyRequests().then(d => setMyRequests(Array.isArray(d) ? d : [])).catch(() => {});
       api.getRankingsTop().then(d => setWeeklyStats(d)).catch(() => {});
       api.getTransferHistory().then(setTransferHistory).catch(() => {});
     }
   }, [user]);
+
+  const saveCharacter = async () => {
+    setSavingChar(true);
+    setCharErr('');
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ albion_character: charNameInput.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar');
+      
+      await refreshUser();
+      setEditChar(false);
+    } catch (err) {
+      setCharErr(err.message);
+    } finally {
+      setSavingChar(false);
+    }
+  };
+
+  const renderUserAvatar = (size) => {
+    if (user.albion_avatar) {
+      return (
+        <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
+          <div style={{ 
+            width: '100%', 
+            height: '100%', 
+            borderRadius: '50%', 
+            background: '#0f0f18', 
+            overflow: 'hidden',
+            position: 'relative',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <img 
+              src={`https://assets.albiononline.com/assets/images/killboard/avatar/${user.albion_avatar}.png`} 
+              alt="" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          </div>
+          {user.albion_ring && (
+            <img 
+              src={`https://assets.albiononline.com/assets/images/killboard/ring/${user.albion_ring}.png`} 
+              alt="" 
+              style={{ 
+                position: 'absolute', 
+                inset: -Math.round(size * 0.05), 
+                width: `calc(100% + ${Math.round(size * 0.1)}px)`, 
+                height: `calc(100% + ${Math.round(size * 0.1)}px)`, 
+                zIndex: 2,
+                pointerEvents: 'none'
+              }} 
+            />
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div style={{ 
+        width: size, 
+        height: size, 
+        borderRadius: '50%', 
+        background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        fontFamily: 'Rajdhani', 
+        fontWeight: 700, 
+        fontSize: size > 40 ? '3rem' : '1.5rem', 
+        color: 'white', 
+        overflow: 'hidden', 
+        border: '3px solid rgba(0,212,255,0.3)', 
+        margin: '0 auto', 
+        boxShadow: '0 0 25px rgba(0,212,255,0.2)', 
+        cursor: 'pointer' 
+      }}
+        onClick={() => fileRef.current.click()}>
+        {user.avatar ? (
+          <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          user.username[0].toUpperCase()
+        )}
+      </div>
+    );
+  };
 
   const requestCredit = async () => {
     setRequesting(true);
@@ -90,13 +186,12 @@ export default function Profile() {
         {/* Avatar card */}
         <div className="card" style={{ textAlign: 'center' }}>
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
-            <div style={{ width: 120, height: 120, borderRadius: '50%', background: 'linear-gradient(135deg, #00aacc, #0044aa)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '3rem', color: 'white', overflow: 'hidden', border: '3px solid rgba(0,212,255,0.3)', margin: '0 auto', boxShadow: '0 0 25px rgba(0,212,255,0.2)', cursor: 'pointer' }}
-              onClick={() => fileRef.current.click()}>
-              {user.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : user.username[0].toUpperCase()}
-            </div>
-            <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#00d4ff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => fileRef.current.click()}>
-              📷
-            </div>
+            {renderUserAvatar(120)}
+            {!user.albion_avatar && (
+              <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#00d4ff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.8rem', zIndex: 10 }} onClick={() => fileRef.current.click()}>
+                📷
+              </div>
+            )}
             <input type="file" ref={fileRef} style={{ display: 'none' }} accept="image/*" onChange={handleAvatarChange} />
           </div>
 
@@ -112,6 +207,69 @@ export default function Profile() {
 
           <div style={{ fontSize: '0.78rem', color: '#4a4a6a', marginTop: 8 }}>
             Miembro desde {new Date(user.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+          </div>
+
+          {/* Seccion de vinculación de Albion Online */}
+          <div style={{ marginTop: 18, padding: '12px 10px', background: '#0b0b14', borderRadius: 8, border: '1px solid #1a1a2a', textAlign: 'center' }}>
+            {editChar ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: '0.75rem', color: '#8a8ab0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personaje Albion</div>
+                <input 
+                  className="input" 
+                  style={{ height: 32, fontSize: '0.85rem', textAlign: 'center', background: '#07070b' }} 
+                  placeholder="Nombre de tu personaje..." 
+                  value={charNameInput} 
+                  onChange={e => setCharNameInput(e.target.value)} 
+                />
+                {charErr && <div style={{ color: '#ff3366', fontSize: '0.75rem', marginTop: 2 }}>{charErr}</div>}
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 4 }}>
+                  <button 
+                    className="btn btn-primary btn-sm" 
+                    style={{ height: 26, padding: '0 12px', fontSize: '0.75rem' }} 
+                    disabled={savingChar}
+                    onClick={saveCharacter}
+                  >
+                    {savingChar ? '...' : 'Guardar'}
+                  </button>
+                  <button 
+                    className="btn btn-secondary btn-sm" 
+                    style={{ height: 26, padding: '0 12px', fontSize: '0.75rem' }} 
+                    disabled={savingChar}
+                    onClick={() => { setEditChar(false); setCharNameInput(user.albion_character || ''); setCharErr(''); }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                {user.albion_character ? (
+                  <>
+                    <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personaje Albion</div>
+                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#00d4ff' }}>
+                      {user.albion_character}
+                    </div>
+                    <button 
+                      style={{ background: 'none', border: 'none', color: '#6a6a8a', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.72rem', padding: 0, marginTop: 4 }}
+                      onClick={() => setEditChar(true)}
+                    >
+                      Cambiar personaje
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '0.72rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>¿No vinculaste tu personaje?</div>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      style={{ fontSize: '0.75rem', padding: '4px 12px', borderColor: '#00d4ff33', color: '#00d4ff' }}
+                      onClick={() => setEditChar(true)}
+                    >
+                      Vincular Personaje
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
