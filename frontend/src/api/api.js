@@ -135,6 +135,9 @@ export const api = {
   casinoRuleta: (body) => req('/api/casino/roulette/spin', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   // Casino - Plinko
   casinoPlinko: (body) => req('/api/casino/plinko/drop', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  // Casino - Slots
+  casinoSlotsSpin: (body) => req('/api/casino/slots/spin', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  casinoSlotsJackpot: () => req('/api/casino/slots/jackpot', { headers: headers() }),
 
   // Poker (REST-based, no WebSocket)
   pokerGetRooms: () => req('/api/poker/rooms', { headers: headers() }),

@@ -6,10 +6,12 @@ import CasinoRuleta from './casino/CasinoRuleta';
 import Poker from './casino/Poker';
 import Truco from './casino/Truco';
 import Plinko from './casino/Plinko';
+import Slots from './casino/Slots';
 
 const GAMES = [
   { id: 'blackjack', label: '🃏 Blackjack', desc: 'Vos contra la casa — llega a 21 sin pasarte', color: '#00d4ff', icon: '🃏' },
-  { id: 'ruleta',    label: '🎰 Ruleta',    desc: 'Apostá a números, colores y grupos',          color: '#ffd700', icon: '🎰' },
+  { id: 'ruleta',    label: '🔴 Ruleta',    desc: 'Apostá a números, colores y grupos',          color: '#ff3b30', icon: '🔴' },
+  { id: 'slots',     label: '🎰 Slots',     desc: 'Tragaperras de 5 carretes y Jackpot Global',   color: '#ffd700', icon: '🎰' },
   { id: 'plinko',    label: '🟢 Plinko',    desc: 'Lanzá la bola por los clavos y multiplicá',   color: '#00e850', icon: '🟢' },
   { id: 'poker',     label: '♠ Poker',      desc: 'Texas Hold\'em multijugador en vivo',          color: '#a78bfa', icon: '♠' },
   { id: 'truco',     label: '🀄 Truco',     desc: 'Truco argentino 1v1 o 2v2 en vivo',            color: '#00e8c0', icon: '🀄' },
@@ -84,6 +86,7 @@ export default function Casino() {
           {activeGame === 'blackjack' && <Blackjack balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'ruleta'    && <CasinoRuleta balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'plinko'    && <Plinko balance={balance} onBalanceChange={setBalance} />}
+          {activeGame === 'slots'     && <Slots balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'poker'     && <Poker user={user} balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'truco'     && <Truco user={user} balance={balance} />}
         </div>

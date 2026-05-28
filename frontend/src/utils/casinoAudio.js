@@ -190,6 +190,176 @@ class CasinoAudio {
       console.warn('Audio play error:', e);
     }
   }
+
+  // Sonido de carretes girando (retorna una referencia para poder pararlo)
+  playSlotSpin() {
+    if (this.muted) return null;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      const gain = this.ctx.createGain();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, now);
+      
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(8, now);
+      
+      lfoGain.gain.setValueAtTime(40, now);
+      
+      gain.gain.setValueAtTime(0.04, now);
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      
+      lfo.start(now);
+      osc.start(now);
+      
+      return {
+        stop: () => {
+          try {
+            const stopTime = this.ctx.currentTime;
+            gain.gain.exponentialRampToValueAtTime(0.001, stopTime + 0.15);
+            osc.stop(stopTime + 0.2);
+            lfo.stop(stopTime + 0.2);
+          } catch(err) {}
+        }
+      };
+    } catch (e) {
+      console.warn('Audio play error:', e);
+      return null;
+    }
+  }
+
+  // Sonido de parada de carrete (thump) con tono ascendente por carrete
+  playSlotStop(reelIndex) {
+    if (this.muted) return;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      const baseFreq = 150 + reelIndex * 40;
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(baseFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.12);
+      
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (e) {
+      console.warn('Audio play error:', e);
+    }
+  }
+
+  // Sonido de línea ganadora
+  playSlotWinLine() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+      const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+      notes.forEach((freq, index) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + index * 0.05);
+        
+        const startTime = now + index * 0.05;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.setValueAtTime(0.08, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
+        
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.start(startTime);
+        osc.stop(startTime + 0.25);
+      });
+    } catch (e) {
+      console.warn('Audio play error:', e);
+    }
+  }
+
+  // Sirena épica del Jackpot Global
+  playJackpotSiren() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+      const duration = 3.5;
+      
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const lfo = this.ctx.createOscillator();
+      const lfoGain = this.ctx.createGain();
+      const gain = this.ctx.createGain();
+      
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(440, now);
+      
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(444, now);
+      
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(4, now);
+      lfoGain.gain.setValueAtTime(200, now);
+      
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + duration - 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc1.frequency);
+      lfoGain.connect(osc2.frequency);
+      
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(this.ctx.destination);
+      
+      lfo.start(now);
+      osc1.start(now);
+      osc2.start(now);
+      
+      lfo.stop(now + duration);
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
+      
+      for (let i = 0; i < 14; i++) {
+        const bellTime = now + i * 0.25;
+        const bellOsc = this.ctx.createOscillator();
+        const bellGain = this.ctx.createGain();
+        
+        bellOsc.type = 'sine';
+        bellOsc.frequency.setValueAtTime(1200, bellTime);
+        
+        bellGain.gain.setValueAtTime(0, now);
+        bellGain.gain.setValueAtTime(0.05, bellTime);
+        bellGain.gain.exponentialRampToValueAtTime(0.001, bellTime + 0.2);
+        
+        bellOsc.connect(bellGain);
+        bellGain.connect(this.ctx.destination);
+        
+        bellOsc.start(bellTime);
+        bellOsc.stop(bellTime + 0.2);
+      }
+    } catch (e) {
+      console.warn('Audio play error:', e);
+    }
+  }
 }
 
 export const casinoAudio = new CasinoAudio();

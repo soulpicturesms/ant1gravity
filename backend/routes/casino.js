@@ -242,4 +242,225 @@ router.post('/plinko/drop', requireAuth, async (req, res) => {
   });
 });
 
+// ── SLOTS (TRAGAPERRAS) ───────────────────────────────────────────────────────
+let inMemoryJackpot = 50000;
+
+router.get('/slots/jackpot', async (req, res) => {
+  try {
+    const { data: jp } = await supabase.from('casino_jackpot').select('amount').eq('id', 'global').maybeSingle();
+    return res.json({ jackpot: jp ? jp.amount : inMemoryJackpot });
+  } catch (e) {
+    return res.json({ jackpot: inMemoryJackpot });
+  }
+});
+
+const SLOTS_SYMBOLS = ['Wild', 'Seven', 'Diamond', 'Bell', 'Plum', 'Orange', 'Lemon', 'Cherry'];
+const SLOTS_WEIGHTS = [3, 4, 6, 8, 12, 15, 18, 20]; // Rare to common
+
+function getRandomSlotsSymbol() {
+  const totalWeight = SLOTS_WEIGHTS.reduce((a, b) => a + b, 0);
+  let r = Math.random() * totalWeight;
+  for (let i = 0; i < SLOTS_SYMBOLS.length; i++) {
+    if (r < SLOTS_WEIGHTS[i]) return SLOTS_SYMBOLS[i];
+    r -= SLOTS_WEIGHTS[i];
+  }
+  return SLOTS_SYMBOLS[SLOTS_SYMBOLS.length - 1];
+}
+
+const SLOTS_PAYLINES = [
+  [1, 1, 1, 1, 1], // Line 1: Middle Row
+  [0, 0, 0, 0, 0], // Line 2: Top Row
+  [2, 2, 2, 2, 2], // Line 3: Bottom Row
+  [0, 1, 2, 1, 0], // Line 4: V Shape
+  [2, 1, 0, 1, 2], // Line 5: Inverted V
+  [0, 0, 1, 0, 0], // Line 6: Zigzag top
+  [2, 2, 1, 2, 2], // Line 7: Zigzag bottom
+  [1, 0, 1, 2, 1], // Line 8: Wave top
+  [1, 2, 1, 0, 1], // Line 9: Wave bottom
+];
+
+const SLOTS_PAYTABLE = {
+  Seven:   { 3: 25, 4: 100, 5: 'JACKPOT' },
+  Diamond: { 3: 15, 4: 50,  5: 200 },
+  Bell:    { 3: 10, 4: 30,  5: 100 },
+  Plum:    { 3: 5,  4: 15,  5: 50 },
+  Orange:  { 3: 4,  4: 10,  5: 30 },
+  Lemon:   { 3: 3,  4: 8,   5: 20 },
+  Cherry:  { 2: 1,  3: 2,   4: 5,   5: 15 },
+  Wild:    { 3: 50, 4: 200, 5: 1000 }
+};
+
+router.post('/slots/spin', requireAuth, async (req, res) => {
+  const bet = parseInt(req.body.bet);
+  if (!bet || bet < 9) return res.status(400).json({ error: 'Apuesta mínima: 9 tokens (1 por línea)' });
+
+  const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
+  if (!user || user.coins < bet) return res.status(400).json({ error: 'Tokens insuficientes' });
+
+  // Get current jackpot
+  let jackpotAmount = 50000;
+  let useMemory = false;
+  try {
+    const { data: jp } = await supabase.from('casino_jackpot').select('amount').eq('id', 'global').maybeSingle();
+    if (jp) {
+      jackpotAmount = jp.amount;
+    } else {
+      await supabase.from('casino_jackpot').insert({ id: 'global', amount: 50000 }).catch(()=>{});
+    }
+  } catch (e) {
+    console.error('Database jackpot fetch error:', e.message);
+    jackpotAmount = inMemoryJackpot;
+    useMemory = true;
+  }
+
+  // Contribute 2% to jackpot
+  const contribution = Math.max(1, Math.floor(bet * 0.02));
+  jackpotAmount += contribution;
+
+  // Generate 5 reels x 3 symbols
+  const reels = [];
+  for (let c = 0; c < 5; c++) {
+    const col = [getRandomSlotsSymbol(), getRandomSlotsSymbol(), getRandomSlotsSymbol()];
+    reels.push(col);
+  }
+
+  const betPerLine = bet / 9.0;
+  let totalPayout = 0;
+  let jackpotWon = false;
+  const winningLines = []; // [{ lineIndex, symbol, count, payout, positions: [[col, row], ...] }]
+
+  // Evaluate the 9 paylines
+  for (let lIndex = 0; lIndex < SLOTS_PAYLINES.length; lIndex++) {
+    const lineCoords = SLOTS_PAYLINES[lIndex]; // e.g. [1, 1, 1, 1, 1] means middle row across all reels
+    const lineSymbols = [
+      reels[0][lineCoords[0]],
+      reels[1][lineCoords[1]],
+      reels[2][lineCoords[2]],
+      reels[3][lineCoords[3]],
+      reels[4][lineCoords[4]],
+    ];
+
+    // Check wild count
+    let wildCount = 0;
+    for (let i = 0; i < 5; i++) {
+      if (lineSymbols[i] === 'Wild') wildCount++;
+      else break;
+    }
+
+    let bestSymbol = null;
+    let bestCount = 0;
+    let bestPayoutType = 0;
+
+    // Check pure Wilds
+    if (wildCount >= 3) {
+      bestSymbol = 'Wild';
+      bestCount = wildCount;
+      bestPayoutType = SLOTS_PAYTABLE.Wild[wildCount] || 0;
+    }
+
+    // Check other symbols
+    for (const S of ['Seven', 'Diamond', 'Bell', 'Plum', 'Orange', 'Lemon', 'Cherry']) {
+      let count = 0;
+      for (let i = 0; i < 5; i++) {
+        if (lineSymbols[i] === S || lineSymbols[i] === 'Wild') {
+          count++;
+        } else {
+          break;
+        }
+      }
+
+      if (count >= 2) {
+        const mult = SLOTS_PAYTABLE[S][count];
+        if (mult) {
+          if (mult === 'JACKPOT') {
+            bestSymbol = S;
+            bestCount = count;
+            bestPayoutType = 'JACKPOT';
+            break; // Jackpot is the max possible, stop checks for this line
+          } else if (bestPayoutType !== 'JACKPOT' && mult > bestPayoutType) {
+            bestSymbol = S;
+            bestCount = count;
+            bestPayoutType = mult;
+          }
+        }
+      }
+    }
+
+    if (bestPayoutType === 'JACKPOT') {
+      jackpotWon = true;
+      const positions = lineCoords.map((row, col) => [col, row]);
+      winningLines.push({
+        lineIndex: lIndex,
+        symbol: bestSymbol,
+        count: bestCount,
+        payout: jackpotAmount, // raw payout is jackpot
+        isJackpot: true,
+        positions
+      });
+    } else if (bestPayoutType > 0) {
+      const linePayout = Math.floor(betPerLine * bestPayoutType);
+      totalPayout += linePayout;
+      const positions = [];
+      for (let col = 0; col < bestCount; col++) {
+        positions.push([col, lineCoords[col]]);
+      }
+      winningLines.push({
+        lineIndex: lIndex,
+        symbol: bestSymbol,
+        count: bestCount,
+        payout: linePayout,
+        isJackpot: false,
+        positions
+      });
+    }
+  }
+
+  let finalPayout = totalPayout;
+  if (jackpotWon) {
+    finalPayout += jackpotAmount;
+    // Reset jackpot to 50000
+    jackpotAmount = 50000;
+  }
+
+  // Update jackpot in db
+  if (useMemory) {
+    inMemoryJackpot = jackpotAmount;
+  } else {
+    try {
+      await supabase.from('casino_jackpot').update({ amount: jackpotAmount }).eq('id', 'global');
+    } catch (e) {
+      console.error('Database jackpot update error:', e.message);
+      inMemoryJackpot = jackpotAmount;
+    }
+  }
+
+  // Update user coins
+  const net = finalPayout - bet;
+  const newBalance = user.coins + net;
+  await supabase.from('users').update({ coins: newBalance }).eq('id', req.user.id);
+
+  // Log transaction
+  let reason = `Tragaperras — Apuesta: ${bet}. Ganancia: ${finalPayout}`;
+  if (jackpotWon) {
+    reason += ` ¡¡MEGA JACKPOT GANADO!!`;
+  }
+  await supabase.from('coin_transactions').insert({
+    user_id: req.user.id,
+    username: user.username,
+    amount: net,
+    type: 'casino',
+    reason,
+  });
+
+  res.json({
+    reels,
+    winningLines,
+    payout: finalPayout,
+    net,
+    jackpotWon,
+    jackpotAmount: jackpotWon ? finalPayout - totalPayout : jackpotAmount,
+    balance: newBalance,
+  });
+});
+
 module.exports = router;

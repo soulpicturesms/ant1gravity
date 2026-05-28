@@ -16,3 +16,5 @@ backend/uploads/
 # OS
 .DS_Store
 Thumbs.db
+.vercel
+backend/temp_items_check.json
