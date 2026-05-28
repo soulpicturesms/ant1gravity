@@ -16,25 +16,49 @@ const WHEEL_NUMBERS = [
 
 function RouletteWheel({ spinning, result, onSpinComplete }) {
   const canvasRef = useRef(null);
-  const rotRef    = useRef(0);
+  
+  // Physics engine variables in refs for 60 FPS performance
+  const wheelAngleRef = useRef(0);
   const ballAngleRef = useRef(0);
   const ballRadiusRef = useRef(0);
-  const lastSlotRef   = useRef(-1);
-  const animRef   = useRef(null);
+  const ballSpeedRef = useRef(0);
+  const ballStateRef = useRef('idle'); // 'idle' | 'outer_rim' | 'falling' | 'bouncing' | 'settled'
+  
+  const relAngleRef = useRef(0);
+  const relAngleVelRef = useRef(0);
+  const bounceIntensityRef = useRef(0);
+  const bounceTimerRef = useRef(0);
+  
+  const ballRadiusVelRef = useRef(0);
+  const lastSlotRef = useRef(-1);
+  const animRef = useRef(null);
+  
   const N = WHEEL_NUMBERS.length; // 38
+  const wheelSpeed = 0.012; // slow constant rotation clockwise
+  
+  const resultRef = useRef(result);
+  const onSpinCompleteRef = useRef(onSpinComplete);
+
+  useEffect(() => {
+    resultRef.current = result;
+  }, [result]);
+
+  useEffect(() => {
+    onSpinCompleteRef.current = onSpinComplete;
+  }, [onSpinComplete]);
+
+  // Initial wheel geometry scale
+  const canvasW = 380;
+  const cx = canvasW / 2; // 190
+  const cy = canvasW / 2; // 190
+  const R = cx - 18;      // 172 (outer pockets boundary)
 
   const draw = (wheelRotDeg, ballAngleRad, ballRadiusPx) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
-    // Scale canvas to 380x380
-    const S = canvas.width;
-    const cx = S / 2;
-    const cy = S / 2;
-    const R = cx - 18; // 172
-    
-    ctx.clearRect(0, 0, S, S);
+    ctx.clearRect(0, 0, canvasW, canvasW);
     const arc = (2 * Math.PI) / N;
     const rotRad = (wheelRotDeg * Math.PI) / 180;
 
@@ -151,127 +175,140 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
     }
   };
 
-  const onSpinCompleteRef = useRef(onSpinComplete);
+  // State trigger for starting the physical spin animation
   useEffect(() => {
-    onSpinCompleteRef.current = onSpinComplete;
-  }, [onSpinComplete]);
+    if (spinning) {
+      if (result === null) {
+        // Start infinite spin rolling on the outer track
+        ballStateRef.current = 'outer_rim';
+        ballSpeedRef.current = -0.22; // opposite direction (counter-clockwise)
+        ballRadiusRef.current = R + 4; // outer rim track
+      }
+    }
+  }, [spinning, result]);
 
+  // Main loop for wheel rotation and ball physics
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const cx = canvas.width / 2;
-    const R = cx - 18;
 
-    if (rotRef.current === undefined) rotRef.current = 0;
-    if (ballAngleRef.current === undefined) ballAngleRef.current = 0;
-    if (ballRadiusRef.current === undefined) ballRadiusRef.current = R - 4;
-    if (lastSlotRef.current === undefined) lastSlotRef.current = -1;
+    // High-DPI setup for wheel
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvasW * dpr;
+    canvas.height = canvasW * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
 
-    let phase = 'idle';
-    let t0 = 0;
-    let startRot = 0;
-    let startBallAngle = 0;
-    let totalRotWheel = 0;
-    let totalRotBall = 0;
-    let slotAngle = 0;
-    const T = 5000; // 5 seconds landing time
+    const tick = () => {
+      // 1. Rotate the wheel clockwise
+      wheelAngleRef.current += wheelSpeed;
+      const rotDeg = (wheelAngleRef.current * 180) / Math.PI;
 
-    if (spinning) {
-      if (result === null) {
-        phase = 'infinite';
-      } else {
-        phase = 'landing';
-        t0 = performance.now();
-        startRot = rotRef.current;
-        startBallAngle = ballAngleRef.current;
+      // 2. Physics-based Ball Simulation
+      if (ballStateRef.current === 'outer_rim') {
+        if (resultRef.current !== null) {
+          // Response received! Slow down ball until it falls
+          ballSpeedRef.current *= 0.991;
+          if (Math.abs(ballSpeedRef.current) < 0.07) {
+            ballStateRef.current = 'falling';
+            ballRadiusVelRef.current = -2.5; // moves inward
+          }
+        }
+        ballAngleRef.current += ballSpeedRef.current;
+        ballRadiusRef.current = R + 4; // keep on outer track
+      } 
+      else if (ballStateRef.current === 'falling') {
+        ballSpeedRef.current *= 0.985;
+        ballAngleRef.current += ballSpeedRef.current;
+        ballRadiusRef.current += ballRadiusVelRef.current;
         
-        const targetIdx = WHEEL_NUMBERS.indexOf(String(result));
-        slotAngle = (targetIdx + 0.5) * (2 * Math.PI / 38);
-        
-        totalRotWheel = 3 * 360; 
-        const finalWheelRot = startRot + totalRotWheel;
-        const finalWheelRotRad = (finalWheelRot * Math.PI) / 180;
-        
-        const finalBallAngle = finalWheelRotRad + slotAngle - Math.PI / 2;
-        totalRotBall = finalBallAngle - startBallAngle - 4 * 2 * Math.PI; 
-      }
-    } else {
-      phase = 'idle';
-      if (result !== null && result !== undefined) {
-        const targetIdx = WHEEL_NUMBERS.indexOf(String(result));
-        if (targetIdx !== -1) {
-          const slotAngle = (targetIdx + 0.5) * (2 * Math.PI / 38);
-          const rotRad = (rotRef.current * Math.PI) / 180;
-          ballAngleRef.current = rotRad + slotAngle - Math.PI / 2;
+        // Check if ball hits the pocket ring (R - 14)
+        if (ballRadiusRef.current <= R - 14) {
           ballRadiusRef.current = R - 14;
+          ballStateRef.current = 'bouncing';
+          bounceTimerRef.current = 0;
+          relAngleRef.current = ballAngleRef.current - wheelAngleRef.current;
+          relAngleVelRef.current = ballSpeedRef.current - wheelSpeed;
+          bounceIntensityRef.current = 1.0;
         }
-      } else {
-        ballAngleRef.current = null;
-        ballRadiusRef.current = null;
       }
-    }
-
-    const tick = (now) => {
-      if (phase === 'infinite') {
-        rotRef.current = (rotRef.current + 2.5) % 360;
-        ballAngleRef.current = (ballAngleRef.current - 0.08) % (2 * Math.PI);
-        ballRadiusRef.current = R - 4;
-        draw(rotRef.current, ballAngleRef.current, ballRadiusRef.current);
-        animRef.current = requestAnimationFrame(tick);
-      } else if (phase === 'landing') {
-        const p = Math.min((now - t0) / T, 1);
-        const easeWheel = 1 - Math.pow(1 - p, 4);
-        const easeBall = 1 - Math.pow(1 - p, 3);
+      else if (ballStateRef.current === 'bouncing') {
+        bounceTimerRef.current++;
+        const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
+        const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
         
-        rotRef.current = startRot + totalRotWheel * easeWheel;
-        let currentBallAngle = startBallAngle + totalRotBall * easeBall;
-        let currentBallRadius = (R - 4) - ((R - 4) - (R - 14)) * Math.pow(p, 2);
+        // Spring pull towards target pocket
+        const diff = targetRelAngle - relAngleRef.current;
+        relAngleVelRef.current += diff * 0.06;
         
-        if (p > 0.82 && p < 0.98) {
-          const bounceFactor = (1 - p) * 6;
-          const angleJitter = Math.sin(p * 55) * bounceFactor * 0.04;
-          const radiusJitter = Math.abs(Math.cos(p * 55)) * bounceFactor * 5;
-          currentBallAngle += angleJitter;
-          currentBallRadius += radiusJitter;
+        // Add random bounce noise representing pockets collision
+        if (bounceIntensityRef.current > 0.05) {
+          if (Math.random() < 0.16) {
+            relAngleVelRef.current += (Math.random() - 0.5) * 0.28 * bounceIntensityRef.current;
+          }
+          bounceIntensityRef.current *= 0.955;
         }
         
-        ballAngleRef.current = currentBallAngle;
-        ballRadiusRef.current = currentBallRadius;
+        relAngleVelRef.current *= 0.83; // friction
+        relAngleRef.current += relAngleVelRef.current;
+        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
         
-        const wheelRotRad = (rotRef.current * Math.PI) / 180;
-        const relativeAngle = currentBallAngle - wheelRotRad;
+        // Hop vertically while bouncing elastically
+        ballRadiusRef.current = (R - 14) + Math.abs(Math.sin(bounceTimerRef.current * 0.35)) * 9 * bounceIntensityRef.current;
+        
+        // Sound ticks on dividers crossing
+        const relativeAngle = relAngleRef.current;
         const slotIdx = Math.floor(((relativeAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI / 38));
         if (slotIdx !== lastSlotRef.current) {
           lastSlotRef.current = slotIdx;
-          if (p < 0.96) {
-            casinoAudio.playRouletteTick();
-          }
+          casinoAudio.playRouletteTick();
         }
- 
-        draw(rotRef.current, ballAngleRef.current, ballRadiusRef.current);
 
-        if (p < 1) {
-          animRef.current = requestAnimationFrame(tick);
-        } else {
-          phase = 'idle';
+        // Settle condition
+        if (bounceIntensityRef.current <= 0.05 && Math.abs(diff) < 0.015) {
+          relAngleRef.current = targetRelAngle;
+          ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
+          ballRadiusRef.current = R - 14;
+          ballStateRef.current = 'settled';
           if (onSpinCompleteRef.current) {
             onSpinCompleteRef.current();
           }
         }
-      } else {
-        draw(rotRef.current, ballAngleRef.current, ballRadiusRef.current);
       }
+      else if (ballStateRef.current === 'settled') {
+        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
+        ballRadiusRef.current = R - 14;
+      }
+      else {
+        // Idle before spin, keep ball in last winning pocket
+        if (resultRef.current !== null && resultRef.current !== undefined) {
+          const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
+          if (targetIdx !== -1) {
+            const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
+            ballAngleRef.current = wheelAngleRef.current + targetRelAngle;
+            ballRadiusRef.current = R - 14;
+          }
+        } else {
+          ballAngleRef.current = null;
+          ballRadiusRef.current = null;
+        }
+      }
+
+      // Draw everything
+      draw(rotDeg, ballAngleRef.current, ballRadiusRef.current);
+
+      animRef.current = requestAnimationFrame(tick);
     };
 
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, [spinning, result]);
+  }, []);
 
   return (
     <div style={{ position: 'relative', maxWidth: 380, margin: '0 auto' }}>
-      {/* Indicador superior de neón */}
       <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', zIndex: 2, width: 0, height: 0, borderLeft: '12px solid transparent', borderRight: '12px solid transparent', borderTop: '20px solid #ffd700', filter: 'drop-shadow(0 0 8px rgba(255,215,0,0.85))' }} />
-      <canvas ref={canvasRef} width={380} height={380} style={{ width: '100%', height: 'auto', borderRadius: '50%', display: 'block' }} />
+      <canvas ref={canvasRef} style={{ width: '100%', height: 'auto', borderRadius: '50%', display: 'block' }} />
     </div>
   );
 }
@@ -289,22 +326,22 @@ function BettingGrid({ bets, onBet }) {
   const canvasGridRef = useRef(null);
   const [hoverBet, setHoverBet] = useState(null);
 
-  // Math coordinates mapping for splits / corners
+  // Layout geometry calculations (expanded cell dimensions)
   function getBetCoordinates(type, value) {
     if (type === 'number') {
-      if (value === '0') return { x: 24, y: 33 };
-      if (value === '00') return { x: 24, y: 99 };
+      if (value === '0') return { x: 27, y: 24 };
+      if (value === '00') return { x: 27, y: 96 };
       const n = parseInt(value);
       const col = Math.floor((n - 1) / 3);
       const row = 2 - ((n - 1) % 3);
-      return { x: 48 + col * 44 + 22, y: row * 44 + 22 };
+      return { x: 54 + col * 48 + 24, y: row * 48 + 24 };
     }
     if (type === 'split') {
-      if (value === '0,00') return { x: 24, y: 66 };
-      if (value === '0,3') return { x: 48, y: 22 };
-      if (value === '0,2') return { x: 48, y: 44 };
-      if (value === '00,2') return { x: 48, y: 88 };
-      if (value === '00,1') return { x: 48, y: 110 };
+      if (value === '0,00') return { x: 27, y: 72 };
+      if (value === '0,3') return { x: 54, y: 24 };
+      if (value === '0,2') return { x: 54, y: 48 };
+      if (value === '00,2') return { x: 54, y: 96 };
+      if (value === '00,1') return { x: 54, y: 120 };
 
       const [n1, n2] = value.split(',').map(Number);
       const col1 = Math.floor((n1 - 1) / 3);
@@ -313,27 +350,27 @@ function BettingGrid({ bets, onBet }) {
       const row2 = 2 - ((n2 - 1) % 3);
 
       if (col1 === col2) {
-        return { x: 48 + col1 * 44 + 22, y: Math.max(row1, row2) * 44 };
+        return { x: 54 + col1 * 48 + 24, y: Math.max(row1, row2) * 48 };
       } else {
-        return { x: 48 + Math.max(col1, col2) * 44, y: row1 * 44 + 22 };
+        return { x: 54 + Math.max(col1, col2) * 48, y: row1 * 48 + 24 };
       }
     }
     if (type === 'corner') {
       const nums = value.split(',').map(Number);
       const cols = nums.map(n => Math.floor((n - 1) / 3));
       const rows = nums.map(n => 2 - ((n - 1) % 3));
-      const midX = 48 + Math.max(...cols) * 44;
-      const midY = Math.max(...rows) * 44;
+      const midX = 54 + Math.max(...cols) * 48;
+      const midY = Math.max(...rows) * 48;
       return { x: midX, y: midY };
     }
     if (type === 'column') {
       const row = 3 - parseInt(value);
-      return { x: 576 + 25, y: row * 44 + 22 };
+      return { x: 630 + 27, y: row * 48 + 24 };
     }
     return null;
   }
 
-  // Draw 3D-stacked chips on board
+  // Draw 3D glossy layered poker chip
   function drawChip(ctx, x, y, amount) {
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
@@ -351,16 +388,16 @@ function BettingGrid({ bets, onBet }) {
       const cy = y - i * 3;
       
       ctx.beginPath();
-      ctx.arc(x, cy, 13, 0, 2 * Math.PI);
+      ctx.arc(x, cy, 14, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
 
-      // Chip borders
+      // Chip edge textures
       ctx.strokeStyle = 'rgba(255,255,255,0.7)';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([3, 3]);
       ctx.beginPath();
-      ctx.arc(x, cy, 10, 0, 2 * Math.PI);
+      ctx.arc(x, cy, 11, 0, 2 * Math.PI);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -380,13 +417,13 @@ function BettingGrid({ bets, onBet }) {
     ctx.restore();
   }
 
-  // Handle Mouse Hover Grid Calculations
+  // Map mouse hover to split or corner coordinates
   const handleMouseMove = (e) => {
     const canvas = canvasGridRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = 626 / rect.width;
-    const scaleY = 132 / rect.height;
+    const scaleX = 684 / rect.width;
+    const scaleY = 144 / rect.height;
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
 
@@ -394,12 +431,12 @@ function BettingGrid({ bets, onBet }) {
     let hoverValue = null;
     let hoverNums = [];
 
-    if (mx < 48) {
-      if (Math.abs(my - 66) < 7) {
+    if (mx < 54) {
+      if (Math.abs(my - 72) < 8) {
         hoverType = 'split';
         hoverValue = '0,00';
         hoverNums = ['0', '00'];
-      } else if (my < 66) {
+      } else if (my < 72) {
         hoverType = 'number';
         hoverValue = '0';
         hoverNums = ['0'];
@@ -408,24 +445,24 @@ function BettingGrid({ bets, onBet }) {
         hoverValue = '00';
         hoverNums = ['00'];
       }
-    } else if (mx >= 48 && mx < 576) {
-      const gridX = mx - 48;
+    } else if (mx >= 54 && mx < 630) {
+      const gridX = mx - 54;
       const gridY = my;
-      const col = Math.floor(gridX / 44);
-      const row = Math.floor(gridY / 44);
+      const col = Math.floor(gridX / 48);
+      const row = Math.floor(gridY / 48);
 
-      const dx = gridX % 44;
-      const dy = gridY % 44;
+      const dx = gridX % 48;
+      const dy = gridY % 48;
 
-      const nearLeft = dx < 7;
-      const nearRight = dx > 37;
-      const nearTop = dy < 7;
-      const nearBottom = dy > 37;
+      const nearLeft = dx < 8;
+      const nearRight = dx > 40;
+      const nearTop = dy < 8;
+      const nearBottom = dy > 40;
 
       const intersectCol = nearLeft ? col : nearRight ? col + 1 : -1;
       const intersectRow = nearTop ? row : nearBottom ? row + 1 : -1;
 
-      // 4-number Corner Bet
+      // Corner (4 numbers)
       if (intersectCol > 0 && intersectCol <= 11 && intersectRow > 0 && intersectRow <= 2) {
         const numTopLeft = (intersectCol - 1) * 3 + (3 - (intersectRow - 1));
         const numTopRight = intersectCol * 3 + (3 - (intersectRow - 1));
@@ -437,7 +474,7 @@ function BettingGrid({ bets, onBet }) {
         hoverValue = nums.join(',');
         hoverNums = nums;
       } 
-      // Horizontal Split Bet
+      // Horizontal Split (2 numbers vertically)
       else if (nearTop && row > 0) {
         const n1 = col * 3 + (3 - (row - 1));
         const n2 = col * 3 + (3 - row);
@@ -453,7 +490,7 @@ function BettingGrid({ bets, onBet }) {
         hoverValue = nums.join(',');
         hoverNums = nums;
       }
-      // Vertical Split Bet
+      // Vertical Split (2 numbers horizontally)
       else if (nearLeft && col > 0) {
         const n1 = (col - 1) * 3 + (3 - row);
         const n2 = col * 3 + (3 - row);
@@ -476,8 +513,8 @@ function BettingGrid({ bets, onBet }) {
         hoverValue = String(n);
         hoverNums = [String(n)];
       }
-    } else if (mx >= 576 && mx <= 626) {
-      const row = Math.floor(my / 44);
+    } else if (mx >= 630 && mx <= 684) {
+      const row = Math.floor(my / 48);
       if (row >= 0 && row <= 2) {
         hoverType = 'column';
         hoverValue = String(3 - row);
@@ -498,14 +535,14 @@ function BettingGrid({ bets, onBet }) {
     }
   };
 
-  // Render Grid Canvas
+  // Draw Betting Grid Canvas
   useEffect(() => {
     const canvas = canvasGridRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const logicalW = 626;
-    const logicalH = 132;
+    const logicalW = 684;
+    const logicalH = 144;
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = logicalW * dpr;
@@ -521,22 +558,22 @@ function BettingGrid({ bets, onBet }) {
 
     // Draw 0
     ctx.fillStyle = isHovered('0') ? 'rgba(0, 212, 255, 0.35)' : '#1a5c1a';
-    ctx.fillRect(0, 0, 48, 66);
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.fillRect(0, 0, 54, 72);
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
     ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, 48, 66);
+    ctx.strokeRect(0, 0, 54, 72);
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 15px Rajdhani';
+    ctx.font = 'bold 16px Rajdhani';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('0', 24, 33);
+    ctx.fillText('0', 27, 36);
 
     // Draw 00
     ctx.fillStyle = isHovered('00') ? 'rgba(0, 212, 255, 0.35)' : '#1a5c1a';
-    ctx.fillRect(0, 66, 48, 66);
-    ctx.strokeRect(0, 66, 48, 66);
+    ctx.fillRect(0, 72, 54, 72);
+    ctx.strokeRect(0, 72, 54, 72);
     ctx.fillStyle = 'white';
-    ctx.fillText('00', 24, 99);
+    ctx.fillText('00', 27, 108);
 
     // Draw Numbers (1-36)
     for (let c = 0; c < 12; c++) {
@@ -546,15 +583,15 @@ function BettingGrid({ bets, onBet }) {
         const cellColor = RED_NUMS.has(n) ? '#8b1a2a' : '#1e1e2f';
 
         ctx.fillStyle = isNumHovered ? 'rgba(255, 215, 0, 0.3)' : cellColor;
-        ctx.fillRect(48 + c * 44, r * 44, 44, 44);
+        ctx.fillRect(54 + c * 48, r * 48, 48, 48);
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.15)';
-        ctx.strokeRect(48 + c * 44, r * 44, 44, 44);
+        ctx.strokeRect(54 + c * 48, r * 48, 48, 48);
 
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 13px Rajdhani';
+        ctx.font = 'bold 14px Rajdhani';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(n), 48 + c * 44 + 22, r * 44 + 22);
+        ctx.fillText(String(n), 54 + c * 48 + 24, r * 48 + 24);
       }
     }
 
@@ -563,15 +600,15 @@ function BettingGrid({ bets, onBet }) {
       const colVal = String(3 - r);
       const isColHovered = hoverBet && hoverBet.type === 'column' && hoverBet.value === colVal;
       ctx.fillStyle = isColHovered ? 'rgba(255, 215, 0, 0.25)' : 'rgba(255, 255, 255, 0.02)';
-      ctx.fillRect(576, r * 44, 50, 44);
+      ctx.fillRect(630, r * 48, 54, 48);
       ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
-      ctx.strokeRect(576, r * 44, 50, 44);
+      ctx.strokeRect(630, r * 48, 54, 48);
 
       ctx.fillStyle = '#ffd700';
       ctx.font = 'bold 11px Rajdhani';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('2to1', 576 + 25, r * 44 + 22);
+      ctx.fillText('2to1', 630 + 27, r * 48 + 24);
     }
 
     // Draw highlighted split/corner borders
@@ -599,7 +636,7 @@ function BettingGrid({ bets, onBet }) {
 
   }, [bets, hoverBet]);
 
-  // HTML simple chance cells below Canvas
+  // HTML outside bet cells
   const Cell = ({ label, type, value }) => {
     const myBet = bets.filter(b => b.type === type && b.value === value).reduce((s, b) => s + b.amount, 0);
     let chipColor = '#6a6a8a';
@@ -638,7 +675,7 @@ function BettingGrid({ bets, onBet }) {
   return (
     <div style={{ overflowX: 'auto', paddingBottom: 8, width: '100%' }}>
       {/* Canvas container for numbers, 0, 00, splits, and corners */}
-      <div style={{ position: 'relative', width: 626, height: 132, marginBottom: 6 }}>
+      <div style={{ position: 'relative', width: 684, height: 144, marginBottom: 6 }}>
         <canvas
           ref={canvasGridRef}
           onMouseMove={handleMouseMove}
@@ -649,7 +686,7 @@ function BettingGrid({ bets, onBet }) {
       </div>
 
       {/* Dozens Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '48px repeat(3, 176px) 50px', gap: 3, width: 626, marginBottom: 3 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '54px repeat(3, 192px) 54px', gap: 3, width: 684, marginBottom: 3 }}>
         <div style={{ visibility: 'hidden' }} />
         <Cell label="1st 12" type="dozen" value="1-12" />
         <Cell label="2nd 12" type="dozen" value="13-24" />
@@ -658,7 +695,7 @@ function BettingGrid({ bets, onBet }) {
       </div>
 
       {/* Low/High, Red/Black, Even/Odd Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '48px repeat(6, 88px) 50px', gap: 3, width: 626 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '54px repeat(6, 96px) 54px', gap: 3, width: 684 }}>
         <div style={{ visibility: 'hidden' }} />
         <Cell label="1-18" type="half" value="low" />
         <Cell label="Even" type="parity" value="even" />
@@ -721,7 +758,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
   };
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 10px' }}>
+    <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 10px' }}>
       <div className="card" style={{ border: '1px solid rgba(255,215,0,0.2)', background: 'linear-gradient(135deg, #0d0d1e, #06060c)', padding: 24, boxShadow: '0 15px 40px rgba(0,0,0,0.7)' }}>
         
         {/* Header & Mute toggle */}
@@ -741,7 +778,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         {err && <div className="alert alert-error" style={{ marginBottom: 16 }}>{err}</div>}
 
         {/* 2-Column Side-by-Side Responsive Layout */}
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 32, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           
           {/* Left Column: Large Wheel + Chips + Spin Controls */}
           <div style={{ flex: '1 1 380px', maxWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -773,7 +810,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
           </div>
 
           {/* Right Column: Wide Betting Grid + Result Summary */}
-          <div style={{ flex: '1 1 626px', maxWidth: 640, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ flex: '1 1 640px', maxWidth: 700, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             
             {/* Win/Loss Summary Display */}
             {summary && (
