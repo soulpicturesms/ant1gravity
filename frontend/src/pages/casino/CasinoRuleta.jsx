@@ -48,94 +48,97 @@ function RouletteWheelSVG() {
             />
             <text
               x={tx} y={ty}
-              fill="#fff" fontSize="9" fontWeight="700"
-              textAnchor="middle" dominantBaseline="middle"
-              transform={`rotate(${(aMid * 180 / Math.PI) + 90}, ${tx}, ${ty})`}
-              style={{ fontFamily: "'JetBrains Mono',monospace" }}
-            >{n}</text>
+              fill="#fff" fontSize="8" fontWeight="bold" fontFamily="'Inter', sans-serif"
+              textAnchor="middle" dominantBaseline="central"
+              transform={`rotate(${(aMid * 180)/Math.PI + 90}, ${tx}, ${ty})`}
+            >
+              {n}
+            </text>
           </g>
         );
       })}
-      <circle cx={cx} cy={cy} r={r*0.42} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-      <circle cx={cx} cy={cy} r={r*0.52} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.8"/>
-      
-      {/* Outer LED chasing lights */}
-      {WHEEL_NUMBERS.map((n, i) => {
-        const a = (i / N) * Math.PI * 2 - Math.PI / 2;
-        const lx = cx + Math.cos(a) * (r - 6);
-        const ly = cy + Math.sin(a) * (r - 6);
-        return (
-          <circle
-            key={`led-${i}`}
-            cx={lx}
-            cy={ly}
-            r="1.8"
-            className="roul-idle-light"
-            style={{
-              animationDelay: `${i * 0.05}s`
-            }}
-          />
-        );
-      })}
+      {/* Outer gold rim */}
+      <circle cx={cx} cy={cy} r={r * 0.94} fill="none" stroke="#d4af37" strokeWidth="1.5" opacity="0.85"/>
+      {/* Inner center details */}
+      <circle cx={cx} cy={cy} r={r * 0.52} fill="#140c08" stroke="#111" strokeWidth="2"/>
+      <circle cx={cx} cy={cy} r={r * 0.38} fill="#24150d" stroke="#d4af37" strokeWidth="1" opacity="0.3"/>
+      <circle cx={cx} cy={cy} r={r * 0.18} fill="url(#rw-wood)"/>
+      <text x={cx} y={cy} fill="rgba(255,255,255,0.08)" fontSize="5" fontWeight="900" fontFamily="Unbounded" textAnchor="middle" dominantBaseline="central">ANT1GRAVITY</text>
     </svg>
   );
 }
 
-// ── Wheel + ball (JS-physics animation loop) ──────────────────────────
-function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize }) {
+function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) {
+  const wRef = useRef(null);
+  const size = wheelSize;
+  const half = size / 2;
+
+  // Ball position relative to wheel angle
+  const screenAngle = wheelRot + ballAngleRel;
+  const rad = (screenAngle * Math.PI) / 180;
+  const bx = half + Math.cos(rad) * ballRadius;
+  const by = half + Math.sin(rad) * ballRadius;
+
   return (
-    <div className="roul-wheel-wrap" style={{ width: wheelSize, height: wheelSize }}>
-      <div className="roul-pointer"/>
-      <div
-        className="roul-wheel"
-        style={{ transform: `rotate(${wheelRot}deg)`, width: '100%', height: '100%' }}
-      >
-        <RouletteWheelSVG/>
-        <div className="roul-wheel__center">ant1gravity</div>
-        {/* Ball is inside the wheel container */}
-        <div
-          className="roul-ball"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            width: '14px',
-            height: '14px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle at 30% 28%, #ffffff, #b0b0b0)',
-            boxShadow: '0 0 5px rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.6)',
-            transform: `translate(-50%, -50%) rotate(${ballAngleRel}deg) translateY(-${ballRadius}px)`,
-            transformOrigin: 'center center',
-            pointerEvents: 'none',
-            zIndex: 3,
-            transition: 'none', // Remove any CSS transition so it moves purely via JS loop
-          }}
-        />
+    <div ref={wRef} style={{ width: size, height: size, position: 'relative', userSelect: 'none', filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.85))' }}>
+      
+      {/* Rotated SVG wheel */}
+      <div style={{ width: '100%', height: '100%', transform: `rotate(${-wheelRot}deg)`, transition: 'transform 0s' }}>
+        <RouletteWheelSVG />
       </div>
+
+      {/* SVG Ball & Golden Turret */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+        {/* Golden central turret head */}
+        <circle cx={half} cy={half} r="18" fill="radial-gradient(circle, #f5c542, #8a640f)" stroke="#111" strokeWidth="1" opacity="0.1"/>
+        <path d={`M${half-1},${half-12} L${half+1},${half-12} L${half+4},${half} L${half-4},${half} Z`} fill="#d4af37" opacity="0.8"/>
+        <path d={`M${half-12},${half-1} L${half-12},${half+1} L${half},${half+4} L${half},${half-4} Z`} fill="#d4af37" opacity="0.8"/>
+        <path d={`M${half-1},${half+12} L${half+1},${half+12} L${half+4},${half} L${half-4},${half} Z`} fill="#d4af37" opacity="0.8"/>
+        <path d={`M${half+12},${half-1} L${half+12},${half+1} L${half},${half+4} L${half},${half-4} Z`} fill="#d4af37" opacity="0.8"/>
+        <circle cx={half} cy={half} r="5" fill="#d4af37" stroke="#6b4c0b" strokeWidth="1"/>
+
+        {/* Outer light pin pointer indicator */}
+        <path d={`M${half},22 L${half-6},8 L${half+6},8 Z`} fill="#ff2d7a" filter="drop-shadow(0 0 6px #ff2d7a)"/>
+
+        {/* Floating ball */}
+        {ballRadius > 0 && (
+          <circle
+            cx={bx}
+            cy={by}
+            r="7"
+            fill="radial-gradient(circle at 35% 35%, #ffffff 0%, #e6e6e6 65%, #999999 100%)"
+            stroke="#b3b3b3"
+            strokeWidth="0.5"
+            filter="drop-shadow(0 3px 5px rgba(0,0,0,0.65))"
+          />
+        )}
+      </svg>
     </div>
   );
 }
 
-// ── Chip selector button ───────────────────────────────────────────────
-const CHIP_COLORS = {
-  10:   { bg: '#546e7a', border: '#546e7a' },
-  50:   { bg: '#00897b', border: '#00897b' },
-  100:  { bg: '#0288d1', border: '#0288d1' },
-  500:  { bg: '#7b1fa2', border: '#7b1fa2' },
-  1000: { bg: '#f9a825', border: '#f9a825' },
-};
-
+// ── Bet chip button ───────────────────────────────────────────────────
 function BetChip({ value, active, onClick }) {
-  const { bg, border } = CHIP_COLORS[value] || { bg: '#546e7a', border: '#546e7a' };
+  let color = '#ff2d7a';
+  if      (value >= 1000) color = '#f5c542'; // Gold
+  else if (value >= 500)  color = '#a78bfa'; // Purple
+  else if (value >= 100)  color = '#00d4ff'; // Blue
+  else if (value >= 50)   color = '#00aa66'; // Green
+
   return (
     <div
       onClick={onClick}
-      className="roul-chip-btn"
       style={{
-        background: active ? bg : 'transparent',
-        border: `2px dashed ${active ? border : border + '60'}`,
-        color: active ? '#fff' : border + 'cc',
-        boxShadow: active ? `0 0 12px ${bg}55` : 'none',
+        width: 32, height: 32, borderRadius: '50%',
+        background: color,
+        border: `2px solid ${active ? '#fff' : 'rgba(255,255,255,0.45)'}`,
+        boxShadow: active ? `0 0 14px ${color}, 0 4px 10px rgba(0,0,0,0.5)` : '0 2px 5px rgba(0,0,0,0.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontSize: '0.68rem', fontWeight: 900,
+        fontFamily: "'JetBrains Mono', monospace",
+        cursor: 'pointer', transition: 'all 0.15s',
+        transform: active ? 'scale(1.15) translateY(-2px)' : 'none',
+        userSelect: 'none',
       }}
     >
       {value >= 1000 ? `${value/1000}K` : value}
@@ -183,29 +186,30 @@ function BettingGrid({ bets, onBet }) {
 
   function drawChip(ctx, x, y, amount) {
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetY = 2;
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
     const stack = amount >= 1000 ? 3 : amount >= 100 ? 2 : 1;
-    let color = '#6a6a8a';
-    if      (amount >= 1000) color = '#f9a825';
+    let color = '#ff2d7a';
+    if      (amount >= 1000) color = '#f5c542';
     else if (amount >= 500)  color = '#a78bfa';
     else if (amount >= 100)  color = '#00d4ff';
     else if (amount >= 50)   color = '#00aa66';
     for (let i = 0; i < stack; i++) {
       const cy = y - i*3;
-      ctx.beginPath(); ctx.arc(x, cy, 13, 0, 2*Math.PI);
+      ctx.beginPath(); ctx.arc(x, cy, 14, 0, 2*Math.PI);
       ctx.fillStyle = color; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-      ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2; ctx.setLineDash([4,3]);
       ctx.beginPath(); ctx.arc(x, cy, 10, 0, 2*Math.PI); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(x, cy, 6, 0, 2*Math.PI);
-      ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x, cy, 6, 0, 2*Math.PI); ctx.stroke();
     }
     ctx.shadowColor = 'transparent';
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 8px JetBrains Mono, monospace';
+    ctx.font = "bold 9px 'JetBrains Mono', monospace";
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(amount >= 1000 ? `${(amount/1000).toFixed(0)}K` : amount, x, y-(stack-1)*3);
     ctx.restore();
@@ -275,23 +279,25 @@ function BettingGrid({ bets, onBet }) {
 
     const isH = val => hoverBet?.nums?.includes(val);
 
-    // Background
-    ctx.fillStyle = '#11111c'; ctx.fillRect(0, 0, 684, 144);
+    // Grid Felt background
+    ctx.fillStyle = '#0f1016'; ctx.fillRect(0, 0, 684, 144);
 
     // 0
-    ctx.fillStyle = isH('0') ? 'rgba(255,45,122,0.32)' : '#1f7a4d';
-    ctx.fillRect(0, 0, 54, 72);
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
-    ctx.strokeRect(0, 0, 54, 72);
-    ctx.fillStyle = '#ecedf4'; ctx.font = 'bold 15px JetBrains Mono,monospace';
+    ctx.fillStyle = isH('0') ? 'rgba(255,45,122,0.28)' : '#1a5c37';
+    ctx.fillRect(1, 1, 52, 70);
+    ctx.strokeStyle = isH('0') ? '#ff2d7a' : 'rgba(212, 175, 55, 0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(1, 1, 52, 70);
+    ctx.fillStyle = '#fff'; ctx.font = "bold 15px 'Unbounded', system-ui, sans-serif";
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('0', 27, 36);
 
     // 00
-    ctx.fillStyle = isH('00') ? 'rgba(255,45,122,0.32)' : '#1f7a4d';
-    ctx.fillRect(0, 72, 54, 72);
-    ctx.strokeRect(0, 72, 54, 72);
-    ctx.fillStyle = '#ecedf4';
+    ctx.fillStyle = isH('00') ? 'rgba(255,45,122,0.28)' : '#1a5c37';
+    ctx.fillRect(1, 73, 52, 70);
+    ctx.strokeStyle = isH('00') ? '#ff2d7a' : 'rgba(212, 175, 55, 0.22)';
+    ctx.strokeRect(1, 73, 52, 70);
+    ctx.fillStyle = '#fff';
     ctx.fillText('00', 27, 108);
 
     // 1-36
@@ -299,16 +305,20 @@ function BettingGrid({ bets, onBet }) {
       for (let r=0; r<3; r++) {
         const n = c*3+(3-r);
         const hovered = isH(String(n));
+        const isRed = RED_NUMS.has(n);
         ctx.fillStyle = hovered
-          ? 'rgba(255,45,122,0.28)'
-          : RED_NUMS.has(n) ? '#c53d3d' : '#16161f';
-        ctx.fillRect(54+c*48, r*48, 48, 48);
-        ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
-        ctx.strokeRect(54+c*48, r*48, 48, 48);
-        ctx.fillStyle = '#ecedf4';
-        ctx.font = 'bold 13px JetBrains Mono,monospace';
+          ? 'rgba(255,45,122,0.32)'
+          : isRed ? '#a62e3b' : '#1b1c24';
+        ctx.fillRect(54 + c * 48 + 1, r * 48 + 1, 46, 46);
+        ctx.strokeStyle = hovered ? '#ff2d7a' : 'rgba(212, 175, 55, 0.22)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(54 + c * 48 + 1, r * 48 + 1, 46, 46);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 13px 'Unbounded', system-ui, sans-serif";
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(String(n), 54+c*48+24, r*48+24);
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 2;
+        ctx.fillText(String(n), 54 + c * 48 + 24, r * 48 + 24);
+        ctx.shadowBlur = 0;
       }
     }
 
@@ -317,28 +327,29 @@ function BettingGrid({ bets, onBet }) {
       const val = String(3-r);
       const hovered = hoverBet?.type === 'column' && hoverBet?.value === val;
       ctx.fillStyle = hovered ? 'rgba(255,45,122,0.22)' : 'rgba(255,255,255,0.02)';
-      ctx.fillRect(630, r*48, 54, 48);
-      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
-      ctx.strokeRect(630, r*48, 54, 48);
+      ctx.fillRect(630 + 1, r * 48 + 1, 52, 46);
+      ctx.strokeStyle = hovered ? '#ff2d7a' : 'rgba(212, 175, 55, 0.22)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(630 + 1, r * 48 + 1, 52, 46);
       ctx.fillStyle = '#a5a6b8';
-      ctx.font = 'bold 10px JetBrains Mono,monospace';
+      ctx.font = "bold 10px 'Unbounded', system-ui, sans-serif";
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('2to1', 630+27, r*48+24);
+      ctx.fillText('2to1', 630 + 27, r * 48 + 24);
     }
 
-    // Split/corner hover indicator
+    // Split/corner hover indicator dot
     if (hoverBet && (hoverBet.type==='split' || hoverBet.type==='corner')) {
       const coords = getBetCoordinates(hoverBet.type, hoverBet.value);
       if (coords) {
         ctx.save();
         ctx.beginPath(); ctx.arc(coords.x, coords.y, 6, 0, 2*Math.PI);
-        ctx.fillStyle = 'rgba(255,45,122,0.85)';
-        ctx.shadowColor = 'rgba(255,45,122,0.6)'; ctx.shadowBlur = 8;
+        ctx.fillStyle = '#ff2d7a';
+        ctx.shadowColor = '#ff2d7a'; ctx.shadowBlur = 8;
         ctx.fill(); ctx.restore();
       }
     }
 
-    // Chips
+    // Draw stacked chips on board coordinates
     bets.forEach(b => {
       const coords = getBetCoordinates(b.type, b.value);
       if (coords) drawChip(ctx, coords.x, coords.y, b.amount);
@@ -347,43 +358,72 @@ function BettingGrid({ bets, onBet }) {
 
   const Cell = ({ label, type, value }) => {
     const myBet = bets.filter(b => b.type===type && b.value===value).reduce((s,b)=>s+b.amount, 0);
-    let chipColor = '#6a6a8a';
-    if      (myBet >= 1000) chipColor = '#f9a825';
+    let chipColor = '#ff2d7a';
+    if      (myBet >= 1000) chipColor = '#f5c542';
     else if (myBet >= 500)  chipColor = '#a78bfa';
     else if (myBet >= 100)  chipColor = '#00d4ff';
     else if (myBet >= 50)   chipColor = '#00aa66';
+
+    const isRed = value === 'red';
+    const isBlack = value === 'black';
+
+    let bg = 'rgba(255,255,255,0.03)';
+    let border = '1px solid rgba(212, 175, 55, 0.18)';
+    let color = '#8a8b9c';
+
+    if (myBet > 0) {
+      bg = 'rgba(255,45,122,0.12)';
+      border = '1px solid #ff2d7a';
+      color = '#ecedf4';
+    } else if (isRed) {
+      bg = 'linear-gradient(135deg, rgba(166,46,59,0.18), rgba(166,46,59,0.05))';
+      border = '1px solid rgba(166,46,59,0.4)';
+      color = '#ff6b7a';
+    } else if (isBlack) {
+      bg = 'linear-gradient(135deg, rgba(27,28,36,0.5), rgba(10,10,12,0.4))';
+      border = '1px solid rgba(255,255,255,0.08)';
+      color = '#a5a6b8';
+    }
+
     return (
       <div
         onClick={() => onBet(type, value)}
         style={{
-          minHeight: 36,
+          minHeight: 38,
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          border: `1px solid ${myBet>0 ? 'rgba(255,45,122,0.28)' : 'rgba(255,255,255,0.07)'}`,
-          borderRadius: 3,
+          border,
+          borderRadius: 6,
           cursor: 'pointer', userSelect: 'none',
-          background: myBet>0 ? 'rgba(255,45,122,0.1)' : 'rgba(255,255,255,0.02)',
-          transition: 'background 0.1s, filter 0.1s',
-          fontSize: '0.78rem',
-          fontFamily: "'JetBrains Mono',monospace",
+          background: bg,
+          transition: 'all 0.15s',
+          fontSize: '0.72rem',
+          fontFamily: "'Unbounded', system-ui, sans-serif",
           fontWeight: 700,
-          color: myBet>0 ? '#ecedf4' : '#6f7088',
+          color,
           position: 'relative',
+          boxShadow: myBet > 0 ? '0 0 10px rgba(255,45,122,0.15)' : 'none',
         }}
-        onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.3)'}
-        onMouseLeave={e => e.currentTarget.style.filter = ''}
+        onMouseEnter={e => {
+          e.currentTarget.style.filter = 'brightness(1.25)';
+          e.currentTarget.style.borderColor = myBet > 0 ? '#ff2d7a' : 'rgba(212, 175, 55, 0.4)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.filter = '';
+          e.currentTarget.style.borderColor = border.split(' ')[2];
+        }}
       >
         {label}
         {myBet > 0 && (
           <div style={{
             position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 26, height: 26, borderRadius: '50%',
+            width: 25, height: 25, borderRadius: '50%',
             background: chipColor,
-            border: '1.5px dashed rgba(255,255,255,0.6)',
+            border: '1.2px dashed rgba(255,255,255,0.75)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.6rem', fontWeight: 900, color: '#fff',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.5)', pointerEvents: 'none',
+            fontSize: '0.58rem', fontWeight: 900, color: '#fff',
+            boxShadow: '0 3px 6px rgba(0,0,0,0.6)', pointerEvents: 'none',
           }}>
             {myBet >= 1000 ? `${(myBet/1000).toFixed(0)}K` : myBet}
           </div>
@@ -413,7 +453,7 @@ function BettingGrid({ bets, onBet }) {
         <div/>
       </div>
 
-      {/* Outside */}
+      {/* Outside halfs, colors & parities */}
       <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(6, 14.03%) 7.89%', gap: 3, maxWidth: 684 }}>
         <div/>
         <Cell label="1-18"  type="half"   value="low"/>
@@ -450,6 +490,8 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
   const animRef  = useRef(null);
   const rollRef  = useRef(null);
   const tickRef  = useRef(null);
+  const bgCanvasRef = useRef(null);
+  const bgParticlesRef = useRef([]);
 
   const totalBet = bets.reduce((s, b) => s + b.amount, 0);
 
@@ -490,14 +532,12 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
       const winningNum = String(res.number);
       const idx        = WHEEL_NUMBERS.indexOf(winningNum);
       const segAngle   = 360 / N;
-      // Center the ball on the winning pocket
       const targetAngleRel = idx * segAngle + (segAngle / 2);
 
       const animStart = performance.now();
-      const duration = 5200; // 5.2 seconds
+      const duration = 5200;
 
       const initialWheelRot = wheelRot % 360;
-      // Convert current relative angle back to screen angle
       const initialBallAngleScreen = (wheelRot + ballAngleRel) % 360;
 
       rollRef.current = casinoAudio.playRouletteRoll();
@@ -518,55 +558,41 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           setBallRadius(110 * ballRadiusScale);
 
           setSpinning(false);
-          setResult(res.number);
-          setHistory(h => [res.number, ...h].slice(0, 12));
-          setSummary(res);
-          onBalanceChange(res.balance);
-          setBets([]);
+          setResult(winningNum);
 
-          if (res.net > 0) {
-            casinoAudio.playWin();
-            triggerWinAnimation(res.net);
-          } else {
-            casinoAudio.playLose();
-          }
+          const net = res.payout - totalBet;
+          setSummary({ number: winningNum, payout: res.payout, net, color: colorOf(winningNum) });
+
+          onBalanceChange(res.balance);
+          if (res.payout > 0) triggerWinAnimation(res.payout);
           return;
         }
 
-        // 1. Wheel rotation (clockwise, decelerating)
-        const wheelProgress = easeOutQuad(Math.min(elapsed / 4800, 1));
-        const currentWheelRot = initialWheelRot + wheelProgress * (360 * 3.5);
+        const t = elapsed / duration;
+
+        // Decelerating wheel rotation
+        const currentWheelRot = initialWheelRot + (360 * 3.5) * easeOutQuad(t);
         setWheelRot(currentWheelRot);
 
-        // 2. Ball rotation & physics (orbits counter-clockwise, spirals, bounces)
-        let currentBallAngleRel = 0;
-        let currentBallRadius = 145 * ballRadiusScale;
+        // Physics: Ball deceleration & orbit decay spiral
+        let currentBallAngleRel;
+        let currentBallRadius;
 
-        if (elapsed < 3200) {
-          // Orbit & spiral phase
-          const tRatio = elapsed / 3200;
-          const ballProgress = easeOutCubic(tRatio);
-          const currentBallAngleScreen = initialBallAngleScreen - ballProgress * (360 * 6.5);
-          currentBallAngleRel = ((currentBallAngleScreen - currentWheelRot) % 360 + 360) % 360;
-          currentBallRadius = (145 - 35 * Math.pow(tRatio, 3)) * ballRadiusScale;
+        if (t < 0.62) {
+          // Spiraling orbit
+          const ballT = t / 0.62;
+          const totalBallSpins = 360 * 6.5;
+          const ballAngleScreen = initialBallAngleScreen - totalBallSpins * easeOutQuad(ballT);
+          currentBallAngleRel = ((ballAngleScreen - currentWheelRot) % 360 + 360) % 360;
+          currentBallRadius = (145 - 22 * easeOutCubic(ballT)) * ballRadiusScale;
         } else {
-          // Bounce & settle phase
-          const bounceT = (elapsed - 3200) / 2000; // 0 to 1
-          const tRatio = 3200 / 3200;
-          const ballProgress = easeOutCubic(tRatio);
-          const ballAngleScreenStart = initialBallAngleScreen - ballProgress * (360 * 6.5);
-          const wheelRotStart = initialWheelRot + easeOutQuad(3200 / 4800) * (360 * 3.5);
-          const ballAngleRelStart = ((ballAngleScreenStart - wheelRotStart) % 360 + 360) % 360;
+          // Bouncing off pocket dividers & settling
+          const settleT = (t - 0.62) / 0.38;
+          const bounceAmp = 12 * Math.exp(-settleT * 2.8) * Math.sin(settleT * Math.PI * 4.5);
+          currentBallRadius = (110 + bounceAmp) * ballRadiusScale;
 
-          // Shortest distance calculation
-          let diff = ballAngleRelStart - targetAngleRel;
-          diff = ((diff + 180) % 360 + 360) % 360 - 180;
-
-          const blend = Math.max(0, 1 - (elapsed - 3200) / 800); // Blend out diff in 800ms
-          const bounceOffset = 18 * Math.exp(-bounceT * 3.5) * Math.sin(bounceT * Math.PI * 7);
-
-          currentBallAngleRel = ((targetAngleRel + diff * blend + bounceOffset) % 360 + 360) % 360;
-          currentBallRadius = (110 + 35 * blend * blend + Math.abs(bounceOffset) * 0.45) * ballRadiusScale;
+          const bounceAngleAmp = 18 * Math.exp(-settleT * 3.2) * Math.cos(settleT * Math.PI * 4.5);
+          currentBallAngleRel = (targetAngleRel + bounceAngleAmp + 360) % 360;
         }
 
         setBallAngleRel(currentBallAngleRel);
@@ -589,219 +615,350 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
     if (animRef.current) cancelAnimationFrame(animRef.current);
   }, [stopSounds]);
 
+  // Ambient gold/pink sparkles background particle system loop
+  useEffect(() => {
+    const canvas = bgCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const handleResize = () => {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    const particles = [];
+    for (let i = 0; i < 28; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 1 + Math.random() * 2.2,
+        speedY: -0.15 - Math.random() * 0.3,
+        speedX: (Math.random() - 0.5) * 0.15,
+        opacity: 0.12 + Math.random() * 0.45,
+        color: Math.random() > 0.48 ? '255, 45, 122' : '245, 197, 66',
+      });
+    }
+    bgParticlesRef.current = particles;
+
+    let animId;
+    const tick = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const pArr = bgParticlesRef.current;
+      pArr.forEach(p => {
+        p.y += p.speedY;
+        p.x += p.speedX;
+        if (p.y < -10) {
+          p.y = canvas.height + 10;
+          p.x = Math.random() * canvas.width;
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, 2*Math.PI);
+        ctx.fillStyle = `rgba(${p.color}, ${p.opacity})`;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = `rgba(${p.color}, 0.85)`;
+        ctx.fill();
+        ctx.restore();
+      });
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const now = performance.now();
+
+      ctx.save();
+      ctx.lineWidth = 1.2;
+
+      // Pulsing Ring 1 (pink)
+      ctx.strokeStyle = `rgba(255, 45, 122, ${0.07 + Math.sin(now / 700) * 0.03})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 185 + Math.sin(now / 700) * 8, 0, 2*Math.PI);
+      ctx.stroke();
+
+      // Pulsing Ring 2 (gold)
+      ctx.strokeStyle = `rgba(245, 197, 66, ${0.04 + Math.cos(now / 900) * 0.02})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 225 + Math.cos(now / 900) * 12, 0, 2*Math.PI);
+      ctx.stroke();
+
+      ctx.restore();
+
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
   const col  = result !== null ? colorOf(String(result)) : null;
 
   return (
-    <div className="roul-split-layout">
+    <div className="casino-roul-view">
       <style>{`
         @keyframes roulLightChaser {
-          0%, 100% { fill: #ff2d7a; filter: drop-shadow(0 0 1px #ff2d7a); opacity: 0.3; }
-          50% { fill: #ffce4d; filter: drop-shadow(0 0 3px #ffce4d); opacity: 1; }
+          0%, 100% { fill: #ff2d7a; filter: drop-shadow(0 0 1px #ff2d7a); opacity: 0.35; }
+          50% { fill: #f5c542; filter: drop-shadow(0 0 4px #f5c542); opacity: 1; }
         }
         .roul-idle-light {
-          animation: roulLightChaser 1.9s infinite linear;
+          animation: roulLightChaser 1.8s infinite linear;
         }
         @keyframes roulGlowRotate {
-          0% { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.35; }
-          50% { transform: translate(-50%, -50%) rotate(180deg); opacity: 0.65; }
-          100% { transform: translate(-50%, -50%) rotate(360deg); opacity: 0.35; }
+          0% { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.4; }
+          50% { transform: translate(-50%, -50%) rotate(180deg); opacity: 0.75; }
+          100% { transform: translate(-50%, -50%) rotate(360deg); opacity: 0.4; }
         }
         .roul-bg-halo {
           position: absolute;
-          top: 45%;
+          top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 540px;
-          height: 540px;
+          width: 580px;
+          height: 580px;
           background: conic-gradient(
             from 0deg,
-            rgba(255, 45, 122, 0.14) 0deg,
-            rgba(111, 255, 125, 0.05) 120deg,
-            rgba(245, 197, 66, 0.08) 240deg,
-            rgba(255, 45, 122, 0.14) 360deg
+            rgba(255, 45, 122, 0.22) 0deg,
+            rgba(111, 255, 125, 0.12) 120deg,
+            rgba(245, 197, 66, 0.15) 240deg,
+            rgba(255, 45, 122, 0.22) 360deg
           );
-          filter: blur(50px);
+          filter: blur(65px);
           border-radius: 50%;
-          animation: roulGlowRotate 16s infinite linear;
+          animation: roulGlowRotate 12s infinite linear;
           pointer-events: none;
           z-index: 0;
         }
-        .roul-split-layout {
-          display: grid;
-          grid-template-columns: 460px 1fr;
-          gap: 24px;
-          align-items: start;
-          width: 100%;
-        }
-        .roul-wheel-stage-left {
-          background: radial-gradient(ellipse at 50% 0%, rgba(255,45,122,0.07) 0%, transparent 55%), var(--c-surface);
-          border: 1px solid var(--c-line2);
-          border-radius: var(--c-rlg);
-          padding: 24px 20px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-          min-height: 580px;
-          position: relative;
-          overflow: hidden;
-        }
-        .roul-betting-stage-right {
-          background: var(--c-surface);
-          border: 1px solid var(--c-line2);
-          border-radius: var(--c-rlg);
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          min-height: 580px;
-        }
-        @media (max-width: 1150px) {
-          .roul-split-layout {
-            grid-template-columns: 1fr;
+        @media (max-width: 1200px) {
+          .roul-stage-grid {
+            grid-template-columns: 1fr !important;
           }
         }
       `}</style>
 
-      {/* ── LEFT COLUMN: WHEEL STAGE ────────────────────── */}
-      <div className="roul-wheel-stage-left">
-        {/* Rotating conic light rays halo background */}
-        <div className="roul-bg-halo" />
-
-        {/* History ticker in stage header */}
-        <div className="casino-roul-stage-hdr" style={{ width: '100%', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="casino-roul-stage-title">Ruleta</span>
-            <span style={{
-              background: 'rgba(111,255,125,0.12)',
-              border: '1px solid rgba(111,255,125,0.25)',
-              color: 'var(--c-accent2)',
-              padding: '2px 8px', borderRadius: 4,
-              fontSize: 9, fontWeight: 700,
-              fontFamily: "'Inter',sans-serif",
-              letterSpacing: '0.1em',
-            }}>CASINO</span>
+      {/* ── LEFT PANEL: Restored professional sidebar ── */}
+      <div className="casino-roul-panel">
+        
+        {/* Active Chip selector */}
+        <div>
+          <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Ficha activa
           </div>
-          <div className="roul-history">
-            {history.slice(0, 10).map((n, i) => (
-              <span key={i} className={`roul-history__cell roul-history__cell--${colorOf(String(n))}`}>
-                {n}
-              </span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}>
+            {[10, 50, 100, 500, 1000].map(v => (
+              <button
+                key={v}
+                disabled={spinning}
+                onClick={() => setChip(v)}
+                style={{
+                  padding: '9px 0',
+                  borderRadius: 8,
+                  background: chip === v ? 'rgba(255,45,122,0.15)' : 'var(--c-surface2)',
+                  border: `1.5px solid ${chip === v ? 'rgba(255,45,122,0.45)' : 'var(--c-line2)'}`,
+                  color: chip === v ? 'var(--c-accent)' : 'var(--c-text3)',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  cursor: spinning ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s',
+                  boxShadow: chip === v ? '0 0 10px rgba(255,45,122,0.25)' : 'none',
+                }}
+              >
+                {v >= 1000 ? `${v/1000}K` : v}
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Large Wheel container */}
-        <div style={{ zIndex: 1, margin: '20px 0' }}>
-          <RouletteWheel
-            wheelRot={wheelRot}
-            ballAngleRel={ballAngleRel}
-            ballRadius={ballRadius}
-            wheelSize={WHEEL_SIZE}
-          />
+        {/* Total Bet stats */}
+        <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 10, padding: '12px 14px' }}>
+          <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+            Apuesta total
+          </div>
+          <div style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--c-accent2)', fontSize: 22, display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            {totalBet.toLocaleString('es-AR')}
+            <span style={{ color: 'var(--c-text4)', fontSize: 11, fontWeight: 700 }}>TK</span>
+          </div>
+          {bets.length > 0 && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--c-text3)', marginTop: 4 }}>
+              Posiciones: <span style={{ color: '#fff', fontWeight: 600 }}>{bets.length}</span>
+            </div>
+          )}
         </div>
 
-        {/* Result banner */}
-        {result !== null && !spinning && (
-          <div
-            className="roul-result-banner"
+        {/* Spin action buttons */}
+        <button
+          className="roul-spin-btn"
+          onClick={spin}
+          disabled={spinning || !bets.length}
+          style={{
+            height: 48,
+            fontSize: '0.8rem',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #ff2d7a, #d91b5c)',
+            border: 'none',
+            borderRadius: 10,
+            color: '#fff',
+            boxShadow: (spinning || !bets.length) ? 'none' : '0 4px 15px rgba(255,45,122,0.35)',
+            cursor: (spinning || !bets.length) ? 'not-allowed' : 'pointer',
+            transition: 'all 0.15s',
+          }}
+        >
+          {spinning ? 'GIRANDO…' : 'GIRAR RULETA'}
+        </button>
+
+        {bets.length > 0 && !spinning && (
+          <button
+            onClick={() => setBets([])}
             style={{
-              zIndex: 1,
-              border: `2px solid ${col==='red' ? '#c53d3d' : col==='green' ? '#1f7a4d' : 'rgba(255,255,255,0.2)'}`,
+              height: 36,
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#ef4444',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              borderRadius: 8,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
             }}
+            onMouseEnter={e => e.target.style.background = 'rgba(239, 68, 68, 0.15)'}
+            onMouseLeave={e => e.target.style.background = 'rgba(239, 68, 68, 0.08)'}
           >
-            Salió{' '}
-            <span style={{ color: col==='red' ? '#ff7070' : col==='green' ? '#6fff7d' : '#ecedf4' }}>
-              {result} · {col?.toUpperCase()}
-            </span>
-          </div>
+            Limpiar mesa
+          </button>
         )}
 
-        {/* Summary */}
-        {summary && (
-          <div className={`roul-summary roul-summary--${summary.net >= 0 ? 'win' : 'lose'}`} style={{ zIndex: 1 }}>
-            <div className={`roul-summary__num roul-summary__num--${colorOf(String(summary.number))}`}>
-              {summary.number}
-            </div>
-            <div className={`roul-summary__net roul-summary__net--${summary.net >= 0 ? 'win' : 'lose'}`}>
-              {summary.net >= 0 ? '+' : ''}{summary.net.toLocaleString('es-AR')} TK
-            </div>
-            <div className="roul-summary__color">{summary.color}</div>
-          </div>
-        )}
+        {err && <div className="casino-err" style={{ marginTop: 0 }}>{err}</div>}
+
+        {/* Tips / information */}
+        <div style={{ fontSize: '0.68rem', color: 'var(--c-text4)', lineHeight: 1.5, borderTop: '1px dashed var(--c-line2)', paddingTop: 12, marginTop: 'auto' }}>
+          💡 Tip: Colocá fichas en las esquinas de los números para apostar a cuatro a la vez (**Corner - 9x**) o en la línea divisoria para dos (**Split - 18x**).
+        </div>
       </div>
 
-      {/* ── RIGHT COLUMN: BETTING GRID & CONTROLS ────────── */}
-      <div className="roul-betting-stage-right">
-        {/* Betting Grid */}
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <BettingGrid bets={bets} onBet={addBet}/>
-        </div>
+      {/* ── RIGHT COLUMN: STAGE WITH WHEEL & TAPETE GRID ── */}
+      <div className="casino-roul-stage" style={{ minHeight: 580 }}>
+        
+        <div className="roul-stage-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: '430px 1fr',
+          gap: 20,
+          width: '100%',
+          alignItems: 'center',
+          position: 'relative'
+        }}>
+          
+          {/* Wheel area box on left */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            background: 'var(--c-surface)',
+            border: '1px solid var(--c-line2)',
+            borderRadius: 14,
+            padding: '24px 20px',
+            minHeight: 520,
+            overflow: 'hidden',
+          }}>
+            
+            {/* Ambient Conic Glowing Halo Background & Particle Canvas */}
+            <div className="roul-bg-halo" />
+            <canvas ref={bgCanvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1 }} />
 
-        {/* Control strip: Chip selector, total bet, action buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 20, alignItems: 'center', marginTop: 10 }}>
-          {/* Chip selector */}
-          <div>
-            <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Ficha activa
+            {/* Ticker header for recent numbers */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              zIndex: 2,
+              marginBottom: 16,
+              borderBottom: '1px solid var(--c-line2)',
+              paddingBottom: 10
+            }}>
+              <span style={{ fontSize: 9, fontFamily: 'Unbounded', color: 'var(--c-text4)', fontWeight: 700, letterSpacing: '0.12em' }}>
+                ÚLTIMOS NÚMEROS
+              </span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {history.slice(0, 6).map((n, i) => (
+                  <span key={i} className={`roul-history__cell roul-history__cell--${colorOf(String(n))}`} style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 700 }}>
+                    {n}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="roul-chip-selector" style={{ justifyContent: 'flex-start' }}>
-              {[10, 50, 100, 500, 1000].map(v => (
-                <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)}/>
-              ))}
-            </div>
-          </div>
 
-          {/* Stats */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Apuesta total
+            {/* The wheel canvas element */}
+            <div style={{ zIndex: 2 }}>
+              <RouletteWheel
+                wheelRot={wheelRot}
+                ballAngleRel={ballAngleRel}
+                ballRadius={ballRadius}
+                wheelSize={WHEEL_SIZE}
+              />
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--c-accent2)', fontSize: 18 }}>
-              {totalBet.toLocaleString('es-AR')}
-              <span style={{ color: 'var(--c-text4)', fontSize: 10, marginLeft: 4 }}>TK</span>
-            </div>
-            {bets.length > 0 && (
-              <div style={{ fontSize: 10, color: 'var(--c-text3)' }}>
-                Posiciones: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{bets.length}</span>
+
+            {/* Result banner overlay */}
+            {result !== null && !spinning && (
+              <div
+                className="roul-result-banner"
+                style={{
+                  zIndex: 2,
+                  marginTop: 20,
+                  border: `2px solid ${col==='red' ? '#c53d3d' : col==='green' ? '#1f7a4d' : 'rgba(255,255,255,0.2)'}`,
+                }}
+              >
+                Salió{' '}
+                <span style={{ color: col==='red' ? '#ff7070' : col==='green' ? '#6fff7d' : '#ecedf4' }}>
+                  {result} · {col?.toUpperCase()}
+                </span>
+              </div>
+            )}
+
+            {summary && (
+              <div className={`roul-summary roul-summary--${summary.net >= 0 ? 'win' : 'lose'}`} style={{ zIndex: 2, marginTop: 10 }}>
+                <div className={`roul-summary__num roul-summary__num--${colorOf(String(summary.number))}`}>
+                  {summary.number}
+                </div>
+                <div className={`roul-summary__net roul-summary__net--${summary.net >= 0 ? 'win' : 'lose'}`}>
+                  {summary.net >= 0 ? '+' : ''}{summary.net.toLocaleString('es-AR')} TK
+                </div>
               </div>
             )}
           </div>
 
-          {/* Buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button
-              className="roul-spin-btn"
-              onClick={spin}
-              disabled={spinning || !bets.length}
-              style={{ height: 44 }}
-            >
-              {spinning ? 'GIRANDO…' : 'GIRAR RULETA'}
-            </button>
-            {bets.length > 0 && !spinning && (
-              <button className="roul-clear-btn" onClick={() => setBets([])} style={{ height: 32, fontSize: 11 }}>
-                Limpiar mesa
-              </button>
-            )}
+          {/* Betting board felt on the right */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--c-surface)',
+            border: '1px solid var(--c-line2)',
+            borderRadius: 14,
+            padding: '24px 20px',
+            minHeight: 520,
+            justifyContent: 'center',
+          }}>
+            
+            {/* The canvas grid tapete container */}
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+              <BettingGrid bets={bets} onBet={addBet} />
+            </div>
+
+            {/* Grid footer specs */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--c-text4)', fontSize: 9, marginTop: 22, borderTop: '1px dashed var(--c-line2)', paddingTop: 12 }}>
+              <span>Doble cero • RTP 94.7%</span>
+              <span>Ruleta Americana</span>
+            </div>
           </div>
+
         </div>
 
-        {err && <div className="casino-err" style={{ marginTop: 0 }}>{err}</div>}
-
-        {/* Tip & information */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 10, color: 'var(--c-text4)',
-          background: 'var(--c-bg2)',
-          border: '1px solid var(--c-line)',
-          borderRadius: 6, padding: '8px 14px',
-          lineHeight: 1.5, marginTop: 'auto',
-        }}>
-          <span>Bordear 2 números → Split (18x) · Esquina de 4 → Corner (9x)</span>
-          <span style={{ color: 'var(--c-text3)' }}>Ruleta Americana · Doble cero · RTP 94.7%</span>
-        </div>
       </div>
     </div>
   );
