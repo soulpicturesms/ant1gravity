@@ -126,13 +126,28 @@ export default function Plinko({ balance, onBalanceChange }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
-    const cx = W / 2;
+    
+    const logicalW = 500;
+    const logicalH = 480;
+    const cx = logicalW / 2;
 
-    const draw = () => {
-      ctx.clearRect(0, 0, W, H);
-      const now = performance.now();
+    // High-DPI scaling
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = logicalW * dpr;
+    canvas.height = logicalH * dpr;
+    ctx.resetTransform();
+    ctx.scale(dpr, dpr);
+
+    let lastTime = performance.now();
+
+    const draw = (now) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Cap delta time to 100ms to avoid huge jumps
+      const dtSec = Math.min(dt, 0.1);
+
+      ctx.clearRect(0, 0, logicalW, logicalH);
 
       // ── Draw Pegs ──────────────────────────────────────────────────────────
       for (let r = 0; r < rows; r++) {
@@ -171,19 +186,16 @@ export default function Plinko({ balance, onBalanceChange }) {
         
         ctx.save();
         ctx.fillStyle = color;
-        // Make bucket splash (move down slightly and shine)
         const currentY = isSplashed ? bucketY + 4 : bucketY;
         if (isSplashed) {
           ctx.shadowColor = color;
           ctx.shadowBlur = 12;
         }
 
-        // Rounded bucket rect
         ctx.beginPath();
         ctx.roundRect(bx, currentY, bucketWidth, bucketHeight, 4);
         ctx.fill();
 
-        // Label multiplier
         ctx.fillStyle = '#000000';
         ctx.font = 'bold 9px Rajdhani, sans-serif';
         ctx.textAlign = 'center';
@@ -200,48 +212,41 @@ export default function Plinko({ balance, onBalanceChange }) {
         const nextStep = step + 1;
 
         if (nextStep >= coords.length) {
-          // Ball finished landing!
-          // Add payout to balance client-side
           onBalanceChange(prev => prev + ball.payout);
-          
-          // Trigger bucket splash
           bucketSplashesRef.current.set(ball.bucket, now + 250);
 
-          // Play ending sound
           if (ball.multiplier >= 1) {
             casinoAudio.playWin();
           } else {
             casinoAudio.playLose();
           }
-          return false; // remove ball
+          return false;
         }
 
-        // Interpolate position
         const p1 = coords[currentStep];
         const p2 = coords[nextStep];
 
-        // Speed: 0.06 per frame (approx 16 frames per bounce, 270ms)
-        const nextProgress = progress + 0.065;
+        // Speed: 3.75 units per second (approx 260ms per bounce)
+        const nextProgress = progress + 3.75 * dtSec;
         ball.progress = nextProgress;
 
         if (nextProgress >= 1) {
           ball.progress = 0;
           ball.step = nextStep;
 
-          // Trigger peg collision visual & sound
           if (p2.peg) {
             flashingPegsRef.current.set(p2.peg, now + 150);
-            casinoAudio.playRouletteTick(); // Short click sound for peg bounce
+            casinoAudio.playRouletteTick();
           }
         }
 
-        // Draw parabolic arc for bounce
         const u = Math.min(nextProgress, 1);
         ball.x = p1.x + (p2.x - p1.x) * u;
         const baseLinearY = p1.y + (p2.y - p1.y) * u;
-        // Parabolic arc bounce
-        const bounceHeight = -10; 
-        ball.y = baseLinearY + bounceHeight * Math.sin(u * Math.PI);
+        
+        // Realistic gravity bounce curve: quick bounce up, accelerating gravity fall
+        const bounce = -18 * u * Math.pow(1 - u, 2) * 6.75;
+        ball.y = baseLinearY + bounce;
 
         // Draw Ball
         ctx.save();
