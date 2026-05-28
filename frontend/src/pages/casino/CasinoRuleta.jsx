@@ -263,63 +263,103 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
         bounceTimerRef.current++;
         const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
         const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
+        const pocketArc = (2 * Math.PI) / 38;
         
-        // Spring pull towards target pocket
+        // --- Realistic angular physics ---
+        // Gentle spring pull towards target pocket (very weak at first, strengthens over time)
         let diff = targetRelAngle - relAngleRef.current;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        relAngleVelRef.current += diff * 0.06;
+        const springStrength = Math.min(0.003 + bounceTimerRef.current * 0.0003, 0.04);
+        relAngleVelRef.current += diff * springStrength;
         
-        // Add random bounce noise representing pockets collision
-        if (bounceIntensityRef.current > 0.05) {
-          if (Math.random() < 0.16) {
-            relAngleVelRef.current += (Math.random() - 0.5) * 0.28 * bounceIntensityRef.current;
+        // Natural fret collision bounces - when ball crosses a pocket divider
+        const relativeAngle = relAngleRef.current;
+        const currentPocketFloat = (((relativeAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) / pocketArc;
+        const currentPocket = Math.floor(currentPocketFloat);
+        const posInPocket = currentPocketFloat - currentPocket;
+        
+        // Detect fret crossing (near pocket boundaries) and bounce off
+        if (bounceIntensityRef.current > 0.02) {
+          if (posInPocket < 0.08 || posInPocket > 0.92) {
+            // Hit a fret! Reverse some angular velocity + add randomness
+            if (Math.abs(relAngleVelRef.current) > 0.003) {
+              relAngleVelRef.current *= -(0.3 + Math.random() * 0.3) * bounceIntensityRef.current;
+              // Random kick simulating uneven frets
+              relAngleVelRef.current += (Math.random() - 0.5) * 0.04 * bounceIntensityRef.current;
+              
+              // Trigger tick sound on fret hit
+              if (currentPocket !== lastSlotRef.current) {
+                lastSlotRef.current = currentPocket;
+                casinoAudio.playRouletteTick();
+              }
+            }
           }
-          bounceIntensityRef.current *= 0.97; // slower bounce decay for more hops
         }
         
-        relAngleVelRef.current *= 0.83; // friction
+        // Friction (angular)
+        relAngleVelRef.current *= 0.985 - (0.005 * (1 - bounceIntensityRef.current));
         relAngleRef.current += relAngleVelRef.current;
         ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
         
-        // Hop vertically while bouncing elastically (increased height)
-        ballRadiusRef.current = (R - 14) + Math.abs(Math.sin(bounceTimerRef.current * 0.40)) * 14 * bounceIntensityRef.current;
+        // --- Realistic radial bounce physics (gravity-like) ---
+        const pocketBottom = R - 16;  // deepest point in pocket
+        const pocketRim = R - 4;       // top rim of pockets
         
-        // Sound ticks on dividers crossing
-        const relativeAngle = relAngleRef.current;
-        const slotIdx = Math.floor(((relativeAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI / 38));
-        if (slotIdx !== lastSlotRef.current) {
-          lastSlotRef.current = slotIdx;
-          casinoAudio.playRouletteTick();
+        // Gravity pulls ball toward pocket bottom
+        const radialGravity = -0.08 * bounceIntensityRef.current;
+        ballRadiusVelRef.current += radialGravity;
+        
+        // Apply velocity
+        ballRadiusRef.current += ballRadiusVelRef.current;
+        
+        // Bounce off pocket bottom
+        if (ballRadiusRef.current <= pocketBottom) {
+          ballRadiusRef.current = pocketBottom;
+          ballRadiusVelRef.current = Math.abs(ballRadiusVelRef.current) * (0.45 + Math.random() * 0.2) * bounceIntensityRef.current;
         }
-
-        // Transition to smooth settling instead of abrupt snap
-        if (bounceIntensityRef.current <= 0.05 && Math.abs(relAngleVelRef.current) < 0.008) {
+        
+        // Constrain to pocket rim
+        if (ballRadiusRef.current > pocketRim) {
+          ballRadiusRef.current = pocketRim;
+          ballRadiusVelRef.current *= -0.5;
+        }
+        
+        // Energy dissipation - bounce intensity decays naturally
+        bounceIntensityRef.current *= 0.993;
+        ballRadiusVelRef.current *= 0.96;
+        
+        // Transition to settling when energy is very low
+        if (bounceIntensityRef.current <= 0.025 && 
+            Math.abs(relAngleVelRef.current) < 0.004 && 
+            Math.abs(ballRadiusVelRef.current) < 0.15) {
           ballStateRef.current = 'settling';
-          bounceTimerRef.current = 0; // reuse as settling frame counter
+          bounceTimerRef.current = 0;
           casinoAudio.playRouletteSettle();
         }
       }
       else if (ballStateRef.current === 'settling') {
-        // Smooth exponential ease-out to final pocket position over ~45 frames
+        // Smooth exponential ease-out to final pocket center
         bounceTimerRef.current++;
         const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
         const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
         
-        // Exponential interpolation: each frame closes 8% of remaining gap
         let diff = targetRelAngle - relAngleRef.current;
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        relAngleRef.current += diff * 0.08;
         
-        // Gently ease radius to pocket depth
-        ballRadiusRef.current += ((R - 14) - ballRadiusRef.current) * 0.12;
+        // Gradual ease - closes 6% of remaining gap per frame
+        relAngleRef.current += diff * 0.06;
+        
+        // Ease radius to pocket bottom
+        const pocketBottom = R - 14;
+        ballRadiusRef.current += (pocketBottom - ballRadiusRef.current) * 0.1;
         
         ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
         
-        // Complete after enough frames and close enough to target
-        if (bounceTimerRef.current > 30 && Math.abs(diff) < 0.003) {
+        // Complete settling after enough time and close enough
+        if (bounceTimerRef.current > 40 && Math.abs(diff) < 0.002) {
           relAngleRef.current = targetRelAngle;
           ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
-          ballRadiusRef.current = R - 14;
+          ballRadiusRef.current = pocketBottom;
           ballStateRef.current = 'settled';
 
           if (onSpinCompleteRef.current) {
@@ -821,7 +861,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ width: 32 }} />
           <div style={{ textAlign: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.8rem', color: '#ffd700', letterSpacing: '0.12em', margin: 0, textShadow: '0 0 10px rgba(255,215,0,0.3)' }}>
-            🎰 RULETA CASINO (AMERICAN ROULETTE 00) <span style={{ fontSize: '0.75rem', color: '#6a6a8a', verticalAlign: 'middle', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 4, marginLeft: 8 }}>v2.2.0</span>
+            🎰 RULETA CASINO (AMERICAN ROULETTE 00) <span style={{ fontSize: '0.75rem', color: '#6a6a8a', verticalAlign: 'middle', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 4, marginLeft: 8 }}>v2.3.0</span>
           </div>
           <button onClick={() => {
             const nowMuted = casinoAudio.toggleMute();
