@@ -39,10 +39,23 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
   const bucketSplashesRef = useRef(new Map());
   const animRef = useRef(null);
 
-  // Scaled dimensions from design handoff
+  // New floating texts, sparkles and toast notifications
+  const [localToast, setLocalToast] = useState(null);
+  const floatingTextsRef = useRef([]);
+  const sparklesRef = useRef([]);
+
+  useEffect(() => {
+    if (!localToast) return;
+    const timer = setTimeout(() => {
+      setLocalToast(null);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [localToast]);
+
+  // Scaled dimensions from design handoff - Upgraded to be taller
   const rows = 12;
-  const startY = 44;
-  const rowSpacing = 32;
+  const startY = 60;
+  const rowSpacing = 42;
   const pegSpacingX = 38;
   const ballSize = 8;
   const pegSize = 3.5;
@@ -95,13 +108,29 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const logicalW = 640;
-    const logicalH = 520;
+    const logicalH = 680;
     const cx = logicalW / 2;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = logicalW * dpr;
     canvas.height = logicalH * dpr;
     ctx.resetTransform();
     ctx.scale(dpr, dpr);
+
+    // Initialize cosmic background ambient particles
+    const ambientParticles = [];
+    for (let i = 0; i < 45; i++) {
+      ambientParticles.push({
+        x: Math.random() * logicalW,
+        y: Math.random() * logicalH,
+        size: 0.8 + Math.random() * 1.6,
+        speedY: 7 + Math.random() * 15,
+        amplitude: 0.3 + Math.random() * 0.9,
+        frequency: 0.002 + Math.random() * 0.004,
+        offset: Math.random() * Math.PI * 2,
+        opacity: 0.12 + Math.random() * 0.38,
+      });
+    }
+
     let lastTime = performance.now();
 
     const draw = (now) => {
@@ -112,7 +141,26 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
       ctx.fillStyle = '#0c0c14';
       ctx.fillRect(0, 0, logicalW, logicalH);
 
-      // Pegs
+      // Draw cosmic background ambient particles
+      ambientParticles.forEach(p => {
+        p.y -= p.speedY * dt;
+        p.x += Math.sin(now * p.frequency + p.offset) * p.amplitude * 0.4;
+        if (p.y < -15) {
+          p.y = logicalH + 15;
+          p.x = Math.random() * logicalW;
+        }
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+        const pulse = 0.5 + 0.5 * Math.sin(now / 600 + p.offset);
+        ctx.fillStyle = `rgba(255, 45, 122, ${p.opacity * pulse})`;
+        ctx.shadowColor = '#ff2d7a';
+        ctx.shadowBlur = 5;
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Pegs with breath pulsing animation
       for (let r = 0; r < rows; r++) {
         const K = r + 3;
         for (let k = 0; k < K; k++) {
@@ -120,10 +168,24 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
           const py = startY + r * rowSpacing;
           const flashKey = `${r}-${k}`;
           const isFlashing = flashingPegsRef.current.has(flashKey) && flashingPegsRef.current.get(flashKey) > now;
+          
           ctx.beginPath();
-          ctx.arc(px, py, isFlashing ? pegSize + 2.5 : pegSize, 0, 2 * Math.PI);
-          ctx.fillStyle = isFlashing ? '#ff2d7a' : 'rgba(255,255,255,0.30)';
-          if (isFlashing) { ctx.shadowColor = '#ff2d7a'; ctx.shadowBlur = 10; }
+          const pulse = 0.5 + 0.5 * Math.sin((now / 800) - (r * 0.22) + (k * 0.12));
+          const sizeMod = isFlashing ? pegSize + 2.5 : pegSize + 0.3 * pulse;
+          ctx.arc(px, py, sizeMod, 0, 2 * Math.PI);
+          
+          if (isFlashing) {
+            ctx.fillStyle = '#ff2d7a';
+            ctx.shadowColor = '#ff2d7a';
+            ctx.shadowBlur = 12;
+          } else {
+            const alpha = 0.18 + 0.24 * pulse;
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            if (pulse > 0.75) {
+              ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+              ctx.shadowBlur = 3;
+            }
+          }
           ctx.fill();
           ctx.shadowBlur = 0;
         }
@@ -145,16 +207,24 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
         const scaledMult = parseFloat((baseMult * curBetFactor).toFixed(1));
         const bgColor = getBucketColor(baseMult);
         const txtColor = getBucketTextColor(baseMult);
+        
         ctx.save();
         ctx.fillStyle = bgColor;
         const currentY = isSplashed ? bucketY + 4 : bucketY;
-        if (isSplashed) { ctx.shadowColor = txtColor; ctx.shadowBlur = 12; }
+        
+        // Glowing outline breathes
+        const pulse = 0.5 + 0.5 * Math.sin(now / 350 + b * 0.4);
+        ctx.shadowColor = txtColor;
+        ctx.shadowBlur = isSplashed ? 16 : 4 + 5 * pulse;
+        
         ctx.beginPath();
         ctx.roundRect(bx, currentY, bucketWidth, bucketHeight, 4);
         ctx.fill();
-        ctx.strokeStyle = isSplashed ? txtColor : 'rgba(255,255,255,0.08)';
-        ctx.lineWidth = 1;
+        
+        ctx.strokeStyle = isSplashed ? txtColor : txtColor + (pulse > 0.5 ? '44' : '22');
+        ctx.lineWidth = isSplashed ? 1.5 : 1;
         ctx.stroke();
+        
         ctx.fillStyle = txtColor;
         ctx.font = 'bold 9px Inter, system-ui';
         ctx.textAlign = 'center';
@@ -169,17 +239,80 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
         if (step + 1 >= coords.length) {
           onBalanceChange(prev => prev + ball.payout);
           bucketSplashesRef.current.set(ball.bucket, now + 250);
-          if (ball.multiplier >= 1) {
-            casinoAudio.playWin();
-            triggerWinAnimation(ball.payout);
-          } else {
-            casinoAudio.playLose();
+          
+          // Win tier evaluation
+          let winTier = 'small';
+          if (ball.multiplier >= 10.0) winTier = 'big';
+          else if (ball.multiplier >= 2.0) winTier = 'medium';
+          
+          const startX = cx + (ball.bucket - 6) * pegSpacingX;
+          const startYVal = bucketY;
+          const bucketTxtColor = getBucketTextColor(PLINKO_MULTIPLIERS[risk][ball.bucket]);
+
+          // Local floating win text
+          floatingTextsRef.current.push({
+            x: startX,
+            y: startYVal - 10,
+            text: `+${ball.payout.toLocaleString('es-AR')} TK`,
+            color: bucketTxtColor,
+            size: winTier === 'big' ? 17 : winTier === 'medium' ? 13 : 11,
+            opacity: 1.0,
+            vy: winTier === 'big' ? -1.5 : winTier === 'medium' ? -2.0 : -2.4,
+            life: 1.0,
+            tier: winTier
+          });
+
+          // Local sparkle/star explosion
+          const pCount = winTier === 'big' ? 35 : winTier === 'medium' ? 15 : 6;
+          for (let i = 0; i < pCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = (winTier === 'big' ? 2.5 : winTier === 'medium' ? 1.8 : 1.0) * (1 + Math.random() * 2.5);
+            sparklesRef.current.push({
+              x: startX,
+              y: startYVal + 10,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed - (winTier === 'big' ? 2.2 : 1.2),
+              color: bucketTxtColor,
+              size: Math.random() * 3 + (winTier === 'big' ? 2.2 : 1.2),
+              opacity: 1.0,
+              life: 0.6 + Math.random() * 0.6,
+              isStar: winTier === 'big' && Math.random() > 0.4
+            });
           }
+
+          // Trigger appropriate notification & audio
+          if (winTier === 'big') {
+            casinoAudio.playWin();
+            // Trigger screen-wide celebration
+            triggerWinAnimation(ball.payout);
+            setLocalToast({
+              id: Math.random(),
+              text: '¡GRAN GANANCIA!',
+              amount: ball.payout,
+              type: 'big'
+            });
+          } else if (winTier === 'medium') {
+            casinoAudio.playWin();
+            setLocalToast({
+              id: Math.random(),
+              text: '¡BUENA GANANCIA!',
+              amount: ball.payout,
+              type: 'medium'
+            });
+          } else {
+            if (ball.multiplier >= 1) {
+              casinoAudio.playWin();
+            } else {
+              casinoAudio.playLose();
+            }
+          }
+          
           return false;
         }
         const p1 = coords[step];
         const p2 = coords[step + 1];
-        const nextProgress = progress + 3.75 * dt;
+        // Dropping speed is slightly slower (3.2 instead of 3.75) for anticipation
+        const nextProgress = progress + 3.2 * dt;
         ball.progress = nextProgress;
         if (nextProgress >= 1) {
           ball.progress = 0;
@@ -205,12 +338,80 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
         return true;
       });
 
+      // Update and draw sparkles
+      const sparkles = sparklesRef.current;
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const s = sparkles[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.08;
+        s.life -= dt;
+        s.opacity = Math.max(0, s.life);
+        if (s.life <= 0) {
+          sparkles.splice(i, 1);
+          continue;
+        }
+        
+        ctx.save();
+        ctx.globalAlpha = s.opacity;
+        ctx.fillStyle = s.color;
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 6;
+        
+        if (s.isStar) {
+          const r = s.size;
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y - r);
+          ctx.quadraticCurveTo(s.x, s.y, s.x + r, s.y);
+          ctx.quadraticCurveTo(s.x, s.y, s.x, s.y + r);
+          ctx.quadraticCurveTo(s.x, s.y, s.x - r, s.y);
+          ctx.quadraticCurveTo(s.x, s.y, s.x, s.y - r);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, 2 * Math.PI);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Update and draw floating texts
+      const fTexts = floatingTextsRef.current;
+      for (let i = fTexts.length - 1; i >= 0; i--) {
+        const ft = fTexts[i];
+        ft.y += ft.vy;
+        ft.life -= dt * 1.1;
+        ft.opacity = Math.max(0, ft.life);
+        if (ft.life <= 0) {
+          fTexts.splice(i, 1);
+          continue;
+        }
+        
+        ctx.save();
+        ctx.globalAlpha = ft.opacity;
+        ctx.fillStyle = ft.color;
+        ctx.shadowColor = ft.color;
+        ctx.shadowBlur = ft.tier === 'big' ? 14 : ft.tier === 'medium' ? 8 : 4;
+        ctx.textAlign = 'center';
+        
+        if (ft.tier === 'big') {
+          ctx.font = '900 italic 18px Unbounded, system-ui';
+        } else if (ft.tier === 'medium') {
+          ctx.font = 'bold italic 13px Unbounded, system-ui';
+        } else {
+          ctx.font = 'bold 11px Inter, system-ui';
+        }
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      }
+
       animRef.current = requestAnimationFrame(draw);
     };
 
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [risk]);
+  }, [risk, triggerWinAnimation, onBalanceChange]);
 
   // Keep a betRef synced for the canvas drawing context
   const betRef = useRef(bet);
@@ -318,12 +519,60 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
 
       {/* ── RIGHT STAGE ─────────────────────────────── */}
       <div className="casino-roul-stage" style={{ alignItems: 'center' }}>
+        <style>{`
+          @keyframes toastPopIn {
+            0% { transform: translate(-50%, -12px) scale(0.85); opacity: 0; }
+            100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+          }
+        `}</style>
+        
         <div style={{
           background: 'var(--c-bg)', border: '1px solid var(--c-line2)',
-          borderRadius: 14, padding: '14px 0 10px', overflow: 'hidden',
+          borderRadius: 14, padding: '16px 0 16px', overflow: 'hidden',
           position: 'relative', width: '100%',
         }}>
-          <canvas ref={canvasRef} width={640} height={520} style={{
+          {localToast && (
+            <div style={{
+              position: 'absolute',
+              top: 24,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+              background: 'rgba(12, 12, 20, 0.92)',
+              border: `1px solid ${localToast.type === 'big' ? '#f5c542' : '#ff2d7a'}`,
+              boxShadow: `0 0 15px ${localToast.type === 'big' ? 'rgba(245,197,66,0.4)' : 'rgba(255,45,122,0.4)'}`,
+              borderRadius: 10,
+              padding: '10px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 4,
+              zIndex: 10,
+              animation: 'toastPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            }}>
+              <div style={{
+                fontFamily: 'Unbounded, system-ui',
+                fontSize: '0.62rem',
+                fontWeight: 800,
+                color: localToast.type === 'big' ? '#f5c542' : '#ff2d7a',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+              }}>
+                {localToast.text}
+              </div>
+              <div style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: '1.2rem',
+                fontWeight: 950,
+                color: '#6fff7d',
+                textShadow: '0 0 10px rgba(111,255,125,0.4)',
+              }}>
+                +{localToast.amount.toLocaleString('es-AR')} <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>TK</span>
+              </div>
+            </div>
+          )}
+
+          <canvas ref={canvasRef} width={640} height={680} style={{
             display: 'block', margin: '0 auto', width: '100%', height: 'auto', maxWidth: 640,
           }} />
         </div>
