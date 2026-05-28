@@ -82,13 +82,13 @@ function RouletteWheelSVG() {
 }
 
 // ── Wheel + ball (JS-physics animation loop) ──────────────────────────
-function RouletteWheel({ wheelRot, ballAngleRel, ballRadius }) {
+function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize }) {
   return (
-    <div className="roul-wheel-wrap">
+    <div className="roul-wheel-wrap" style={{ width: wheelSize, height: wheelSize }}>
       <div className="roul-pointer"/>
       <div
         className="roul-wheel"
-        style={{ transform: `rotate(${wheelRot}deg)` }}
+        style={{ transform: `rotate(${wheelRot}deg)`, width: '100%', height: '100%' }}
       >
         <RouletteWheelSVG/>
         <div className="roul-wheel__center">ant1gravity</div>
@@ -99,8 +99,8 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius }) {
             position: 'absolute',
             top: '50%',
             left: '50%',
-            width: '12px',
-            height: '12px',
+            width: '14px',
+            height: '14px',
             borderRadius: '50%',
             background: 'radial-gradient(circle at 30% 28%, #ffffff, #b0b0b0)',
             boxShadow: '0 0 5px rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.6)',
@@ -438,10 +438,14 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
   const [err, setErr]           = useState('');
   const [history, setHistory]   = useState([]);
 
+  // Physical wheel scaling to 420px
+  const WHEEL_SIZE = 420;
+  const ballRadiusScale = WHEEL_SIZE / 320;
+
   // JS physics animation loop states
   const [wheelRot, setWheelRot] = useState(0);
   const [ballAngleRel, setBallAngleRel] = useState(0);
-  const [ballRadius, setBallRadius] = useState(145);
+  const [ballRadius, setBallRadius] = useState(145 * ballRadiusScale);
 
   const animRef  = useRef(null);
   const rollRef  = useRef(null);
@@ -511,7 +515,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           const finalWheelRot = initialWheelRot + 360 * 3.5;
           setWheelRot(finalWheelRot);
           setBallAngleRel(targetAngleRel);
-          setBallRadius(110);
+          setBallRadius(110 * ballRadiusScale);
 
           setSpinning(false);
           setResult(res.number);
@@ -536,7 +540,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
 
         // 2. Ball rotation & physics (orbits counter-clockwise, spirals, bounces)
         let currentBallAngleRel = 0;
-        let currentBallRadius = 145;
+        let currentBallRadius = 145 * ballRadiusScale;
 
         if (elapsed < 3200) {
           // Orbit & spiral phase
@@ -544,7 +548,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           const ballProgress = easeOutCubic(tRatio);
           const currentBallAngleScreen = initialBallAngleScreen - ballProgress * (360 * 6.5);
           currentBallAngleRel = ((currentBallAngleScreen - currentWheelRot) % 360 + 360) % 360;
-          currentBallRadius = 145 - 35 * Math.pow(tRatio, 3);
+          currentBallRadius = (145 - 35 * Math.pow(tRatio, 3)) * ballRadiusScale;
         } else {
           // Bounce & settle phase
           const bounceT = (elapsed - 3200) / 2000; // 0 to 1
@@ -562,7 +566,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           const bounceOffset = 18 * Math.exp(-bounceT * 3.5) * Math.sin(bounceT * Math.PI * 7);
 
           currentBallAngleRel = ((targetAngleRel + diff * blend + bounceOffset) % 360 + 360) % 360;
-          currentBallRadius = 110 + 35 * blend * blend + Math.abs(bounceOffset) * 0.45;
+          currentBallRadius = (110 + 35 * blend * blend + Math.abs(bounceOffset) * 0.45) * ballRadiusScale;
         }
 
         setBallAngleRel(currentBallAngleRel);
@@ -578,7 +582,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
       setSpinning(false);
       stopSounds();
     }
-  }, [spinning, bets, totalBet, balance, wheelRot, ballAngleRel, startTickSounds, stopSounds, onBalanceChange, triggerWinAnimation]);
+  }, [spinning, bets, totalBet, balance, wheelRot, ballAngleRel, startTickSounds, stopSounds, onBalanceChange, triggerWinAnimation, ballRadiusScale]);
 
   useEffect(() => () => {
     stopSounds();
@@ -588,7 +592,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
   const col  = result !== null ? colorOf(String(result)) : null;
 
   return (
-    <div className="casino-roul-view">
+    <div className="roul-split-layout">
       <style>{`
         @keyframes roulLightChaser {
           0%, 100% { fill: #ff2d7a; filter: drop-shadow(0 0 1px #ff2d7a); opacity: 0.3; }
@@ -597,74 +601,77 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
         .roul-idle-light {
           animation: roulLightChaser 1.9s infinite linear;
         }
+        @keyframes roulGlowRotate {
+          0% { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.35; }
+          50% { transform: translate(-50%, -50%) rotate(180deg); opacity: 0.65; }
+          100% { transform: translate(-50%, -50%) rotate(360deg); opacity: 0.35; }
+        }
+        .roul-bg-halo {
+          position: absolute;
+          top: 45%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 540px;
+          height: 540px;
+          background: conic-gradient(
+            from 0deg,
+            rgba(255, 45, 122, 0.14) 0deg,
+            rgba(111, 255, 125, 0.05) 120deg,
+            rgba(245, 197, 66, 0.08) 240deg,
+            rgba(255, 45, 122, 0.14) 360deg
+          );
+          filter: blur(50px);
+          border-radius: 50%;
+          animation: roulGlowRotate 16s infinite linear;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .roul-split-layout {
+          display: grid;
+          grid-template-columns: 460px 1fr;
+          gap: 24px;
+          align-items: start;
+          width: 100%;
+        }
+        .roul-wheel-stage-left {
+          background: radial-gradient(ellipse at 50% 0%, rgba(255,45,122,0.07) 0%, transparent 55%), var(--c-surface);
+          border: 1px solid var(--c-line2);
+          border-radius: var(--c-rlg);
+          padding: 24px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          min-height: 580px;
+          position: relative;
+          overflow: hidden;
+        }
+        .roul-betting-stage-right {
+          background: var(--c-surface);
+          border: 1px solid var(--c-line2);
+          border-radius: var(--c-rlg);
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          min-height: 580px;
+        }
+        @media (max-width: 1150px) {
+          .roul-split-layout {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
-      {/* ── LEFT: Bet Panel ────────────────────────────── */}
-      <div className="casino-roul-panel">
-        <div className="casino-roul-panel__title">Apuesta</div>
+      {/* ── LEFT COLUMN: WHEEL STAGE ────────────────────── */}
+      <div className="roul-wheel-stage-left">
+        {/* Rotating conic light rays halo background */}
+        <div className="roul-bg-halo" />
 
-        {/* Chip selector */}
-        <div>
-          <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Ficha activa
-          </div>
-          <div className="roul-chip-selector">
-            {[10, 50, 100, 500, 1000].map(v => (
-              <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)}/>
-            ))}
-          </div>
-        </div>
-
-        {/* Total bet */}
-        <div className="roul-total-row">
-          <span style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            Apuesta total
-          </span>
-          <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--c-text)', fontSize: 16 }}>
-            {totalBet.toLocaleString('es-AR')}
-            <span style={{ color: 'var(--c-text4)', fontSize: 10, marginLeft: 4 }}>TK</span>
-          </span>
-        </div>
-
-        {/* Bets count */}
-        {bets.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--c-text3)' }}>
-            <span>Posiciones</span>
-            <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--c-text2)' }}>{bets.length}</span>
-          </div>
-        )}
-
-        {err && <div className="casino-err">{err}</div>}
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button
-            className="roul-spin-btn"
-            onClick={spin}
-            disabled={spinning || !bets.length}
-          >
-            {spinning ? 'GIRANDO…' : 'GIRAR RULETA'}
-          </button>
-          {bets.length > 0 && !spinning && (
-            <button className="roul-clear-btn" onClick={() => setBets([])}>
-              Limpiar mesa
-            </button>
-          )}
-        </div>
-
-        {/* Mini info */}
-        <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.5 }}>
-          Ruleta Americana · Doble cero · RTP 94.7%
-        </div>
-      </div>
-
-      {/* ── RIGHT: Stage ──────────────────────────────── */}
-      <div className="casino-roul-stage">
-
-        {/* Stage header */}
-        <div className="casino-roul-stage-hdr">
+        {/* History ticker in stage header */}
+        <div className="casino-roul-stage-hdr" style={{ width: '100%', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="casino-roul-stage-title">Mesa #2104</span>
+            <span className="casino-roul-stage-title">Ruleta</span>
             <span style={{
               background: 'rgba(111,255,125,0.12)',
               border: '1px solid rgba(111,255,125,0.25)',
@@ -684,18 +691,22 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           </div>
         </div>
 
-        {/* Wheel */}
-        <RouletteWheel
-          wheelRot={wheelRot}
-          ballAngleRel={ballAngleRel}
-          ballRadius={ballRadius}
-        />
+        {/* Large Wheel container */}
+        <div style={{ zIndex: 1, margin: '20px 0' }}>
+          <RouletteWheel
+            wheelRot={wheelRot}
+            ballAngleRel={ballAngleRel}
+            ballRadius={ballRadius}
+            wheelSize={WHEEL_SIZE}
+          />
+        </div>
 
         {/* Result banner */}
         {result !== null && !spinning && (
           <div
             className="roul-result-banner"
             style={{
+              zIndex: 1,
               border: `2px solid ${col==='red' ? '#c53d3d' : col==='green' ? '#1f7a4d' : 'rgba(255,255,255,0.2)'}`,
             }}
           >
@@ -708,7 +719,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
 
         {/* Summary */}
         {summary && (
-          <div className={`roul-summary roul-summary--${summary.net >= 0 ? 'win' : 'lose'}`}>
+          <div className={`roul-summary roul-summary--${summary.net >= 0 ? 'win' : 'lose'}`} style={{ zIndex: 1 }}>
             <div className={`roul-summary__num roul-summary__num--${colorOf(String(summary.number))}`}>
               {summary.number}
             </div>
@@ -718,22 +729,80 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
             <div className="roul-summary__color">{summary.color}</div>
           </div>
         )}
+      </div>
 
-        {/* Betting grid */}
-        <BettingGrid bets={bets} onBet={addBet}/>
+      {/* ── RIGHT COLUMN: BETTING GRID & CONTROLS ────────── */}
+      <div className="roul-betting-stage-right">
+        {/* Betting Grid */}
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <BettingGrid bets={bets} onBet={addBet}/>
+        </div>
 
-        {/* Tip */}
+        {/* Control strip: Chip selector, total bet, action buttons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 20, alignItems: 'center', marginTop: 10 }}>
+          {/* Chip selector */}
+          <div>
+            <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Ficha activa
+            </div>
+            <div className="roul-chip-selector" style={{ justifyContent: 'flex-start' }}>
+              {[10, 50, 100, 500, 1000].map(v => (
+                <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)}/>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: "'Unbounded',system-ui", fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+              Apuesta total
+            </div>
+            <div style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700, color: 'var(--c-accent2)', fontSize: 18 }}>
+              {totalBet.toLocaleString('es-AR')}
+              <span style={{ color: 'var(--c-text4)', fontSize: 10, marginLeft: 4 }}>TK</span>
+            </div>
+            {bets.length > 0 && (
+              <div style={{ fontSize: 10, color: 'var(--c-text3)' }}>
+                Posiciones: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{bets.length}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              className="roul-spin-btn"
+              onClick={spin}
+              disabled={spinning || !bets.length}
+              style={{ height: 44 }}
+            >
+              {spinning ? 'GIRANDO…' : 'GIRAR RULETA'}
+            </button>
+            {bets.length > 0 && !spinning && (
+              <button className="roul-clear-btn" onClick={() => setBets([])} style={{ height: 32, fontSize: 11 }}>
+                Limpiar mesa
+              </button>
+            )}
+          </div>
+        </div>
+
+        {err && <div className="casino-err" style={{ marginTop: 0 }}>{err}</div>}
+
+        {/* Tip & information */}
         <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           fontSize: 10, color: 'var(--c-text4)',
           background: 'var(--c-bg2)',
           border: '1px solid var(--c-line)',
-          borderRadius: 6, padding: '6px 12px',
-          lineHeight: 1.5, width: '100%', maxWidth: 684,
+          borderRadius: 6, padding: '8px 14px',
+          lineHeight: 1.5, marginTop: 'auto',
         }}>
-          Bordear 2 números → Split (18×) · Esquina de 4 → Corner (9×)
+          <span>Bordear 2 números → Split (18x) · Esquina de 4 → Corner (9x)</span>
+          <span style={{ color: 'var(--c-text3)' }}>Ruleta Americana · Doble cero · RTP 94.7%</span>
         </div>
       </div>
-
     </div>
   );
 }

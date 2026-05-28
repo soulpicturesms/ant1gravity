@@ -59,34 +59,6 @@ const GAMES = [
     art: '◆',
     tag: 'live', live: 280,
   },
-  // Slot variants from Claude Design handoff
-  {
-    id: 'neon-reels',
-    name: 'Neon Reels',
-    desc: 'Original · Estilo Retro',
-    bg: 'linear-gradient(135deg, #1a1a3a, #0a0a1f)',
-    art: '★',
-    tag: 'new', live: 920,
-    isSlotsVariant: true,
-  },
-  {
-    id: 'diamond-drop',
-    name: 'Diamond Drop',
-    desc: 'Gemas · Alta Volatilidad',
-    bg: 'linear-gradient(135deg, #1a3a3a, #0a1f1f)',
-    art: '♦',
-    tag: null, live: 1432,
-    isSlotsVariant: true,
-  },
-  {
-    id: 'pyramid-rush',
-    name: 'Pyramid Rush',
-    desc: 'Egipcio · Multiplicadores',
-    bg: 'linear-gradient(135deg, #3a2a1a, #1f1408)',
-    art: '▲',
-    tag: 'hot', live: 832,
-    isSlotsVariant: true,
-  },
 ];
 
 class WinCoinParticle {
@@ -380,33 +352,55 @@ export default function Casino() {
 
       {/* ── GAME ACTIVE HEADER ─────────────────────────────── */}
       {activeGame && (
-        <div className="casino-game-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="casino-back-btn" onClick={() => setActiveGame(null)}>
+        <div className="casino-game-header" style={{ padding: '12px 24px 16px', borderBottom: '1px solid var(--c-line2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <button className="casino-back-btn" onClick={() => setActiveGame(null)} style={{ height: 40 }}>
               ‹ Lobby
             </button>
             {activeGameDef && (
-              <div>
-                <div className="casino-game-title">{activeGameDef.name}</div>
-                <div className="casino-game-subdesc">{activeGameDef.desc}</div>
+              <div style={{ marginLeft: 6 }}>
+                <div style={{ fontSize: '0.62rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui, sans-serif", letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 2 }}>
+                  JUEGOS / {
+                    activeGameDef.id === 'slots' ? 'TRAGAMONEDAS' :
+                    activeGameDef.id === 'ruleta' ? 'RULETA' :
+                    activeGameDef.id === 'poker' ? "TEXAS HOLD'EM" :
+                    activeGameDef.id === 'blackjack' ? 'BLACKJACK' :
+                    activeGameDef.id === 'plinko' ? 'PLINKO' :
+                    activeGameDef.id === 'truco' ? 'TRUCO ARGENTINO' :
+                    activeGameDef.id.toUpperCase()
+                  }
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, lineHeight: 1.1 }}>
+                  <span style={{ fontFamily: "'Unbounded', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+                    {activeGameDef.name.split(' ')[0]}
+                  </span>
+                  {activeGameDef.name.split(' ').length > 1 && (
+                    <span style={{ fontFamily: "'Unbounded', system-ui, sans-serif", fontSize: '1.4rem', fontWeight: 800, color: '#ff2d7a', letterSpacing: '-0.02em' }}>
+                      {activeGameDef.name.split(' ').slice(1).join(' ')}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--c-text3)', marginTop: 4, fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  {activeGameDef.desc}
+                </div>
               </div>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="casino-balance-badge">
+            <div className="casino-balance-badge" style={{ padding: '8px 16px', borderRadius: 10 }}>
               <span style={{ fontSize: 9, fontFamily: 'Unbounded,system-ui', fontWeight: 700, letterSpacing: '0.14em', color: 'var(--c-text4)', textTransform: 'uppercase' }}>Balance</span>
-              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontWeight: 700, fontSize: 15, color: 'var(--c-accent2)' }}>
+              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontWeight: 700, fontSize: 16, color: 'var(--c-accent2)', marginLeft: 6 }}>
                 {balance.toLocaleString('es-AR')}
               </span>
-              <span style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: 'Inter,sans-serif' }}>TK</span>
+              <span style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: 'Inter,sans-serif', marginLeft: 4 }}>TK</span>
               <button
                 onClick={refreshBalance}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '0.9rem', padding: 0, lineHeight: 1, transition: 'color 0.2s' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '0.9rem', padding: 0, marginLeft: 8, lineHeight: 1, transition: 'color 0.2s' }}
                 onMouseEnter={e => e.target.style.color = 'var(--c-accent2)'}
                 onMouseLeave={e => e.target.style.color = 'var(--c-text4)'}
               >↻</button>
             </div>
-            <button className="casino-mute-btn" onClick={toggleMute} title={muted ? 'Activar sonido' : 'Silenciar'}>
+            <button className="casino-mute-btn" onClick={toggleMute} title={muted ? 'Activar sonido' : 'Silenciar'} style={{ width: 40, height: 40, borderRadius: 10 }}>
               {muted ? '🔇' : '🔊'}
             </button>
           </div>
@@ -514,15 +508,7 @@ export default function Casino() {
           {activeGame === 'plinko'    && <Plinko balance={balance} onBalanceChange={setBalance} triggerWinAnimation={triggerWinAnimation} />}
           {activeGame === 'slots'     && <Slots balance={balance} onBalanceChange={setBalance} triggerWinAnimation={triggerWinAnimation} />}
           
-          {/* Slot variants mapping */}
-          {activeGameDef?.isSlotsVariant && (
-            <Slots
-              balance={balance}
-              onBalanceChange={setBalance}
-              triggerWinAnimation={triggerWinAnimation}
-              gameName={activeGameDef.name}
-            />
-          )}
+
 
           {activeGame === 'poker'     && <Poker user={user} balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'truco'     && <Truco user={user} balance={balance} />}

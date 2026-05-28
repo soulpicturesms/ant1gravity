@@ -25,14 +25,14 @@ const QUICK_BETS = [9, 45, 90, 180, 450, 900];
 
 class CoinParticle {
   constructor(canvasWidth, canvasHeight) {
-    this.x = canvasWidth / 2 + (Math.random() - 0.5) * 160;
+    this.x = canvasWidth / 2 + (Math.random() - 0.5) * 200;
     this.y = canvasHeight - 20;
-    this.vx = (Math.random() - 0.5) * 14;
-    this.vy = -12 - Math.random() * 12;
+    this.vx = (Math.random() - 0.5) * 16;
+    this.vy = -14 - Math.random() * 14;
     this.gravity = 0.55;
     this.angle = Math.random() * Math.PI * 2;
     this.spin = (Math.random() - 0.5) * 0.25;
-    this.size = 18 + Math.random() * 14;
+    this.size = 20 + Math.random() * 16;
     const rand = Math.random();
     this.emoji = rand > 0.6 ? '🪙' : rand > 0.3 ? '🟡' : '⚡';
   }
@@ -71,16 +71,18 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
   ]);
 
   const particlesRef = useRef([]);
+  const bgParticlesRef = useRef([]); // Background ambient specs
   const [winningLines, setWinningLines] = useState([]);
   const winningLinesRef = useRef([]);
   const [activeLineIndex, setActiveLineIndex] = useState(-1);
   const activeLineIndexRef = useRef(-1);
 
-  const colWidth = 116;
-  const rowHeight = 90;
+  // Scaled dimensions — enlarged from 116x90 to 150x120
+  const colWidth = 150;
+  const rowHeight = 120;
   const colCount = 5;
   const rowCount = 3;
-  const symbolHeight = 90;
+  const symbolHeight = 120;
 
   const balanceRef = useRef(balance);
   useEffect(() => { balanceRef.current = balance; }, [balance]);
@@ -130,6 +132,38 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
       ctx.fillStyle = '#0e0e1c';
       ctx.fillRect(0, 0, logicalW, logicalH);
 
+      // Draw golden ambient floating specs in background
+      if (bgParticlesRef.current.length < 35) {
+        bgParticlesRef.current.push({
+          x: Math.random() * logicalW,
+          y: logicalH + Math.random() * 20,
+          vy: -0.25 - Math.random() * 0.45,
+          size: 1.5 + Math.random() * 2.5,
+          opacity: 0.15 + Math.random() * 0.4,
+          speed: 0.05 + Math.random() * 0.05,
+        });
+      }
+
+      ctx.save();
+      bgParticlesRef.current.forEach((p, idx) => {
+        p.y += p.vy;
+        p.x += Math.sin(Date.now() * p.speed * 0.1) * 0.15;
+        ctx.fillStyle = `rgba(245, 197, 66, ${p.opacity})`;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        if (p.y < -10) {
+          bgParticlesRef.current[idx] = {
+            x: Math.random() * logicalW,
+            y: logicalH + Math.random() * 10,
+            vy: -0.25 - Math.random() * 0.45,
+            size: 1.5 + Math.random() * 2.5,
+            opacity: 0.15 + Math.random() * 0.4,
+            speed: 0.05 + Math.random() * 0.05,
+          };
+        }
+      });
+      ctx.restore();
+
+      // Draw reels
       for (let c = 0; c < colCount; c++) {
         const reel = reelsRef.current[c];
         if (reel.state === 'spinning') {
@@ -159,14 +193,22 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
           const symbolIndex = (startIndex + r) % (reel.symbols.length || 1);
           const symbol = reel.symbols[symbolIndex] || 'Cherry';
           const x = c * colWidth; const y = r * rowHeight + drawOffset;
+          
           ctx.save();
-          ctx.font = 'bold 42px Arial, sans-serif';
+          
+          // CRITICAL BUG FIX: Reset text fillStyle to solid white so the columns 2-5
+          // don't inherit the 5% opacity from the column dividers drawn previously.
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 56px Arial, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          
           if (symbol === 'Seven' || symbol === 'Wild') {
             ctx.shadowColor = symbol === 'Seven' ? '#ff2d7a' : '#a855f7'; ctx.shadowBlur = 14;
           } else { ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 3; }
+          
           ctx.globalAlpha = 1;
           const emoji = SYMBOL_EMOJIS[symbol] || '🍒';
+          
           if (reel.speed > 16) {
             const steps = 3; const blurAmt = reel.speed * 0.12;
             for (let j = 0; j < steps; j++) {
@@ -181,6 +223,7 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
         }
       }
 
+      // Draw winning lines
       const lines = winningLinesRef.current; const actIdx = activeLineIndexRef.current;
       if (lines.length > 0) {
         lines.forEach((line, index) => {
@@ -201,19 +244,20 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
           if (isActive) {
             line.positions.forEach(([cIndex, rIndex]) => {
               const px = cIndex * colWidth + colWidth / 2; const py = rIndex * rowHeight + rowHeight / 2;
-              ctx.beginPath(); ctx.arc(px, py, 32, 0, Math.PI * 2);
+              ctx.beginPath(); ctx.arc(px, py, 42, 0, Math.PI * 2);
               ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.shadowColor = color; ctx.shadowBlur = 10;
               ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fill(); ctx.stroke();
             });
             const lastPos = line.positions[line.positions.length - 1];
             const lx = lastPos[0] * colWidth + colWidth / 2; const ly = lastPos[1] * rowHeight + rowHeight / 2;
-            ctx.font = 'bold 11px Arial, sans-serif'; ctx.fillStyle = color; ctx.shadowBlur = 4; ctx.textAlign = 'center';
-            ctx.fillText(`+${line.payout} TK`, Math.min(logicalW - 55, Math.max(55, lx)), ly - 38);
+            ctx.font = 'bold 13px Arial, sans-serif'; ctx.fillStyle = color; ctx.shadowBlur = 4; ctx.textAlign = 'center';
+            ctx.fillText(`+${line.payout} TK`, Math.min(logicalW - 55, Math.max(55, lx)), ly - 50);
           }
           ctx.restore();
         });
       }
 
+      // Draw particles
       const particles = particlesRef.current;
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i]; p.update(); p.draw(ctx);
@@ -408,11 +452,11 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
       <div className="casino-roul-stage" style={{ flexDirection: 'column', gap: 10, alignItems: 'center' }}>
 
         {/* Reels cabinet */}
-        <div style={{
+        <div className="slots-cabinet slots-cabinet-idle" style={{
           border: '5px solid var(--c-surface2)', borderRadius: 14, overflow: 'hidden',
           boxShadow: 'inset 0 0 30px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,45,122,0.12), 0 0 20px rgba(0,0,0,0.5)',
           background: '#07070c', touchAction: 'none', position: 'relative',
-          width: '100%', maxWidth: '580px', aspectRatio: '580/270', margin: '0 auto',
+          width: '100%', maxWidth: '750px', aspectRatio: '750/360', margin: '0 auto',
         }}>
           <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
           <div style={{
@@ -486,6 +530,19 @@ export default function Slots({ balance, onBalanceChange, triggerWinAnimation, g
           100% { transform: scale(1.04); filter: brightness(1.15); }
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slotsCabinetIdle {
+          0%, 100% {
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.95), 0 0 15px rgba(255,45,122,0.3);
+            border-color: var(--c-surface2);
+          }
+          50% {
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.95), 0 0 35px rgba(255,45,122,0.7), 0 0 10px rgba(111,255,125,0.4);
+            border-color: var(--c-accent);
+          }
+        }
+        .slots-cabinet-idle {
+          animation: slotsCabinetIdle 3s infinite ease-in-out;
+        }
       `}</style>
     </div>
   );

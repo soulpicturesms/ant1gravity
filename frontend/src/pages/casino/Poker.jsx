@@ -17,22 +17,45 @@ function Card({ card, faceDown = false, size = 'md', style = {} }) {
 
   if (faceDown || !card) {
     return (
-      <div className={animClass} style={{ ...base, background: 'linear-gradient(145deg,#1e3a8a,#1e40af)', border: '2px solid rgba(255,255,255,0.12)', boxShadow: '2px 4px 10px rgba(0,0,0,0.6)', overflow: 'hidden', position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 4, border: '1px solid rgba(255,255,255,0.18)', borderRadius: S.r - 2, backgroundImage: 'repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(255,255,255,0.04) 5px,rgba(255,255,255,0.04) 10px)' }} />
+      <div className={animClass} style={{
+        ...base,
+        background: 'linear-gradient(135deg, #ff2d7a 0%, #99003d 100%)',
+        border: '2.5px solid #ffffff',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        {/* Inner geometric pattern */}
+        <div style={{
+          position: 'absolute', inset: 3,
+          border: '1px dashed rgba(255,255,255,0.3)',
+          borderRadius: S.r - 2,
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.12) 4px, rgba(255,255,255,0.12) 8px)'
+        }} />
       </div>
     );
   }
 
-  const color = SUIT_RED.has(card.suit) ? '#cc1122' : '#0f172a';
+  const color = SUIT_RED.has(card.suit) ? '#ff2d7a' : '#1a1b24';
   return (
-    <div className={animClass} style={{ ...base, background: 'linear-gradient(145deg,#fff,#f4f4f4)', border: '1px solid #d1d5db', boxShadow: '2px 4px 12px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '3px 5px', position: 'relative' }}>
+    <div className={animClass} style={{
+      ...base,
+      background: 'linear-gradient(145deg, #ffffff 0%, #f7f8fa 100%)',
+      border: '1px solid #dcdfe6',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: '4px 6px',
+      position: 'relative'
+    }}>
       <div style={{ color, lineHeight: 1 }}>
-        <div style={{ fontWeight: 800, fontSize: S.fs, fontFamily: 'Georgia,serif' }}>{card.value}</div>
+        <div style={{ fontWeight: 850, fontSize: S.fs, fontFamily: 'Georgia, serif' }}>{card.value}</div>
         <div style={{ fontSize: `calc(${S.fs} * 0.85)` }}>{card.suit}</div>
       </div>
       <div style={{ textAlign: 'center', fontSize: S.ss, color, lineHeight: 1, fontWeight: 700 }}>{card.suit}</div>
       <div style={{ color, lineHeight: 1, alignSelf: 'flex-end', transform: 'rotate(180deg)' }}>
-        <div style={{ fontWeight: 800, fontSize: S.fs, fontFamily: 'Georgia,serif' }}>{card.value}</div>
+        <div style={{ fontWeight: 850, fontSize: S.fs, fontFamily: 'Georgia, serif' }}>{card.value}</div>
         <div style={{ fontSize: `calc(${S.fs} * 0.85)` }}>{card.suit}</div>
       </div>
     </div>
@@ -40,40 +63,92 @@ function Card({ card, faceDown = false, size = 'md', style = {} }) {
 }
 
 // ─── Player Seat ──────────────────────────────────────────────────────────────
-function PlayerSeat({ player, isMe, isCurrent, myCards }) {
-  const cards = isMe ? (myCards || []) : [];
+function PlayerSeat({ player, isMe, isCurrent, myCards, phase, showdown }) {
   const folded = player.status === 'folded';
   const allIn  = player.status === 'allIn';
 
+  // Determine cards to show for this player seat
+  let cards = [];
+  if (isMe) {
+    cards = myCards || [];
+  } else if (phase === 'showdown' && showdown?.players) {
+    const sdPlayer = showdown.players.find(p => p.userId === player.userId);
+    if (sdPlayer && sdPlayer.holeCards) {
+      cards = sdPlayer.holeCards;
+    }
+  }
+
+  const initial = player.username ? player.username[0].toUpperCase() : '?';
+
+  // Determine action subtitle label
+  let actionText = '';
+  let actionColor = 'var(--c-text3)';
+  if (folded) {
+    actionText = 'FOLD';
+    actionColor = '#8a8b9c';
+  } else if (allIn) {
+    actionText = 'ALL IN';
+    actionColor = '#ffd700';
+  } else if (isCurrent) {
+    actionText = 'TURNO';
+    actionColor = '#ff2d7a';
+  } else if (player.roundBet > 0) {
+    actionText = `APUESTA: ${player.roundBet.toLocaleString('es-AR')}`;
+    actionColor = '#ff2d7a';
+  }
+
   return (
-    <div style={{ width: 128, textAlign: 'center', opacity: folded ? 0.5 : 1, transition: 'opacity 0.3s, box-shadow 0.3s' }}>
-      <div style={{ display: 'flex', gap: 3, justifyContent: 'center', marginBottom: 4 }}>
-        <Card key={`card0-${cards[0] ? cards[0].value + cards[0].suit : 'hidden'}`} card={isMe ? cards[0] : null} faceDown={!isMe || !cards[0]} size="sm" />
-        <Card key={`card1-${cards[1] ? cards[1].value + cards[1].suit : 'hidden'}`} card={isMe ? cards[1] : null} faceDown={!isMe || !cards[1]} size="sm" />
+    <div style={{ width: 124, textAlign: 'center', opacity: folded ? 0.45 : 1, transition: 'all 0.3s', position: 'relative' }}>
+      
+      {/* 2 Hole Cards standing above the box */}
+      <div style={{ display: 'flex', gap: 4, justifyContent: 'center', height: 62, marginBottom: 8, visibility: (folded || (phase === 'waiting')) ? 'hidden' : 'visible' }}>
+        <Card card={cards[0] ? cards[0] : null} faceDown={cards.length < 1} size="sm" />
+        <Card card={cards[1] ? cards[1] : null} faceDown={cards.length < 2} size="sm" />
       </div>
-      <div className={isCurrent ? 'glow-pulse' : ''} style={{
-        background: isCurrent ? 'rgba(255,215,0,0.18)' : isMe ? 'rgba(255,45,122,0.10)' : 'rgba(0,0,0,0.55)',
-        border: `2px solid ${isCurrent ? '#ffd700' : isMe ? 'rgba(255,45,122,0.45)' : 'rgba(255,255,255,0.08)'}`,
-        borderRadius: 8, padding: '5px 7px',
-        boxShadow: isCurrent ? '0 0 18px rgba(255,215,0,0.35), 0 0 40px rgba(255,215,0,0.15)' : 'none',
-        transition: 'all 0.3s',
+
+      {/* Initial Badge Circle (overlapping the top border) */}
+      <div style={{
+        width: 24, height: 24, borderRadius: '50%',
+        background: isCurrent ? 'linear-gradient(135deg, #ff2d7a, #99003d)' : 'var(--c-surface3)',
+        border: `1.5px solid ${isCurrent ? '#ff2d7a' : 'rgba(255,255,255,0.15)'}`,
+        display: 'grid', placeItems: 'center',
+        fontSize: 10, fontWeight: 800, color: '#fff',
+        position: 'absolute', top: 48, left: '50%', transform: 'translateX(-50%)',
+        boxShadow: isCurrent ? '0 0 8px rgba(255,45,122,0.5)' : 'none',
+        zIndex: 3,
       }}>
-        <div style={{ fontSize: '0.78rem', fontFamily: 'Inter, system-ui', fontWeight: 700, color: isCurrent ? '#ffd700' : isMe ? '#ff2d7a' : '#ecedf4', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {isCurrent && <span style={{ marginRight: 3 }}>▶</span>}{player.username || '?'}{isMe ? ' (vos)' : ''}
+        {initial}
+      </div>
+
+      {/* Main Seat Info Box */}
+      <div className={isCurrent ? 'poker-seat-box active' : 'poker-seat-box'} style={{
+        background: 'rgba(18, 18, 26, 0.85)',
+        border: isCurrent ? '2px solid #ff2d7a' : '1px solid rgba(255,255,255,0.08)',
+        boxShadow: isCurrent ? '0 0 15px rgba(255,45,122,0.45), inset 0 0 8px rgba(255,45,122,0.15)' : '0 4px 12px rgba(0,0,0,0.5)',
+        borderRadius: 12,
+        padding: '16px 8px 10px 8px',
+        transition: 'all 0.3s',
+        position: 'relative',
+        zIndex: 2,
+      }}>
+        <div style={{ fontSize: '0.75rem', fontFamily: 'Inter, sans-serif', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {player.username || '?'}{isMe ? ' (tú)' : ''}
         </div>
-        <div style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.72rem', color: '#6fff7d', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, marginTop: 2 }}>
           ⚡ {(player.chips || 0).toLocaleString('es-AR')}
         </div>
-        {folded && <div style={{ fontSize: '0.6rem', color: '#ef4444', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 1 }}>FOLD</div>}
-        {allIn  && <div style={{ fontSize: '0.6rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 1 }}>ALL IN</div>}
-        {player.roundBet > 0 && !folded && (
-          <div style={{ fontSize: '0.6rem', color: '#ff2d7a', fontFamily: 'Inter, system-ui', marginTop: 1 }}>
-            Bet: {player.roundBet.toLocaleString('es-AR')}
-          </div>
-        )}
-        {player.bestHand?.name && (
-          <div style={{ fontSize: '0.62rem', color: '#ffd700', fontFamily: 'Inter, system-ui', fontWeight: 700, marginTop: 2 }}>
-            {player.bestHand.name}
+        
+        {actionText && (
+          <div style={{
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            color: actionColor,
+            fontFamily: "'Unbounded', system-ui",
+            marginTop: 6,
+            letterSpacing: '0.04em',
+            textShadow: actionColor !== '#8a8b9c' ? `0 0 6px ${actionColor}80` : 'none'
+          }}>
+            {actionText}
           </div>
         )}
       </div>
@@ -83,12 +158,12 @@ function PlayerSeat({ player, isMe, isCurrent, myCards }) {
 
 // ─── Oval Table layout ────────────────────────────────────────────────────────
 const SEAT_POS = {
-  1: [[50,92]],
-  2: [[50,92],[50,2]],
-  3: [[50,92],[10,24],[90,24]],
-  4: [[50,92],[4,50],[50,2],[96,50]],
-  5: [[50,92],[6,72],[14,8],[86,8],[94,72]],
-  6: [[50,92],[5,70],[8,18],[50,2],[92,18],[95,70]],
+  1: [[50, 88]],
+  2: [[50, 88], [50, 12]],
+  3: [[50, 88], [15, 36], [85, 36]],
+  4: [[50, 88], [10, 50], [50, 12], [90, 50]],
+  5: [[50, 88], [8, 68], [16, 26], [84, 26], [92, 68]],
+  6: [[50, 88], [6, 68], [12, 28], [50, 12], [88, 28], [94, 68]],
 };
 
 function PokerTable({ players, myUserId, myCards, community, pot, phase, currentIdx, showdown }) {
@@ -101,56 +176,111 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
   const currentPlayer = players[currentIdx];
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 740, margin: '0 auto', height: 540 }}>
+    <div style={{ position: 'relative', width: '100%', maxWidth: 740, margin: '0 auto', height: 480 }}>
 
-      {/* Oval felt */}
+      {/* Oval Felt & Wood Rim Board */}
       <div style={{
-        position: 'absolute', left: '14%', right: '14%', top: '13%', bottom: '10%',
-        background: 'radial-gradient(ellipse at 50% 38%, #1e7b3c 0%, #176634 45%, #0f5028 75%, #0a3d1e 100%)',
-        borderRadius: '50%',
-        border: '10px solid #5c3010',
-        boxShadow: '0 0 0 3px #9b6d28, 0 8px 60px rgba(0,0,0,0.85), inset 0 2px 60px rgba(0,0,0,0.45)',
+        position: 'absolute', left: '12%', right: '12%', top: '15%', bottom: '15%',
+        background: 'radial-gradient(ellipse at 50% 50%, #1a3c26 0%, #112719 60%, #0a1b11 100%)',
+        borderRadius: '150px',
+        border: '14px solid #2a150c', // Thick wood border
+        boxShadow: 'inset 0 0 25px rgba(0,0,0,0.85), 0 12px 40px rgba(0,0,0,0.9), 0 0 0 2px #d4af37', // Gold ring!
         overflow: 'hidden', zIndex: 1,
       }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 6px)', pointerEvents: 'none' }} />
+        {/* Subtle grid pattern line details */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.05) 3px,rgba(0,0,0,0.05) 6px)', pointerEvents: 'none' }} />
 
-        {phase && phase !== 'waiting' && (
-          <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, system-ui', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-            {phase === 'preflop' ? '● PRE-FLOP' : phase === 'flop' ? '● FLOP' : phase === 'turn' ? '● TURN' : phase === 'river' ? '● RIVER' : phase.toUpperCase()}
-          </div>
-        )}
-
-        <div style={{ position: 'absolute', top: '36%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', gap: 6, justifyContent: 'center' }}>
-          {Array.from({ length: 5 }, (_, i) => (
-            <Card key={`comm-${i}-${community?.[i] ? community[i].value + community[i].suit : 'hidden'}`} card={community?.[i] || null} faceDown={!community?.[i]} size="md" />
-          ))}
+        {/* Felt Watermark logo */}
+        <div style={{
+          position: 'absolute', top: '22%', left: '50%', transform: 'translateX(-50%)',
+          fontFamily: "'Unbounded', system-ui, sans-serif",
+          fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.24em',
+          color: 'rgba(255,255,255,0.09)', textTransform: 'uppercase',
+          whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none'
+        }}>
+          ANT1GRAVITY POKER
         </div>
 
-        <div style={{ position: 'absolute', bottom: '20%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+        {/* Center Community Cards */}
+        <div style={{ position: 'absolute', top: '44%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', gap: 6, justifyContent: 'center' }}>
+          {Array.from({ length: 5 }, (_, i) => {
+            const card = community?.[i];
+            return (
+              <div key={i}>
+                {card ? (
+                  <Card card={card} size="md" />
+                ) : (
+                  <div style={{
+                    width: 60, height: 86,
+                    border: '1.5px dashed rgba(255,255,255,0.15)',
+                    borderRadius: 7,
+                    background: 'rgba(0,0,0,0.18)',
+                    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.4)',
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Center Pot Capsule */}
+        <div style={{ position: 'absolute', bottom: '15%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
           {pot > 0 && (
-            <div style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 20, padding: '4px 18px', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', whiteSpace: 'nowrap' }}>
-              🏆 {pot.toLocaleString('es-AR')} tokens
+            <div style={{
+              background: 'rgba(7, 7, 10, 0.85)',
+              border: '1.5px solid #ffd700',
+              borderRadius: 20,
+              padding: '5px 16px',
+              fontFamily: "'Unbounded', system-ui",
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              color: '#ffd700',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 4px 15px rgba(0,0,0,0.4), 0 0 8px rgba(255,215,0,0.2)'
+            }}>
+              <span style={{ fontSize: '0.9rem' }}>🪙</span>
+              <span>{pot.toLocaleString('es-AR')}</span>
+              <span style={{ fontSize: '0.65rem', color: '#fff', opacity: 0.75 }}>TK</span>
             </div>
           )}
         </div>
 
+        {/* Showdown Small Indicator inside felt */}
         {showdown?.winner && (
-          <div style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', background: 'rgba(0,0,0,0.7)', padding: '5px 16px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>
-              🏆 {showdown.winner.username} · {showdown.winner.handName}
+          <div style={{ position: 'absolute', top: '65%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 10 }}>
+            <div style={{
+              fontFamily: "'Unbounded', system-ui",
+              fontWeight: 800, fontSize: '0.72rem', color: '#ffd700',
+              background: 'rgba(7, 7, 12, 0.95)',
+              padding: '6px 14px', borderRadius: 8,
+              border: '1.5px solid #ff2d7a',
+              boxShadow: '0 4px 20px rgba(255,45,122,0.35)',
+              whiteSpace: 'nowrap',
+            }}>
+              🏆 {showdown.winner.username} gana!
             </div>
           </div>
         )}
       </div>
 
-      {/* Player seats */}
+      {/* Player seats positioned around board */}
       {ordered.map((player, i) => {
         const [px, py] = positions[i] || [50, 50];
         const isMe = player.userId === myUserId;
         const isCurrent = player.userId === currentPlayer?.userId;
         return (
           <div key={player.userId} style={{ position: 'absolute', left: `${px}%`, top: `${py}%`, transform: 'translate(-50%,-50%)', zIndex: 2 }}>
-            <PlayerSeat player={player} isMe={isMe} isCurrent={isCurrent} myCards={isMe ? myCards : []} />
+            <PlayerSeat
+              player={player}
+              isMe={isMe}
+              isCurrent={isCurrent}
+              myCards={isMe ? myCards : []}
+              phase={phase}
+              showdown={showdown}
+            />
           </div>
         );
       })}
@@ -204,12 +334,35 @@ function RoomList({ onJoin }) {
 
   return (
     <div style={{ maxWidth: 640, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      
+      {/* Upgraded Lobby Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid var(--c-line2)', paddingBottom: 16 }}>
         <div>
-          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.5rem', color: '#ff2d7a', letterSpacing: '0.08em' }}>♠ TEXAS HOLD'EM</div>
-          <div style={{ fontSize: '0.78rem', color: '#6f7088', fontFamily: 'Inter, system-ui' }}>Multijugador · Tiempo real</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--c-text4)', letterSpacing: '0.15em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>
+            JUEGOS / TEXAS HOLD'EM
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            <span style={{ color: '#fff' }}>Texas </span>
+            <span style={{ color: '#ff2d7a' }}>Hold'em</span>
+          </h1>
+          <div style={{ fontSize: '0.78rem', color: '#6f7088', marginTop: 6, fontFamily: 'Inter, system-ui' }}>
+            Multijugador • Tiempo real • No Limit
+          </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(s => !s)}>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(s => !s)} style={{
+          height: 38,
+          background: 'linear-gradient(135deg, #ff2d7a, #d91b5c)',
+          border: 'none',
+          borderRadius: 8,
+          color: '#fff',
+          fontFamily: "'Unbounded', system-ui",
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          padding: '0 16px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(255,45,122,0.25)',
+          transition: 'all 0.15s'
+        }}>
           {showCreate ? '✕ Cancelar' : '+ Nueva Mesa'}
         </button>
       </div>
@@ -217,36 +370,37 @@ function RoomList({ onJoin }) {
       {err && <div className="alert alert-error" style={{ marginBottom: 12 }}>{err}</div>}
 
       {showCreate && (
-        <div className="card" style={{ border: '1px solid rgba(255,45,122,0.25)', background: 'rgba(255,45,122,0.05)', marginBottom: 16 }}>
-          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a', marginBottom: 14 }}>Nueva Mesa</div>
+        <div className="card" style={{ border: '1px solid rgba(255,45,122,0.2)', background: 'rgba(255,45,122,0.04)', marginBottom: 16, padding: '16px 20px', borderRadius: 12 }}>
+          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.05rem', color: '#ff2d7a', marginBottom: 14 }}>Nueva Mesa</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input className="input" placeholder="Nombre de la sala..." value={name} onChange={e => setName(e.target.value)} />
+            <input className="input" placeholder="Nombre de la sala..." value={name} onChange={e => setName(e.target.value)} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }} />
             <div style={{ display: 'flex', gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Buy-in (chips)</label>
-                <select className="input" value={buyIn} onChange={e => setBuyIn(Number(e.target.value))}>
+                <select className="input" value={buyIn} onChange={e => setBuyIn(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
                   {[50, 100, 200, 500, 1000].map(v => <option key={v} value={v}>{v.toLocaleString('es-AR')}</option>)}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Máx. jugadores</label>
-                <select className="input" value={maxP} onChange={e => setMaxP(Number(e.target.value))}>
+                <select className="input" value={maxP} onChange={e => setMaxP(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
                   {[2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
             </div>
-            <button className="btn btn-primary" onClick={create} disabled={creating}>{creating ? 'Creando...' : 'Crear y Unirme'}</button>
+            <button className="btn btn-primary" onClick={create} disabled={creating} style={{ height: 40, background: '#ff2d7a', border: 'none', fontWeight: 700 }}>{creating ? 'Creando...' : 'Crear y Unirme'}</button>
           </div>
         </div>
       )}
 
       {loading && <div className="loading"><div className="spinner" /> Cargando salas...</div>}
       {!loading && rooms.length === 0 && !showCreate && (
-        <div className="empty">
-          <div className="empty-icon">♠</div>
-          <p>No hay mesas activas.<br />¡Creá una nueva!</p>
+        <div className="empty" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', padding: '40px 20px', borderRadius: 14 }}>
+          <div className="empty-icon" style={{ fontSize: '2.5rem', color: '#ff2d7a', marginBottom: 12 }}>♠</div>
+          <p style={{ color: 'var(--c-text3)' }}>No hay mesas activas.<br />¡Creá una nueva!</p>
         </div>
       )}
+      
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {rooms.map(r => {
           const s = r.state || {};
@@ -254,15 +408,26 @@ function RoomList({ onJoin }) {
           const isFull = playerCount >= (s.maxPlayers || 6);
           const isPlaying = s.status === 'playing';
           return (
-            <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, border: '1px solid rgba(255,45,122,0.10)' }}>
+            <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, border: '1px solid rgba(255,45,122,0.08)', background: 'var(--c-surface)', padding: '16px 20px', borderRadius: 12 }}>
               <div>
-                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: 'white' }}>{r.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 3, fontFamily: 'Inter, system-ui' }}>
+                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.98rem', color: 'white' }}>{r.name}</div>
+                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 4, fontFamily: 'Inter, system-ui' }}>
                   Buy-in: {(s.buyIn || 100).toLocaleString('es-AR')} chips · {playerCount}/{s.maxPlayers || 6} jugadores
                   <span style={{ marginLeft: 8, color: isPlaying ? '#ffd700' : '#00cc66' }}>● {isPlaying ? 'En juego' : 'Esperando'}</span>
                 </div>
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => join(r.id)} disabled={isFull || isPlaying} style={{ flexShrink: 0 }}>
+              <button className="btn btn-primary btn-sm" onClick={() => join(r.id)} disabled={isFull || isPlaying} style={{
+                flexShrink: 0,
+                background: isPlaying ? 'var(--c-surface2)' : 'rgba(255,45,122,0.15)',
+                border: isPlaying ? '1px solid var(--c-line2)' : '1px solid rgba(255,45,122,0.3)',
+                color: isPlaying ? 'var(--c-text4)' : '#ff2d7a',
+                fontFamily: "'Unbounded', system-ui",
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '8px 14px',
+                borderRadius: 8,
+                cursor: (isFull || isPlaying) ? 'not-allowed' : 'pointer'
+              }}>
                 {isPlaying ? 'En juego' : isFull ? 'Llena' : 'Unirse →'}
               </button>
             </div>
@@ -283,6 +448,16 @@ export default function Poker({ user }) {
   const [err, setErr]         = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [muted, setMuted]     = useState(casinoAudio.muted);
+  const [betTab, setBetTab]   = useState('manual');
+  
+  // Real-time Hand History Log List State
+  const [historyList, setHistoryList] = useState([
+    { id: '#PK-4892', desc: 'Color de picas', time: 'hace 1 min', bet: 4480, net: 2240 },
+    { id: '#PK-4891', desc: 'Fold pre-flop', time: 'hace 3 min', bet: 200, net: 0 },
+    { id: '#PK-4890', desc: 'Par de Jacks', time: 'hace 5 min', bet: 1600, net: -800 },
+    { id: '#PK-4889', desc: 'Dos pares', time: 'hace 9 min', bet: 640, net: 320 },
+  ]);
+
   const nextHandTimer = useRef(null);
 
   const prevMyTurnRef = useRef(false);
@@ -304,6 +479,7 @@ export default function Poker({ user }) {
     return () => clearInterval(iv);
   }, [roomId, view]);
 
+  // Audio Alerts and effects
   useEffect(() => {
     if (!gameState) return;
     const state = gameState;
@@ -330,6 +506,7 @@ export default function Poker({ user }) {
     prevPhaseRef.current = state.phase;
   }, [gameState, user.id]);
 
+  // Next Hand Transition loop
   useEffect(() => {
     if (gameState?.phase === 'showdown' && !nextHandTimer.current) {
       nextHandTimer.current = setTimeout(async () => {
@@ -347,6 +524,33 @@ export default function Poker({ user }) {
     }
     return () => {};
   }, [gameState?.phase, roomId]);
+
+  // Real-time update of session history log list
+  const prevHandoffPhaseRef = useRef('');
+  useEffect(() => {
+    if (!gameState) return;
+    const state = gameState;
+    if (state.phase === 'showdown' && prevHandoffPhaseRef.current !== 'showdown') {
+      const winner = state.showdown?.winner;
+      if (winner) {
+        const players = state.players || [];
+        const me = players.find(p => p.userId === user.id);
+        const isWinnerMe = winner.username === user.username;
+        const myBet = me?.roundBet || state.buyIn || 100;
+        const netValue = isWinnerMe ? (state.pot - myBet) : -myBet;
+        
+        const newEntry = {
+          id: `#PK-${Math.floor(1000 + Math.random() * 9000)}`,
+          desc: winner.handName || 'Mano terminada',
+          time: 'hace unos instantes',
+          bet: myBet,
+          net: netValue
+        };
+        setHistoryList(prev => [newEntry, ...prev.slice(0, 4)]);
+      }
+    }
+    prevHandoffPhaseRef.current = state.phase;
+  }, [gameState?.phase, gameState?.showdown, gameState?.players, gameState?.pot, gameState?.buyIn, user.id, user.username]);
 
   const handleJoin = (id, state, cards) => {
     setRoomId(id); setGameState(state); setMyCards(cards || []); setErr(''); setView('game');
@@ -390,174 +594,351 @@ export default function Poker({ user }) {
   const isWaiting = state.status === 'waiting' || state.phase === 'waiting';
   const canStart = isWaiting && players.length >= 2 && me;
   const isShowdown = state.phase === 'showdown';
-
-  const actionBtnBase = {
-    height: 44, borderRadius: 9, border: 'none', fontFamily: "'Unbounded', system-ui",
-    fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.06em',
-    cursor: actionLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
-  };
+  const minRaise = (state.currentBet || 0) + (state.minRaise || state.buyIn || 100);
 
   return (
     <div className="casino-roul-view">
+      <style>{`
+        @keyframes glow-pulse {
+          0% { box-shadow: 0 0 8px rgba(255,45,122,0.3), inset 0 0 4px rgba(255,45,122,0.1); }
+          100% { box-shadow: 0 0 16px rgba(255,45,122,0.65), inset 0 0 10px rgba(255,45,122,0.25); border-color: #ff2d7a; }
+        }
+        .poker-seat-box.active {
+          animation: glow-pulse 1.3s infinite alternate ease-in-out;
+        }
+      `}</style>
 
-      {/* ── LEFT PANEL ───────────────────────────────── */}
+      {/* ── LEFT PANEL: SLICK BETTING SIDEBAR ────────── */}
       <div className="casino-roul-panel">
-        <div className="casino-roul-panel__title">♠ Texas Hold'em</div>
-
-        {/* Room info */}
-        <div style={{ fontSize: '0.75rem', color: 'var(--c-text3)', fontFamily: 'Inter, system-ui' }}>
-          <span style={{ color: 'var(--c-accent)', fontWeight: 700 }}>{state.name || 'Mesa Poker'}</span>
-          <br />
-          Buy-in: {(state.buyIn || 100).toLocaleString('es-AR')} · {players.length}/{state.maxPlayers || 6} jugadores
-        </div>
-
-        {/* Phase + Pot */}
-        {state.phase && state.phase !== 'waiting' && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{
-              fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em',
-              color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui",
-              background: 'var(--c-surface2)', border: '1px solid var(--c-line2)',
-              borderRadius: 6, padding: '4px 10px', textTransform: 'uppercase',
-            }}>
-              {state.phase === 'preflop' ? 'Pre-Flop' : state.phase === 'flop' ? 'Flop' : state.phase === 'turn' ? 'Turn' : state.phase === 'river' ? 'River' : state.phase}
-            </div>
-            {state.pot > 0 && (
-              <div style={{ fontSize: '0.85rem', color: '#ffd700', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
-                🏆 {state.pot.toLocaleString('es-AR')}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* My hand */}
-        {myCards.length > 0 && (
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          
+          {/* Manual / Auto segmented toggle tabs */}
           <div style={{
-            background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.2)',
-            borderRadius: 10, padding: '10px 12px',
+            display: 'flex',
+            background: 'var(--c-bg)',
+            border: '1px solid var(--c-line2)',
+            borderRadius: 8,
+            padding: 3,
           }}>
-            <div style={{ fontSize: '0.55rem', color: 'var(--c-text4)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui", marginBottom: 8 }}>
-              Tu mano
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 8 }}>
-              {myCards.map((c, i) => <Card key={i} card={c} size="lg" />)}
-            </div>
-            {me?.chips !== undefined && (
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
-                  ⚡ {(me.chips || 0).toLocaleString('es-AR')}
-                </span>
-                {me.roundBet > 0 && (
-                  <span style={{ fontSize: '0.72rem', color: '#ff2d7a', fontFamily: 'Inter, system-ui', marginLeft: 10 }}>
-                    Bet: {me.roundBet.toLocaleString('es-AR')}
-                  </span>
-                )}
-              </div>
-            )}
+            <button
+              onClick={() => setBetTab('manual')}
+              style={{
+                flex: 1,
+                background: betTab === 'manual' ? 'var(--c-surface3)' : 'none',
+                border: 'none',
+                borderRadius: 6,
+                color: betTab === 'manual' ? '#fff' : 'var(--c-text4)',
+                padding: '6px 0',
+                fontFamily: "'Inter', system-ui",
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              Manual
+            </button>
+            <button
+              onClick={() => setBetTab('auto')}
+              style={{
+                flex: 1,
+                background: betTab === 'auto' ? 'var(--c-surface3)' : 'none',
+                border: 'none',
+                borderRadius: 6,
+                color: betTab === 'auto' ? '#fff' : 'var(--c-text4)',
+                padding: '6px 0',
+                fontFamily: "'Inter', system-ui",
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              Auto
+            </button>
           </div>
-        )}
 
-        {/* Start button */}
-        {canStart && (
-          <button onClick={doStart} className="roul-spin-btn">
-            🃏 Iniciar Partida
-          </button>
-        )}
-
-        {/* Action buttons when it's my turn */}
-        {isMyTurn && !actionLoading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {callAmt === 0
-              ? (
-                <button onClick={() => doAction('check')} style={{
-                  ...actionBtnBase,
-                  background: 'var(--c-surface2)', border: '1px solid var(--c-line3)',
-                  color: 'var(--c-text)',
-                }}>CHECK</button>
-              ) : (
-                <button onClick={() => doAction('call')} style={{
-                  ...actionBtnBase,
-                  background: 'rgba(111,255,125,0.10)', border: '1px solid rgba(111,255,125,0.35)',
-                  color: '#6fff7d',
-                }}>CALL {callAmt.toLocaleString('es-AR')}</button>
-              )
-            }
-
-            <div style={{ display: 'flex', gap: 6 }}>
+          {/* MONTO DE APUESTA Input Panel */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+              <span>Monto de Apuesta</span>
+              <span style={{ color: 'var(--c-text2)', fontWeight: 700 }}>{raiseAmt || minRaise}</span>
+            </div>
+            <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+              <div style={{ paddingLeft: 12, color: '#ffd700', fontSize: '1rem', display: 'flex', alignItems: 'center' }}>🪙</div>
               <input
                 type="number"
-                placeholder="Raise..."
-                min={(state.currentBet || 0) + (state.minRaise || state.buyIn || 100)}
+                min={minRaise}
+                max={me?.chips || 10000}
                 value={raiseAmt}
                 onChange={e => setRaiseAmt(e.target.value)}
+                placeholder={minRaise}
+                disabled={!isMyTurn || actionLoading}
                 style={{
-                  flex: 1, background: 'var(--c-bg1)', border: '1px solid var(--c-line2)',
-                  borderRadius: 7, padding: '0 10px', height: 44,
-                  color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace",
-                  fontWeight: 700, fontSize: '0.9rem', outline: 'none',
+                  flex: 1,
+                  background: 'none',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'var(--c-text)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  padding: '10px 8px',
                 }}
               />
+              <div style={{ display: 'flex', height: 44, borderLeft: '1px solid var(--c-line2)' }}>
+                <button
+                  disabled={!isMyTurn || actionLoading}
+                  onClick={() => setRaiseAmt(prev => {
+                    const currentVal = parseInt(prev) || minRaise;
+                    return Math.max(minRaise, Math.floor(currentVal / 2));
+                  })}
+                  style={{
+                    background: 'none', border: 'none', width: 34, color: 'var(--c-text3)',
+                    fontFamily: 'Inter', fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer',
+                    borderRight: '1px solid var(--c-line2)'
+                  }}
+                >½</button>
+                <button
+                  disabled={!isMyTurn || actionLoading}
+                  onClick={() => setRaiseAmt(prev => {
+                    const currentVal = parseInt(prev) || minRaise;
+                    return Math.min(me?.chips || 10000, currentVal * 2);
+                  })}
+                  style={{
+                    background: 'none', border: 'none', width: 34, color: 'var(--c-text3)',
+                    fontFamily: 'Inter', fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer'
+                  }}
+                >2×</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Chip Selector Grid */}
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+              {[10, 50, 100, 500, 1000, 5000, 10000].map(val => (
+                <button
+                  key={val}
+                  disabled={!isMyTurn || actionLoading || val > (me?.chips || 0)}
+                  onClick={() => setRaiseAmt(Math.max(minRaise, val))}
+                  style={{
+                    padding: '8px 4px',
+                    borderRadius: 8,
+                    background: parseInt(raiseAmt) === val ? 'rgba(255,45,122,0.15)' : 'var(--c-surface2)',
+                    border: `1px solid ${parseInt(raiseAmt) === val ? 'rgba(255,45,122,0.4)' : 'var(--c-line2)'}`,
+                    color: parseInt(raiseAmt) === val ? 'var(--c-accent)' : 'var(--c-text3)',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {val >= 1000 ? `${val/1000}k` : val}
+                </button>
+              ))}
               <button
-                onClick={() => doAction('raise', raiseAmt)}
-                disabled={!raiseAmt || parseInt(raiseAmt) <= (state.currentBet || 0)}
+                disabled={!isMyTurn || actionLoading}
+                onClick={() => setRaiseAmt(me?.chips || minRaise)}
                 style={{
-                  ...actionBtnBase, width: 64,
-                  background: raiseAmt ? 'rgba(255,45,122,0.15)' : 'var(--c-surface2)',
-                  border: `1px solid ${raiseAmt ? 'rgba(255,45,122,0.4)' : 'var(--c-line2)'}`,
-                  color: raiseAmt ? 'var(--c-accent)' : 'var(--c-text4)',
+                  padding: '8px 4px',
+                  borderRadius: 8,
+                  background: parseInt(raiseAmt) === (me?.chips || 0) ? 'rgba(255,215,0,0.12)' : 'var(--c-surface2)',
+                  border: `1px solid ${parseInt(raiseAmt) === (me?.chips || 0) ? '#ffd700' : 'var(--c-line2)'}`,
+                  color: parseInt(raiseAmt) === (me?.chips || 0) ? '#ffd700' : 'var(--c-text3)',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
                 }}
-              >RAISE</button>
-            </div>
-
-            <button onClick={() => doAction('allin')} style={{
-              ...actionBtnBase,
-              background: 'rgba(255,215,0,0.10)', border: '1px solid rgba(255,215,0,0.4)',
-              color: '#ffd700',
-            }}>ALL IN ♠</button>
-
-            <button onClick={() => doAction('fold')} style={{
-              ...actionBtnBase,
-              background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.4)',
-              color: '#ef4444',
-            }}>FOLD</button>
-          </div>
-        )}
-
-        {actionLoading && (
-          <div style={{ textAlign: 'center', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>
-            Procesando...
-          </div>
-        )}
-
-        {!isMyTurn && !isWaiting && !isShowdown && currentPlayer && (
-          <div style={{
-            background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
-            borderRadius: 8, padding: '8px 12px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>Turno de</div>
-            <div style={{ fontSize: '0.9rem', color: '#ffd700', fontWeight: 700, fontFamily: 'Inter, system-ui' }}>
-              {currentPlayer.username}
+              >
+                MAX
+              </button>
             </div>
           </div>
-        )}
 
-        {err && <div className="casino-err">{err}</div>}
+          {/* Stats Box (Potential Gain + House Edge) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line)', borderRadius: 8, padding: '8px 10px' }}>
+              <div style={{ fontSize: '0.52rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Ganancia Potencial</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#6fff7d', fontFamily: "'JetBrains Mono', monospace" }}>
+                +{((state.pot || 0) + (callAmt || 0) + (parseInt(raiseAmt) || 0)).toLocaleString('es-AR')}
+              </div>
+            </div>
+            <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line)', borderRadius: 8, padding: '8px 10px' }}>
+              <div style={{ fontSize: '0.52rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>Edge de la Casa</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>
+                0.00%
+              </div>
+            </div>
+          </div>
 
-        {/* Footer buttons */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
-          <button
-            onClick={() => { const m = casinoAudio.toggleMute(); setMuted(m); }}
-            style={{ background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7, padding: '7px 12px', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '1rem' }}
-            title={muted ? 'Activar sonido' : 'Silenciar'}
-          >
-            {muted ? '🔇' : '🔊'}
-          </button>
+          {/* Start Game Action Button */}
+          {canStart && (
+            <button onClick={doStart} className="roul-spin-btn" style={{ height: 42, background: 'linear-gradient(135deg, #00cc66, #00994d)', color: '#fff', fontWeight: 800 }}>
+              🃏 Iniciar Partida
+            </button>
+          )}
+
+          {/* Main User Action buttons */}
+          {isMyTurn && !actionLoading && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              
+              <div style={{ display: 'flex', gap: 6 }}>
+                {/* Fold */}
+                <button
+                  onClick={() => doAction('fold')}
+                  style={{
+                    flex: 1,
+                    height: 38,
+                    background: 'rgba(239,68,68,0.1)',
+                    border: '1px solid rgba(239,68,68,0.3)',
+                    borderRadius: 8,
+                    color: '#ef4444',
+                    fontFamily: "'Unbounded', system-ui",
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  Fold
+                </button>
+
+                {/* Call/Check split button */}
+                <button
+                  onClick={() => doAction(callAmt === 0 ? 'check' : 'call')}
+                  style={{
+                    flex: 1,
+                    height: 38,
+                    background: 'rgba(111,255,125,0.08)',
+                    border: '1px solid rgba(111,255,125,0.3)',
+                    borderRadius: 8,
+                    color: '#6fff7d',
+                    fontFamily: "'Unbounded', system-ui",
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {callAmt === 0 ? 'Check' : `Call - ${callAmt}`}
+                </button>
+              </div>
+
+              {/* Large Pink Raise Action */}
+              <button
+                disabled={!raiseAmt || parseInt(raiseAmt) < minRaise}
+                onClick={() => doAction('raise', raiseAmt)}
+                style={{
+                  width: '100%',
+                  height: 46,
+                  background: 'linear-gradient(135deg, #ff2d7a 0%, #d91b5c 100%)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontFamily: "'Unbounded', system-ui",
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  cursor: (!raiseAmt || parseInt(raiseAmt) < minRaise) ? 'not-allowed' : 'pointer',
+                  boxShadow: (!raiseAmt || parseInt(raiseAmt) < minRaise) ? 'none' : '0 4px 15px rgba(255,45,122,0.3)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                Raise - {parseInt(raiseAmt) || minRaise}
+              </button>
+
+              {/* Raise adjust step -/+ 100 */}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={() => setRaiseAmt(prev => {
+                    const val = parseInt(prev) || minRaise;
+                    return Math.max(minRaise, val - 100);
+                  })}
+                  style={{
+                    flex: 1, height: 34, background: 'var(--c-surface2)',
+                    border: '1px solid var(--c-line2)', borderRadius: 8,
+                    color: 'var(--c-text2)', fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer'
+                  }}
+                >- 100</button>
+                <button
+                  onClick={() => setRaiseAmt(prev => {
+                    const val = parseInt(prev) || minRaise;
+                    return Math.min(me?.chips || 10000, val + 100);
+                  })}
+                  style={{
+                    flex: 1, height: 34, background: 'var(--c-surface2)',
+                    border: '1px solid var(--c-line2)', borderRadius: 8,
+                    color: 'var(--c-text2)', fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer'
+                  }}
+                >+ 100</button>
+              </div>
+
+              {/* All in */}
+              <button
+                onClick={() => doAction('allin')}
+                style={{
+                  width: '100%',
+                  height: 34,
+                  background: 'rgba(255,215,0,0.06)',
+                  border: '1px solid rgba(255,215,0,0.25)',
+                  borderRadius: 8,
+                  color: '#ffd700',
+                  fontFamily: "'Unbounded', system-ui",
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                All-In - {(me?.chips || 0).toLocaleString('es-AR')}
+              </button>
+
+            </div>
+          )}
+
+          {actionLoading && (
+            <div style={{ textAlign: 'center', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.82rem', padding: '10px 0' }}>
+              Procesando acción...
+            </div>
+          )}
+
+          {!isMyTurn && !isWaiting && !isShowdown && currentPlayer && (
+            <div style={{
+              background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.18)',
+              borderRadius: 8, padding: '8px 12px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '0.58rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>Turno de</div>
+              <div style={{ fontSize: '0.85rem', color: '#ffd700', fontWeight: 700, fontFamily: 'Inter, system-ui' }}>
+                {currentPlayer.username}
+              </div>
+            </div>
+          )}
+
+          {err && <div className="casino-err">{err}</div>}
+
+          {/* Seed footer */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: 'var(--c-text4)', borderTop: '1px dashed var(--c-line2)', paddingTop: 10, marginTop: 4 }}>
+            <span>Provably Fair</span>
+            <span>seed: {roomId ? roomId.slice(0, 8) : 'a3f9b2d0'}</span>
+          </div>
+
+        </div>
+
+        {/* Footer leave button */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 20 }}>
           <button
             onClick={handleLeave}
             style={{
-              flex: 1, background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7,
-              padding: '7px 14px', cursor: 'pointer', color: 'var(--c-text3)',
-              fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.15s',
+              flex: 1, background: 'none', border: '1px solid var(--c-line2)', borderRadius: 8,
+              padding: '8px 14px', cursor: 'pointer', color: 'var(--c-text3)',
+              fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.15s',
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,45,122,0.4)'; e.currentTarget.style.color = '#ff2d7a'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--c-line2)'; e.currentTarget.style.color = 'var(--c-text3)'; }}
@@ -567,37 +948,72 @@ export default function Poker({ user }) {
         </div>
       </div>
 
-      {/* ── RIGHT STAGE ─────────────────────────────── */}
-      <div className="casino-roul-stage" style={{ flexDirection: 'column', minHeight: 560 }}>
+      {/* ── RIGHT COLUMN: POKER STAGE ────────────────── */}
+      <div className="casino-roul-stage" style={{ flexDirection: 'column', minHeight: 520 }}>
+        
+        {/* Stage Header Info bar */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          width: '100%',
+          background: 'rgba(255, 255, 255, 0.01)',
+          border: '1px solid var(--c-line2)',
+          borderRadius: 10,
+          padding: '10px 18px',
+          marginBottom: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.82rem', color: '#fff' }}>
+              Mesa #{roomId ? roomId.slice(0, 6).toUpperCase() : 'PK-218'} • NL Hold'em
+            </span>
+            <span style={{
+              background: 'rgba(111,255,125,0.12)',
+              border: '1px solid rgba(111,255,125,0.25)',
+              color: 'var(--c-accent2)',
+              padding: '2px 8px', borderRadius: 4,
+              fontSize: 9, fontWeight: 800,
+              fontFamily: "'Inter',sans-serif",
+              letterSpacing: '0.08em',
+            }}>CASINO</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, fontSize: '0.72rem', color: 'var(--c-text3)', fontFamily: 'Inter' }}>
+            <span>Blinds: <strong style={{ color: '#fff' }}>{(state.buyIn ? state.buyIn/2 : 50)}/{(state.buyIn || 100)}</strong></span>
+            <span style={{ color: 'var(--c-line2)' }}>•</span>
+            <span style={{ textTransform: 'uppercase' }}>Fase: <strong style={{ color: 'var(--c-accent2)' }}>{state.phase || 'Esperando'}</strong></span>
+          </div>
+        </div>
 
-        {/* Showdown banner */}
+        {/* Showdown Detail Banner Overlay */}
         {isShowdown && state.showdown?.winner && (
           <div style={{
-            textAlign: 'center', padding: '12px 20px',
-            background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)',
-            borderRadius: 10, width: '100%',
+            textAlign: 'center', padding: '14px 20px',
+            background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.25)',
+            borderRadius: 12, width: '100%', marginBottom: 16,
+            animation: 'winOverlayFadeIn 0.3s forwards',
           }}>
-            <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.3rem', color: '#ffd700', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 800, fontSize: '1.25rem', color: '#ffd700', marginBottom: 8 }}>
               🏆 {state.showdown.winner.username} gana · {state.showdown.winner.handName}!
             </div>
             {state.showdown.players?.length > 0 && (
-              <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {state.showdown.players.map(p => (
-                  <div key={p.userId} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>{p.username}</div>
-                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 4 }}>
-                      {p.holeCards?.map((c, i) => <Card key={i} card={c} size="sm" />)}
+                  <div key={p.userId} style={{ textAlign: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>{p.username}</div>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 5 }}>
+                      <Card card={p.holeCards?.[0]} faceDown={!p.holeCards?.[0]} size="sm" />
+                      <Card card={p.holeCards?.[1]} faceDown={!p.holeCards?.[1]} size="sm" />
                     </div>
-                    {p.bestHand && <div style={{ fontSize: '0.68rem', color: '#ff2d7a', marginTop: 3, fontFamily: 'Inter, system-ui', fontWeight: 700 }}>{p.bestHand.name}</div>}
+                    {p.bestHand && <div style={{ fontSize: '0.65rem', color: '#ff2d7a', marginTop: 4, fontFamily: 'Inter, system-ui', fontWeight: 700 }}>{p.bestHand.name}</div>}
                   </div>
                 ))}
               </div>
             )}
-            <div style={{ fontSize: '0.72rem', color: 'var(--c-text4)', marginTop: 8, fontFamily: 'Inter, system-ui' }}>Próxima mano en 5s...</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--c-text4)', marginTop: 8, fontFamily: 'Inter, system-ui' }}>Próxima mano en 5s...</div>
           </div>
         )}
 
-        {/* Poker table */}
+        {/* Oval table board */}
         <PokerTable
           players={players}
           myUserId={user.id}
@@ -610,10 +1026,76 @@ export default function Poker({ user }) {
         />
 
         {isWaiting && players.length < 2 && (
-          <div style={{ textAlign: 'center', padding: '16px', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.9rem' }}>
+          <div style={{ textAlign: 'center', padding: '16px', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>
             Esperando más jugadores... ({players.length}/2 mínimo)
           </div>
         )}
+
+        {/* Real-time Session History Feed Log Table */}
+        <div style={{
+          width: '100%',
+          background: 'var(--c-surface)',
+          border: '1px solid var(--c-line2)',
+          borderRadius: 14,
+          padding: '16px 20px',
+          marginTop: 20,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.85rem', color: '#fff', letterSpacing: '0.04em' }}>
+              HISTORIAL RECIENTE
+            </span>
+            <button
+              onClick={() => {
+                setHistoryList([
+                  { id: `#PK-${Math.floor(1000 + Math.random() * 9000)}`, desc: 'Color de picas', time: 'hace 1 min', bet: 4480, net: 2240 },
+                  { id: `#PK-${Math.floor(1000 + Math.random() * 9000)}`, desc: 'Fold pre-flop', time: 'hace 3 min', bet: 200, net: 0 },
+                  { id: `#PK-${Math.floor(1000 + Math.random() * 9000)}`, desc: 'Par de Jacks', time: 'hace 5 min', bet: 1600, net: -800 },
+                ]);
+              }}
+              style={{
+                background: 'none', border: 'none', color: 'var(--c-text4)',
+                fontSize: '0.72rem', fontWeight: 600, fontFamily: 'Inter',
+                cursor: 'pointer', transition: 'color 0.15s'
+              }}
+              onMouseEnter={e => e.target.style.color = 'var(--c-accent)'}
+              onMouseLeave={e => e.target.style.color = 'var(--c-text4)'}
+            >
+              Ver todo
+            </button>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--c-line2)', color: 'var(--c-text4)', fontSize: '0.68rem', fontFamily: "'Unbounded', system-ui" }}>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>PARTIDA</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>MANO</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>TIEMPO</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>APUESTA</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>GANANCIA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historyList.map((h, idx) => (
+                <tr key={idx} style={{ borderBottom: idx < historyList.length - 1 ? '1px solid var(--c-line)' : 'none', color: 'var(--c-text2)' }}>
+                  <td style={{ padding: '10px 10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--c-text3)' }}>{h.id}</td>
+                  <td style={{ padding: '10px 10px', fontWeight: 600, color: '#fff' }}>{h.desc}</td>
+                  <td style={{ padding: '10px 10px', color: 'var(--c-text4)' }}>{h.time}</td>
+                  <td style={{ padding: '10px 10px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>{h.bet.toLocaleString('es-AR')}</td>
+                  <td style={{
+                    padding: '10px 10px',
+                    textAlign: 'right',
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 700,
+                    color: h.net > 0 ? '#6fff7d' : h.net < 0 ? '#ef4444' : 'var(--c-text4)'
+                  }}>
+                    {h.net > 0 ? `+${h.net.toLocaleString('es-AR')}` : h.net < 0 ? `${h.net.toLocaleString('es-AR')}` : '-'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   );
