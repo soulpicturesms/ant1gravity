@@ -16,65 +16,107 @@ const WHEEL_NUMBERS = [
 
 function RouletteWheel({ spinning, result, onSpinComplete }) {
   const canvasRef = useRef(null);
-  
-  // Physics engine variables in refs for 60 FPS performance
+
   const wheelAngleRef = useRef(0);
-  const ballAngleRef = useRef(0);
-  const ballRadiusRef = useRef(0);
-  const ballSpeedRef = useRef(0);
-  const ballStateRef = useRef('idle'); // 'idle' | 'outer_rim' | 'falling' | 'bouncing' | 'settled'
-  
+  const ballAngleRef  = useRef(null); // null = no ball shown
+  const ballRadiusRef = useRef(null);
+
+  // 'idle' | 'spinning' | 'landing' | 'settled'
+  const ballStateRef = useRef('idle');
+
+  // Landing animation (time-based, pre-computed trajectory)
+  const landingStartTimeRef  = useRef(0);
+  const landingStartAngleRef = useRef(0);
+  const landingTotalDeltaRef = useRef(0);
+  const landingTargetRelRef  = useRef(0);
+
+  // Relative angle to wheel center (used in settled state)
   const relAngleRef = useRef(0);
-  const relAngleVelRef = useRef(0);
-  const bounceIntensityRef = useRef(0);
-  const bounceTimerRef = useRef(0);
-  
-  const ballRadiusVelRef = useRef(0);
-  const lastSlotRef = useRef(-1);
-  const animRef = useRef(null);
-  const rollSoundRef = useRef(null); // Ref for continuous rolling sound loop
-  
-  const N = WHEEL_NUMBERS.length; // 38
-  const wheelSpeed = 0.012; // slow constant rotation clockwise
-  
-  const resultRef = useRef(result);
+
+  const lastTickPocketRef = useRef(-1);
+  const rollSoundRef      = useRef(null);
+  const onSpinCalledRef   = useRef(false);
+  const animRef           = useRef(null);
+
+  const resultRef         = useRef(result);
   const onSpinCompleteRef = useRef(onSpinComplete);
 
+  useEffect(() => { resultRef.current = result; },           [result]);
+  useEffect(() => { onSpinCompleteRef.current = onSpinComplete; }, [onSpinComplete]);
+
+  const N          = 38;
+  const wheelSpeed = 0.012;
+  const BALL_SPEED = -0.22;          // rad/frame, counter-clockwise
+  const LANDING_MS = 4000;
+  const canvasW    = 380;
+  const cx         = canvasW / 2;    // 190
+  const cy         = canvasW / 2;    // 190
+  const R          = cx - 18;        // 172
+  const OUTER_R    = R + 4;          // 176 — rim track
+  const POCKET_R   = R - 14;         // 158 — pocket bottom
+
+  // Kick off spin
   useEffect(() => {
-    resultRef.current = result;
+    if (spinning && result === null) {
+      ballStateRef.current    = 'spinning';
+      ballAngleRef.current    = Math.PI;
+      ballRadiusRef.current   = OUTER_R;
+      onSpinCalledRef.current = false;
+      lastTickPocketRef.current = -1;
+      if (rollSoundRef.current) { rollSoundRef.current.stop(); rollSoundRef.current = null; }
+      rollSoundRef.current = casinoAudio.playRouletteRoll();
+    }
+  }, [spinning, result]);
+
+  // Pre-compute full landing trajectory when result arrives
+  useEffect(() => {
+    if (result === null || ballStateRef.current !== 'spinning') return;
+
+    const arc          = (2 * Math.PI) / N;
+    const targetIdx    = WHEEL_NUMBERS.indexOf(String(result));
+    const targetRelAng = (targetIdx + 0.5) * arc - Math.PI / 2;
+
+    // Wheel angle at the moment the landing animation finishes
+    const framesAhead    = (LANDING_MS / 1000) * 60;
+    const wheelAtLanding = wheelAngleRef.current + framesAhead * wheelSpeed;
+    const targetAbsAng   = wheelAtLanding + targetRelAng;
+
+    // Ball travels counter-clockwise (negative delta) from current angle
+    let delta = targetAbsAng - ballAngleRef.current;
+    delta = ((delta % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI); // [0, 2π)
+    delta -= 2 * Math.PI;                                               // (-2π, 0]
+    delta -= (2 * Math.PI) * (2 + Math.floor(Math.random() * 2));      // 2–3 extra revs
+
+    landingStartAngleRef.current = ballAngleRef.current;
+    landingTotalDeltaRef.current = delta;
+    landingTargetRelRef.current  = targetRelAng;
+    landingStartTimeRef.current  = performance.now();
+
+    ballStateRef.current = 'landing';
+    if (rollSoundRef.current) rollSoundRef.current.setSpeed(0.65);
   }, [result]);
-
-  useEffect(() => {
-    onSpinCompleteRef.current = onSpinComplete;
-  }, [onSpinComplete]);
-
-  // Initial wheel geometry scale
-  const canvasW = 380;
-  const cx = canvasW / 2; // 190
-  const cy = canvasW / 2; // 190
-  const R = cx - 18;      // 172 (outer pockets boundary)
 
   const draw = (wheelRotDeg, ballAngleRad, ballRadiusPx) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
+
     ctx.clearRect(0, 0, canvasW, canvasW);
-    const arc = (2 * Math.PI) / N;
+    const arc    = (2 * Math.PI) / N;
     const rotRad = (wheelRotDeg * Math.PI) / 180;
 
-    // Draw background outer wheel wood
+    // Outer wood rim
     ctx.beginPath();
     ctx.arc(cx, cy, cx - 2, 0, 2 * Math.PI);
-    ctx.fillStyle = '#2f1f17';
+    ctx.fillStyle   = '#2f1f17';
     ctx.fill();
     ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 3;
+    ctx.lineWidth   = 3;
     ctx.stroke();
 
-    // Draw wheel sectors
+    // Wheel sectors + dividers + numbers
     for (let i = 0; i < N; i++) {
-      const n = WHEEL_NUMBERS[i];
+      const n     = WHEEL_NUMBERS[i];
       const start = rotRad + i * arc - Math.PI / 2;
       const end   = rotRad + (i + 1) * arc - Math.PI / 2;
       const mid   = rotRad + (i + 0.5) * arc - Math.PI / 2;
@@ -86,313 +128,168 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
       ctx.fillStyle = n === '0' || n === '00' ? '#1a5c1a' : RED_NUMS.has(parseInt(n)) ? '#8b1a2a' : '#1a1a2a';
       ctx.fill();
 
-      // Divider lines
       ctx.beginPath();
       ctx.moveTo(cx + (R - 20) * Math.cos(start), cy + (R - 20) * Math.sin(start));
       ctx.lineTo(cx + R * Math.cos(start), cy + R * Math.sin(start));
       ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 1;
+      ctx.lineWidth   = 1;
       ctx.stroke();
 
-      // Numbers
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(mid);
-      ctx.fillStyle = '#e0e0f0';
-      ctx.font = 'bold 11px Rajdhani, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle     = '#e0e0f0';
+      ctx.font          = 'bold 11px Rajdhani, sans-serif';
+      ctx.textAlign     = 'right';
+      ctx.textBaseline  = 'middle';
       ctx.fillText(n, R - 5, 0);
       ctx.restore();
     }
 
-    // Outer gold border of pockets
-    ctx.beginPath(); 
-    ctx.arc(cx, cy, R, 0, 2 * Math.PI);
-    ctx.strokeStyle = '#ffd700'; 
-    ctx.lineWidth = 2.5; 
-    ctx.stroke();
+    // Pocket borders
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.stroke();
 
-    // Inner gold border of pockets
-    ctx.beginPath(); 
-    ctx.arc(cx, cy, R - 20, 0, 2 * Math.PI);
-    ctx.strokeStyle = '#ffd700'; 
-    ctx.lineWidth = 2; 
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, R - 20, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
 
-    // Outer rim metal track for ball
+    // Outer rim track
+    ctx.beginPath(); ctx.arc(cx, cy, R + 6, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#4a4a5a'; ctx.lineWidth = 4; ctx.stroke();
+
+    // Brass spindle
     ctx.beginPath();
-    ctx.arc(cx, cy, R + 6, 0, 2 * Math.PI);
-    ctx.strokeStyle = '#4a4a5a';
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    
-    // Brass Spindle
-    ctx.beginPath(); 
     ctx.arc(cx, cy, 24, 0, 2 * Math.PI);
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
-    g.addColorStop(0, '#ffffff');
-    g.addColorStop(0.3, '#ffd700');
-    g.addColorStop(1, '#8b6508');
-    ctx.fillStyle = g; 
-    ctx.fill();
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.3, '#ffd700'); g.addColorStop(1, '#8b6508');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // Spinner handles (4 brass arms rotating with wheel)
+    // Rotating arms
     for (let j = 0; j < 4; j++) {
-      const handleAngle = rotRad + j * Math.PI / 2;
+      const ha = rotRad + j * Math.PI / 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + 34 * Math.cos(handleAngle), cy + 34 * Math.sin(handleAngle));
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
+      ctx.lineTo(cx + 34 * Math.cos(ha), cy + 34 * Math.sin(ha));
+      ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2.5; ctx.stroke();
       ctx.beginPath();
-      ctx.arc(cx + 34 * Math.cos(handleAngle), cy + 34 * Math.sin(handleAngle), 4, 0, 2 * Math.PI);
-      ctx.fillStyle = '#ffd700';
-      ctx.fill();
+      ctx.arc(cx + 34 * Math.cos(ha), cy + 34 * Math.sin(ha), 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffd700'; ctx.fill();
     }
 
-    // Draw Ball (Glowing spheres)
+    // Ball
     if (ballAngleRad !== null && ballRadiusPx !== null) {
       const bx = cx + ballRadiusPx * Math.cos(ballAngleRad);
       const by = cy + ballRadiusPx * Math.sin(ballAngleRad);
-      
       ctx.save();
       ctx.beginPath();
       ctx.arc(bx, by, 8, 0, 2 * Math.PI);
-      const ballGlow = ctx.createRadialGradient(bx - 3, by - 3, 1, bx, by, 8);
-      ballGlow.addColorStop(0, '#ffffff');
-      ballGlow.addColorStop(0.7, '#e4e4e4');
-      ballGlow.addColorStop(1, '#9c9c9c');
-      ctx.fillStyle = ballGlow;
+      const bg = ctx.createRadialGradient(bx - 3, by - 3, 1, bx, by, 8);
+      bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.7, '#e4e4e4'); bg.addColorStop(1, '#9c9c9c');
+      ctx.fillStyle   = bg;
       ctx.shadowColor = 'rgba(255,255,255,0.85)';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur  = 10;
       ctx.fill();
       ctx.restore();
     }
   };
 
-  // State trigger for starting the physical spin animation
-  useEffect(() => {
-    if (spinning) {
-      if (result === null) {
-        // Start infinite spin rolling on the outer track
-        ballStateRef.current = 'outer_rim';
-        ballSpeedRef.current = -0.26; // opposite direction (counter-clockwise)
-        ballRadiusRef.current = R + 4; // outer rim track
-        
-        // Start roll sound
-        if (rollSoundRef.current) {
-          rollSoundRef.current.stop();
-        }
-        rollSoundRef.current = casinoAudio.playRouletteRoll();
-      }
-    }
-  }, [spinning, result]);
-
-  // Main loop for wheel rotation and ball physics
+  // Main animation loop — pure time-based, no accumulating physics state
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    // High-DPI setup for wheel
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = canvasW * dpr;
+    canvas.width  = canvasW * dpr;
     canvas.height = canvasW * dpr;
     const ctx = canvas.getContext('2d');
     ctx.resetTransform();
     ctx.scale(dpr, dpr);
 
-    const tick = () => {
-      // 1. Rotate the wheel clockwise
+    const easeOutQuart = t => 1 - Math.pow(1 - t, 4);
+    const easeInCubic  = t => t * t * t;
+    const arc = (2 * Math.PI) / N;
+
+    const tick = (now) => {
       wheelAngleRef.current += wheelSpeed;
       const rotDeg = (wheelAngleRef.current * 180) / Math.PI;
+      const state  = ballStateRef.current;
 
-      // 2. Physics-based Ball Simulation
-      if (ballStateRef.current === 'outer_rim') {
-        if (resultRef.current !== null) {
-          // Response received! Slow down ball until it falls
-          ballSpeedRef.current *= 0.993; // slow down more gradually (takes ~2.5s)
-          if (Math.abs(ballSpeedRef.current) < 0.085) {
-            ballStateRef.current = 'falling';
-            ballRadiusVelRef.current = -0.05; // starts slow inward spiraling
-          }
-        }
-        ballAngleRef.current += ballSpeedRef.current;
-        ballRadiusRef.current = R + 4; // keep on outer track
+      if (state === 'spinning') {
+        ballAngleRef.current  += BALL_SPEED;
+        ballRadiusRef.current  = OUTER_R;
+        if (rollSoundRef.current) rollSoundRef.current.setSpeed(1.0);
 
-        // Update rolling sound speed
+      } else if (state === 'landing') {
+        const elapsed = now - landingStartTimeRef.current;
+        const t       = Math.min(elapsed / LANDING_MS, 1.0);
+        const eased   = easeOutQuart(t);
+
+        // Angular: ease from start to target (includes extra full revolutions)
+        ballAngleRef.current = landingStartAngleRef.current + landingTotalDeltaRef.current * eased;
+
+        // Radial: stay on outer rim until 55% done, then spiral smoothly into pocket
+        const tR      = Math.max(0, (t - 0.55) / 0.45);
+        const rEased  = easeInCubic(tR);
+        const base    = OUTER_R + (POCKET_R - OUTER_R) * rEased;
+        // Fading oscillation gives the illusion of bouncing off pocket frets
+        const wiggle  = Math.sin(t * 40) * 2.5 * Math.max(0, 1 - t * 1.4);
+        ballRadiusRef.current = base + wiggle;
+
+        // Roll sound fades with deceleration
         if (rollSoundRef.current) {
-          const speedPercent = Math.min(Math.abs(ballSpeedRef.current) / 0.26, 1.0);
-          rollSoundRef.current.setSpeed(speedPercent);
+          rollSoundRef.current.setSpeed(Math.max(0.05, 1.0 - eased));
         }
-      } 
-      else if (ballStateRef.current === 'falling') {
-        ballSpeedRef.current *= 0.992;
-        ballAngleRef.current += ballSpeedRef.current;
-        ballRadiusRef.current += ballRadiusVelRef.current;
-        ballRadiusVelRef.current -= 0.004; // accelerate inward
 
-        // Update rolling sound speed
-        if (rollSoundRef.current) {
-          const speedPercent = Math.min(Math.abs(ballSpeedRef.current) / 0.26, 1.0);
-          rollSoundRef.current.setSpeed(speedPercent);
-        }
-        
-        // Check if ball hits the pocket ring (R - 14)
-        if (ballRadiusRef.current <= R - 14) {
-          ballRadiusRef.current = R - 14;
-          ballStateRef.current = 'bouncing';
-          bounceTimerRef.current = 0;
-          relAngleRef.current = ballAngleRef.current - wheelAngleRef.current;
-          relAngleVelRef.current = ballSpeedRef.current - wheelSpeed;
-          bounceIntensityRef.current = 1.0;
-
-          // Stop rolling sound when hitting pockets
-          if (rollSoundRef.current) {
-            rollSoundRef.current.stop();
-            rollSoundRef.current = null;
+        // Tick sounds while ball is still on the outer rim
+        if (t < 0.7) {
+          const rel    = ballAngleRef.current - wheelAngleRef.current;
+          const norm   = ((rel % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          const pocket = Math.floor(norm / arc) % N;
+          if (pocket !== lastTickPocketRef.current) {
+            lastTickPocketRef.current = pocket;
+            casinoAudio.playRouletteTick();
           }
         }
-      }
-      else if (ballStateRef.current === 'bouncing') {
-        bounceTimerRef.current++;
-        const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
-        const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
-        const pocketArc = (2 * Math.PI) / 38;
-        const halfPocket = pocketArc * 0.5;
-        
-        // --- Realistic angular physics ---
-        let diff = targetRelAngle - relAngleRef.current;
-        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        
-        // Spring pull: starts weak for natural bouncing, ramps up as energy decays
-        // so the ball is guaranteed to be in the correct pocket before settling
-        const energyFactor = 1 - bounceIntensityRef.current; // 0→1 as energy drops
-        const springStrength = 0.003 + energyFactor * energyFactor * 0.07;
-        relAngleVelRef.current += diff * springStrength;
-        
-        // Natural fret collision bounces - only while energy is still high
-        const relativeAngle = relAngleRef.current;
-        const currentPocketFloat = (((relativeAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) / pocketArc;
-        const currentPocket = Math.floor(currentPocketFloat);
-        const posInPocket = currentPocketFloat - currentPocket;
-        
-        if (bounceIntensityRef.current > 0.06) {
-          if (posInPocket < 0.08 || posInPocket > 0.92) {
-            if (Math.abs(relAngleVelRef.current) > 0.003) {
-              relAngleVelRef.current *= -(0.3 + Math.random() * 0.3) * bounceIntensityRef.current;
-              relAngleVelRef.current += (Math.random() - 0.5) * 0.04 * bounceIntensityRef.current;
-              
-              if (currentPocket !== lastSlotRef.current) {
-                lastSlotRef.current = currentPocket;
-                casinoAudio.playRouletteTick();
-              }
-            }
-          }
-        }
-        
-        // Friction (angular) — increases as energy drops
-        const friction = 0.985 - (0.012 * energyFactor);
-        relAngleVelRef.current *= friction;
-        relAngleRef.current += relAngleVelRef.current;
-        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
-        
-        // --- Realistic radial bounce physics ---
-        const pocketBottom = R - 16;
-        const pocketRim = R - 4;
-        
-        const radialGravity = -0.08 * bounceIntensityRef.current;
-        ballRadiusVelRef.current += radialGravity;
-        ballRadiusRef.current += ballRadiusVelRef.current;
-        
-        if (ballRadiusRef.current <= pocketBottom) {
-          ballRadiusRef.current = pocketBottom;
-          ballRadiusVelRef.current = Math.abs(ballRadiusVelRef.current) * (0.45 + Math.random() * 0.2) * bounceIntensityRef.current;
-        }
-        if (ballRadiusRef.current > pocketRim) {
-          ballRadiusRef.current = pocketRim;
-          ballRadiusVelRef.current *= -0.5;
-        }
-        
-        bounceIntensityRef.current *= 0.993;
-        ballRadiusVelRef.current *= 0.96;
-        
-        // Transition to settling ONLY when energy is low AND ball is in/near target pocket
-        if (bounceIntensityRef.current <= 0.025 && 
-            Math.abs(relAngleVelRef.current) < 0.004 && 
-            Math.abs(ballRadiusVelRef.current) < 0.15 &&
-            Math.abs(diff) < halfPocket) {
-          ballStateRef.current = 'settling';
-          bounceTimerRef.current = 0;
+
+        if (t >= 1.0 && !onSpinCalledRef.current) {
+          onSpinCalledRef.current   = true;
+          relAngleRef.current       = landingTargetRelRef.current;
+          ballAngleRef.current      = wheelAngleRef.current + relAngleRef.current;
+          ballRadiusRef.current     = POCKET_R;
+          ballStateRef.current      = 'settled';
+          if (rollSoundRef.current) { rollSoundRef.current.stop(); rollSoundRef.current = null; }
           casinoAudio.playRouletteSettle();
+          if (onSpinCompleteRef.current) onSpinCompleteRef.current();
         }
-      }
-      else if (ballStateRef.current === 'settling') {
-        // Smooth exponential ease-out to final pocket center
-        bounceTimerRef.current++;
-        const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
-        const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
-        
-        let diff = targetRelAngle - relAngleRef.current;
-        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-        
-        // Gradual ease - closes 6% of remaining gap per frame
-        relAngleRef.current += diff * 0.06;
-        
-        // Ease radius to pocket bottom
-        const pocketBottom = R - 14;
-        ballRadiusRef.current += (pocketBottom - ballRadiusRef.current) * 0.1;
-        
-        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
-        
-        // Complete settling after enough time and close enough
-        if (bounceTimerRef.current > 40 && Math.abs(diff) < 0.002) {
-          relAngleRef.current = targetRelAngle;
-          ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
-          ballRadiusRef.current = pocketBottom;
-          ballStateRef.current = 'settled';
 
-          if (onSpinCompleteRef.current) {
-            onSpinCompleteRef.current();
-          }
-        }
-      }
-      else if (ballStateRef.current === 'settled') {
-        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
-        ballRadiusRef.current = R - 14;
-      }
-      else {
-        // Idle before spin, keep ball in last winning pocket
-        if (resultRef.current !== null && resultRef.current !== undefined) {
-          const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
-          if (targetIdx !== -1) {
-            const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
-            ballAngleRef.current = wheelAngleRef.current + targetRelAngle;
-            ballRadiusRef.current = R - 14;
+      } else if (state === 'settled') {
+        ballAngleRef.current  = wheelAngleRef.current + relAngleRef.current;
+        ballRadiusRef.current = POCKET_R;
+
+      } else { // idle
+        const res = resultRef.current;
+        if (res !== null && res !== undefined) {
+          const idx = WHEEL_NUMBERS.indexOf(String(res));
+          if (idx !== -1) {
+            const rel          = (idx + 0.5) * arc - Math.PI / 2;
+            relAngleRef.current    = rel;
+            ballAngleRef.current   = wheelAngleRef.current + rel;
+            ballRadiusRef.current  = POCKET_R;
           }
         } else {
-          ballAngleRef.current = null;
+          ballAngleRef.current  = null;
           ballRadiusRef.current = null;
         }
       }
 
-      // Draw everything
       draw(rotDeg, ballAngleRef.current, ballRadiusRef.current);
-
       animRef.current = requestAnimationFrame(tick);
     };
 
     animRef.current = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(animRef.current);
-      if (rollSoundRef.current) {
-        rollSoundRef.current.stop();
-      }
+      if (rollSoundRef.current) { rollSoundRef.current.stop(); rollSoundRef.current = null; }
     };
   }, []);
 
