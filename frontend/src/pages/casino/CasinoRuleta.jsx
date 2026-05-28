@@ -79,7 +79,7 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) 
       <div style={{
         width: '100%',
         height: '100%',
-        transform: `rotate(${-wheelRot}deg)`,
+        transform: `rotate(${wheelRot}deg)`,
         transition: 'transform 0s',
         position: 'relative'
       }}>
