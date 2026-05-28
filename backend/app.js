@@ -26,5 +26,6 @@ app.use('/api/ruleta',   require('./routes/ruleta'));
 app.use('/api/tokens',  require('./routes/tokens'));
 app.use('/api/bets',    require('./routes/bets'));
 app.use('/api/casino',  require('./routes/casino'));
+app.use('/api/poker',   require('./routes/poker'));
 
 module.exports = app;

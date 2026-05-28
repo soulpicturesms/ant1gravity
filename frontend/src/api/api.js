@@ -134,6 +134,16 @@ export const api = {
   // Casino - Roulette
   casinoRuleta: (body) => req('/api/casino/roulette/spin', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
 
+  // Poker (REST-based, no WebSocket)
+  pokerGetRooms: () => req('/api/poker/rooms', { headers: headers() }),
+  pokerGetRoom: (id) => req(`/api/poker/rooms/${id}`, { headers: headers() }),
+  pokerCreateRoom: (body) => req('/api/poker/rooms', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  pokerJoinRoom: (id) => req(`/api/poker/rooms/${id}/join`, { method: 'POST', headers: headers() }),
+  pokerLeaveRoom: (id) => req(`/api/poker/rooms/${id}/leave`, { method: 'POST', headers: headers() }),
+  pokerStartGame: (id) => req(`/api/poker/rooms/${id}/start`, { method: 'POST', headers: headers() }),
+  pokerAction: (id, body) => req(`/api/poker/rooms/${id}/action`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  pokerNextHand: (id) => req(`/api/poker/rooms/${id}/next-hand`, { method: 'POST', headers: headers() }),
+
   // Admin
   getAdminStats: () => req('/api/admin/stats', { headers: headers() }),
   getTransactions: () => req('/api/admin/transactions', { headers: headers() }),

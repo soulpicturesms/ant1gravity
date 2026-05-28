@@ -206,7 +206,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         {/* Result */}
         {summary && (
           <div style={{ textAlign: 'center', marginBottom: 20, padding: '14px', background: summary.net >= 0 ? 'rgba(0,204,102,0.1)' : 'rgba(255,68,102,0.1)', border: `1px solid ${summary.net >= 0 ? '#00cc6644' : '#ff446644'}`, borderRadius: 10 }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 4, background: numberColor(summary.number), width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', fontSize: '1.2rem' }}>{summary.number}</div>
+            <div style={{ marginBottom: 4, background: numberColor(summary.number), width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', fontSize: '1.2rem' }}>{summary.number}</div>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.3rem', color: summary.net >= 0 ? '#00cc66' : '#ff4466' }}>
               {summary.net >= 0 ? `+${summary.net.toLocaleString('es-AR')}` : summary.net.toLocaleString('es-AR')} tokens
             </div>
