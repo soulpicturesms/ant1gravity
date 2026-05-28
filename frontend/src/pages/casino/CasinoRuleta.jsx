@@ -801,7 +801,7 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div style={{ width: 32 }} />
           <div style={{ textAlign: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.8rem', color: '#ffd700', letterSpacing: '0.12em', margin: 0, textShadow: '0 0 10px rgba(255,215,0,0.3)' }}>
-            🎰 RULETA CASINO (AMERICAN ROULETTE 00)
+            🎰 RULETA CASINO (AMERICAN ROULETTE 00) <span style={{ fontSize: '0.75rem', color: '#6a6a8a', verticalAlign: 'middle', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 4, marginLeft: 8 }}>v2.1.0</span>
           </div>
           <button onClick={() => {
             const nowMuted = casinoAudio.toggleMute();
