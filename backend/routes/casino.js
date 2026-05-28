@@ -695,4 +695,17 @@ router.post('/slots/spin', requireAuth, async (req, res) => {
   });
 });
 
+// ── RECENT WINS (public) ──────────────────────────────────────────────────────
+router.get('/recent-wins', async (req, res) => {
+  const { data, error } = await supabase
+    .from('coin_transactions')
+    .select('username, amount, reason, created_at')
+    .eq('type', 'casino')
+    .gt('amount', 0)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
 module.exports = router;

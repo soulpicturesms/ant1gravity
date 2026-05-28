@@ -125,15 +125,76 @@ function GameCard({ game, onClick }) {
   );
 }
 
+function parseWin(row) {
+  const { username, amount, reason, created_at } = row;
+  let game = 'Casino', bet = null, mult = null;
+
+  if (reason) {
+    if (reason.startsWith('Blackjack')) {
+      game = 'Blackjack Pro';
+      const betMatch = reason.match(/apuesta:\s*(\d+)/i);
+      if (betMatch) {
+        bet = parseInt(betMatch[1]);
+        mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null;
+      }
+    } else if (reason.startsWith('Plinko')) {
+      game = 'Plinko Zero-G';
+      const multMatch = reason.match(/\(x([\d.]+)\)/);
+      if (multMatch) mult = `${multMatch[1]}x`;
+      const betMatch = reason.match(/apuesta:\s*(\d+)/i);
+      if (betMatch) bet = parseInt(betMatch[1]);
+    } else if (reason.startsWith('Tragaperras')) {
+      game = 'Anti-Gravity Slots';
+      const betMatch = reason.match(/Apuesta:\s*(\d+)/);
+      const gainMatch = reason.match(/Ganancia:\s*(\d+)/);
+      if (betMatch) bet = parseInt(betMatch[1]);
+      if (betMatch && gainMatch) {
+        const gain = parseInt(gainMatch[1]);
+        mult = bet > 0 ? `${(gain / bet).toFixed(1)}x` : null;
+      }
+    } else if (reason.startsWith('Ruleta')) {
+      game = 'Ruleta Americana';
+    } else if (reason.startsWith('Blackjack Split')) {
+      game = 'Blackjack Pro';
+      const betMatch = reason.match(/apuesta total:\s*(\d+)/i);
+      if (betMatch) {
+        bet = parseInt(betMatch[1]);
+        mult = bet > 0 ? `${((bet + amount) / bet).toFixed(1)}x` : null;
+      }
+    }
+  }
+
+  return { user: username || 'anónimo', game, bet, win: amount, mult };
+}
+
 function LiveWinsTicker() {
-  const wins = [
-    { user: "neoplayer_2024", game: "Anti-Gravity Slots", bet: 200, win: 24800, mult: "124x" },
-    { user: "x_kira_99",      game: "Plinko Zero-G",     bet: 1000, win: 18400, mult: "18.4x" },
-    { user: "mr_pixel",       game: "Ruleta Americana",  bet: 500, win: 17500, mult: "35x" },
-    { user: "lunarsh",        game: "Blackjack Pro",     bet: 2400, win: 4800, mult: "2x" },
-    { user: "vortex_22",      game: "Neon Reels",        bet: 100, win: 12000, mult: "120x" },
-    { user: "anonymous",      game: "Anti-Gravity Slots", bet: 300, win: 9200, mult: "30.6x" },
-  ];
+  const [wins, setWins] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchWins = useCallback(() => {
+    api.casinoRecentWins()
+      .then(data => { setWins(data.map(parseWin)); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchWins();
+    const id = setInterval(fetchWins, 15000);
+    return () => clearInterval(id);
+  }, [fetchWins]);
+
+  if (loading) return (
+    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>
+      Cargando ganadores...
+    </div>
+  );
+
+  if (!wins.length) return (
+    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--c-text3)', fontSize: 13 }}>
+      Aún no hay ganadores registrados. ¡Sé el primero!
+    </div>
+  );
+
   return (
     <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-line2)', borderRadius: '14px', overflow: 'hidden', marginTop: 16 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -165,9 +226,15 @@ function LiveWinsTicker() {
                 </span>
               </td>
               <td style={{ padding: '12px 14px', color: 'var(--c-text2)' }}>{w.game}</td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: 'var(--c-text3)' }}>{w.bet.toLocaleString()}</td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent)' }}>{w.mult}</td>
-              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent2)' }}>+{w.win.toLocaleString()}</td>
+              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: 'var(--c-text3)' }}>
+                {w.bet != null ? w.bet.toLocaleString() : '—'}
+              </td>
+              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent)' }}>
+                {w.mult || '—'}
+              </td>
+              <td style={{ padding: '12px 14px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: 'var(--c-accent2)' }}>
+                +{w.win.toLocaleString()}
+              </td>
             </tr>
           ))}
         </tbody>
