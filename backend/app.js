@@ -27,5 +27,6 @@ app.use('/api/tokens',  require('./routes/tokens'));
 app.use('/api/bets',    require('./routes/bets'));
 app.use('/api/casino',  require('./routes/casino'));
 app.use('/api/poker',   require('./routes/poker'));
+app.use('/api/truco',   require('./routes/truco'));
 
 module.exports = app;

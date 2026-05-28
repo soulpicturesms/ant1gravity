@@ -144,6 +144,22 @@ export const api = {
   pokerAction: (id, body) => req(`/api/poker/rooms/${id}/action`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   pokerNextHand: (id) => req(`/api/poker/rooms/${id}/next-hand`, { method: 'POST', headers: headers() }),
 
+  // Truco (REST-based, no WebSocket)
+  trucoGetRooms:      ()       => req('/api/truco/rooms', { headers: headers() }),
+  trucoGetRoom:       (id)     => req(`/api/truco/rooms/${id}`, { headers: headers() }),
+  trucoCreateRoom:    (body)   => req('/api/truco/rooms', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
+  trucoJoinRoom:      (id)     => req(`/api/truco/rooms/${id}/join`,          { method: 'POST', headers: headers() }),
+  trucoLeaveRoom:     (id)     => req(`/api/truco/rooms/${id}/leave`,         { method: 'POST', headers: headers() }),
+  trucoStart:         (id)     => req(`/api/truco/rooms/${id}/start`,         { method: 'POST', headers: headers() }),
+  trucoPlayCard:      (id, b)  => req(`/api/truco/rooms/${id}/play-card`,     { method: 'POST', headers: headers(), body: JSON.stringify(b) }),
+  trucoCallTruco:     (id, b)  => req(`/api/truco/rooms/${id}/call-truco`,    { method: 'POST', headers: headers(), body: JSON.stringify(b) }),
+  trucoRespondTruco:  (id, b)  => req(`/api/truco/rooms/${id}/respond-truco`, { method: 'POST', headers: headers(), body: JSON.stringify(b) }),
+  trucoCallEnvido:    (id, b)  => req(`/api/truco/rooms/${id}/call-envido`,   { method: 'POST', headers: headers(), body: JSON.stringify(b) }),
+  trucoRespondEnvido: (id, b)  => req(`/api/truco/rooms/${id}/respond-envido`,{ method: 'POST', headers: headers(), body: JSON.stringify(b) }),
+  trucoMazo:          (id)     => req(`/api/truco/rooms/${id}/mazo`,          { method: 'POST', headers: headers() }),
+  trucoNextHand:      (id)     => req(`/api/truco/rooms/${id}/next-hand`,     { method: 'POST', headers: headers() }),
+  trucoRematch:       (id)     => req(`/api/truco/rooms/${id}/rematch`,       { method: 'POST', headers: headers() }),
+
   // Admin
   getAdminStats: () => req('/api/admin/stats', { headers: headers() }),
   getTransactions: () => req('/api/admin/transactions', { headers: headers() }),
