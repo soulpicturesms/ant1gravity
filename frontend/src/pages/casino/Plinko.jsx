@@ -2,19 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
-const C = {
-  bg:       '#0c1a24',
-  surface:  '#162534',
-  panel:    '#1e3040',
-  border:   '#273f52',
-  borderHi: '#3a5f78',
-  text:     '#c8d8e8',
-  textDim:  '#6a8fa8',
-  textFaint:'#3d5a70',
-  green:    '#00e676',
-  red:      '#ff4572',
-  gold:     '#f5c542',
-  cyan:     '#29b6f6',
+const T = {
+  bg:        '#0c0c14',
+  surface:   '#161623',
+  panel:     '#1d1d2c',
+  border:    'rgba(255,255,255,0.10)',
+  text:      '#ecedf4',
+  textDim:   '#a5a6b8',
+  textFaint: '#4a4b60',
+  green:     '#6fff7d',
+  red:       '#ff2d7a',
+  gold:      '#f5c542',
+  accent:    '#ff2d7a',
 };
 
 const PLINKO_MULTIPLIERS = {
@@ -23,22 +22,24 @@ const PLINKO_MULTIPLIERS = {
   alto:  [33.0, 11.0, 3.0, 1.3, 0.5, 0.2, 0.0, 0.2, 0.5, 1.3, 3.0, 11.0, 33.0],
 };
 
-const BUCKET_COLORS = {
-  losing: '#384a56',
-  neutral: '#0288d1',
-  winning: '#00897b',
-  jackpot: '#f9a825',
+const getBucketColor = (mult) => {
+  if (mult <= 0)  return '#1e1e30';
+  if (mult < 1)   return '#1e1e30';
+  if (mult < 2)   return '#1d2855';
+  if (mult < 10)  return '#163b28';
+  return '#4a3200';
 };
 
-const getBucketColor = (mult) => {
-  if (mult < 1) return BUCKET_COLORS.losing;
-  if (mult < 2) return BUCKET_COLORS.neutral;
-  if (mult < 10) return BUCKET_COLORS.winning;
-  return BUCKET_COLORS.jackpot;
+const getBucketTextColor = (mult) => {
+  if (mult <= 0)  return '#4a4b60';
+  if (mult < 1)   return '#6f7088';
+  if (mult < 2)   return '#6699ff';
+  if (mult < 10)  return '#6fff7d';
+  return '#f5c542';
 };
 
 const RISK_LABELS = { bajo: 'Bajo', medio: 'Medio', alto: 'Alto' };
-const RISK_COLORS = { bajo: C.cyan, medio: C.gold, alto: C.red };
+const RISK_COLORS = { bajo: '#6fff7d', medio: '#f5c542', alto: '#ff2d7a' };
 
 export default function Plinko({ balance, onBalanceChange }) {
   const [bet, setBet] = useState(100);
@@ -118,6 +119,11 @@ export default function Plinko({ balance, onBalanceChange }) {
       lastTime = now;
       ctx.clearRect(0, 0, logicalW, logicalH);
 
+      // Dark background
+      ctx.fillStyle = 'rgba(12,12,20,1)';
+      ctx.fillRect(0, 0, logicalW, logicalH);
+
+      // Pegs
       for (let r = 0; r < rows; r++) {
         const K = r + 3;
         for (let k = 0; k < K; k++) {
@@ -127,13 +133,14 @@ export default function Plinko({ balance, onBalanceChange }) {
           const isFlashing = flashingPegsRef.current.has(flashKey) && flashingPegsRef.current.get(flashKey) > now;
           ctx.beginPath();
           ctx.arc(px, py, isFlashing ? pegSize + 2.5 : pegSize, 0, 2 * Math.PI);
-          ctx.fillStyle = isFlashing ? '#ffffff' : 'rgba(255,255,255,0.35)';
-          if (isFlashing) { ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8; }
+          ctx.fillStyle = isFlashing ? '#ff2d7a' : 'rgba(255,255,255,0.30)';
+          if (isFlashing) { ctx.shadowColor = '#ff2d7a'; ctx.shadowBlur = 10; }
           ctx.fill();
           ctx.shadowBlur = 0;
         }
       }
 
+      // Buckets
       const bucketWidth = pegSpacingX - 4;
       const bucketHeight = 24;
       const bucketY = startY + rows * rowSpacing + 12;
@@ -142,22 +149,27 @@ export default function Plinko({ balance, onBalanceChange }) {
         const bx = cx + (b - 6) * pegSpacingX - bucketWidth / 2;
         const isSplashed = bucketSplashesRef.current.has(b) && bucketSplashesRef.current.get(b) > now;
         const mult = mults[b];
-        const color = getBucketColor(mult);
+        const bgColor = getBucketColor(mult);
+        const txtColor = getBucketTextColor(mult);
         ctx.save();
-        ctx.fillStyle = color;
+        ctx.fillStyle = bgColor;
         const currentY = isSplashed ? bucketY + 4 : bucketY;
-        if (isSplashed) { ctx.shadowColor = color; ctx.shadowBlur = 12; }
+        if (isSplashed) { ctx.shadowColor = txtColor; ctx.shadowBlur = 12; }
         ctx.beginPath();
         ctx.roundRect(bx, currentY, bucketWidth, bucketHeight, 4);
         ctx.fill();
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 9px Rajdhani, sans-serif';
+        ctx.strokeStyle = isSplashed ? txtColor : 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = txtColor;
+        ctx.font = 'bold 9px Inter, system-ui';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`${mult}x`, bx + bucketWidth / 2, currentY + bucketHeight / 2);
         ctx.restore();
       }
 
+      // Balls
       ballsRef.current = ballsRef.current.filter((ball) => {
         const { coords, step, progress } = ball;
         if (step + 1 >= coords.length) {
@@ -183,12 +195,12 @@ export default function Plinko({ balance, onBalanceChange }) {
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ballSize, 0, 2 * Math.PI);
         const ballGlow = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 1, ball.x, ball.y, ballSize);
-        ballGlow.addColorStop(0, '#38bdf8');
-        ballGlow.addColorStop(0.7, '#0284c7');
-        ballGlow.addColorStop(1, '#0369a1');
+        ballGlow.addColorStop(0, '#ffffff');
+        ballGlow.addColorStop(0.5, '#ff6aaa');
+        ballGlow.addColorStop(1, '#ff2d7a');
         ctx.fillStyle = ballGlow;
-        ctx.shadowColor = '#38bdf8';
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = '#ff2d7a';
+        ctx.shadowBlur = 8;
         ctx.fill();
         ctx.restore();
         return true;
@@ -210,7 +222,7 @@ export default function Plinko({ balance, onBalanceChange }) {
 
       {/* Canvas area */}
       <div style={{
-        background: C.bg, border: `1px solid ${C.border}`, borderRadius: 14,
+        background: T.bg, border: `1px solid ${T.border}`, borderRadius: 14,
         padding: '14px 0 10px', overflow: 'hidden', position: 'relative', marginBottom: 10,
       }}>
         <canvas ref={canvasRef} width={500} height={480} style={{
@@ -220,15 +232,15 @@ export default function Plinko({ balance, onBalanceChange }) {
 
       {/* Controls panel */}
       <div style={{
-        background: C.surface, border: `1px solid ${C.border}`,
+        background: T.surface, border: `1px solid ${T.border}`,
         borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14,
       }}>
 
         {err && (
           <div style={{
-            background: 'rgba(255,69,114,0.12)', border: '1px solid rgba(255,69,114,0.3)',
+            background: 'rgba(255,45,122,0.10)', border: '1px solid rgba(255,45,122,0.28)',
             borderRadius: 8, padding: '7px 12px', color: '#ff8aaa',
-            fontSize: '0.82rem', textAlign: 'center',
+            fontSize: '0.82rem', textAlign: 'center', fontFamily: "'Inter', system-ui",
           }}>
             {err}
           </div>
@@ -238,17 +250,17 @@ export default function Plinko({ balance, onBalanceChange }) {
           {/* Risk */}
           <div>
             <div style={{
-              fontSize: '0.65rem', color: C.textFaint, marginBottom: 7,
-              fontFamily: 'Rajdhani', letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontSize: '0.6rem', color: T.textFaint, marginBottom: 7,
+              fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase',
             }}>RIESGO</div>
             <div style={{ display: 'flex', gap: 5 }}>
               {['bajo', 'medio', 'alto'].map(r => (
                 <button key={r} onClick={() => setRisk(r)} style={{
                   flex: 1, padding: '8px 4px', borderRadius: 7, cursor: 'pointer',
-                  background: risk === r ? RISK_COLORS[r] + '18' : C.panel,
-                  border: `1px solid ${risk === r ? RISK_COLORS[r] + '50' : C.border}`,
-                  color: risk === r ? RISK_COLORS[r] : C.textDim,
-                  fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.75rem',
+                  background: risk === r ? RISK_COLORS[r] + '18' : T.panel,
+                  border: `1px solid ${risk === r ? RISK_COLORS[r] + '50' : T.border}`,
+                  color: risk === r ? RISK_COLORS[r] : T.textDim,
+                  fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.75rem',
                   letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s',
                 }}>
                   {RISK_LABELS[r]}
@@ -260,32 +272,32 @@ export default function Plinko({ balance, onBalanceChange }) {
           {/* Bet input */}
           <div>
             <div style={{
-              fontSize: '0.65rem', color: C.textFaint, marginBottom: 7,
-              fontFamily: 'Rajdhani', letterSpacing: '0.12em', textTransform: 'uppercase',
+              fontSize: '0.6rem', color: T.textFaint, marginBottom: 7,
+              fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase',
             }}>APUESTA</div>
-            <div style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', height: 36 }}>
                 <input
                   type="number" min="10" value={bet} disabled={loading}
                   onChange={e => setBet(Math.max(10, parseInt(e.target.value) || 10))}
                   style={{
                     flex: 1, background: 'none', border: 'none', outline: 'none',
-                    color: C.text, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', textAlign: 'right',
+                    color: T.text, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '0.95rem', textAlign: 'right',
                   }}
                 />
-                <span style={{ color: C.textFaint, fontSize: '0.65rem', fontFamily: 'Rajdhani', marginLeft: 5 }}>TK</span>
+                <span style={{ color: T.textFaint, fontSize: '0.65rem', fontFamily: "'Inter', system-ui", marginLeft: 5 }}>TK</span>
               </div>
-              <div style={{ display: 'flex', borderTop: `1px solid ${C.panel}` }}>
+              <div style={{ display: 'flex', borderTop: `1px solid ${T.panel}` }}>
                 {[['½', half], ['2×', double], ['MAX', setMax]].map(([label, action], i, arr) => (
                   <button key={label} onClick={action} disabled={loading} style={{
                     flex: 1, background: 'none', border: 'none',
-                    borderRight: i < arr.length - 1 ? `1px solid ${C.panel}` : 'none',
-                    color: C.textDim, padding: '5px 0',
-                    fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.7rem',
+                    borderRight: i < arr.length - 1 ? `1px solid ${T.panel}` : 'none',
+                    color: T.textDim, padding: '5px 0',
+                    fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.7rem',
                     cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
                   }}
-                  onMouseEnter={e => { if (!loading) { e.target.style.color = C.cyan; e.target.style.background = C.surface; }}}
-                  onMouseLeave={e => { e.target.style.color = C.textDim; e.target.style.background = 'none'; }}
+                  onMouseEnter={e => { if (!loading) { e.target.style.color = T.accent; e.target.style.background = T.surface; }}}
+                  onMouseLeave={e => { e.target.style.color = T.textDim; e.target.style.background = 'none'; }}
                   >
                     {label}
                   </button>
@@ -298,20 +310,20 @@ export default function Plinko({ balance, onBalanceChange }) {
         <button onClick={dropBall} disabled={loading || bet < 10 || bet > balance} style={{
           height: 48, borderRadius: 10, border: 'none',
           background: loading || bet > balance
-            ? 'rgba(0,230,118,0.08)'
-            : 'linear-gradient(135deg, #00c65a, #00e676)',
-          color: loading || bet > balance ? C.textFaint : '#0c1a24',
-          fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em',
+            ? T.panel
+            : 'linear-gradient(135deg, #ff2d7a, #ff5f4b)',
+          color: loading || bet > balance ? T.textFaint : '#fff',
+          fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em',
           cursor: loading || bet > balance ? 'not-allowed' : 'pointer',
-          fontFamily: 'Rajdhani',
-          boxShadow: (!loading && bet <= balance) ? '0 0 18px rgba(0,230,118,0.22)' : 'none',
+          fontFamily: "'Unbounded', system-ui",
+          boxShadow: (!loading && bet <= balance) ? '0 4px 20px rgba(255,45,122,0.35)' : 'none',
           transition: 'all 0.2s',
         }}>
           {loading ? 'CARGANDO...' : 'SOLTAR BOLA'}
         </button>
 
         {bet > balance && (
-          <div style={{ fontSize: '0.73rem', color: C.red, fontFamily: 'Rajdhani', textAlign: 'center', marginTop: -8 }}>
+          <div style={{ fontSize: '0.73rem', color: T.red, fontFamily: "'Inter', system-ui", textAlign: 'center', marginTop: -8 }}>
             Tokens insuficientes
           </div>
         )}

@@ -64,13 +64,13 @@ function ScoreBar({ scores, trickWins, players, myUserId }) {
 
   const ScoreRow = ({ score, label, isMe, tricks }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-      <div style={{ width: 90, fontSize: '0.72rem', color: isMe ? '#ffd700' : '#9090b0', fontFamily: 'Rajdhani', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div style={{ width: 90, fontSize: '0.72rem', color: isMe ? '#ffd700' : '#9090b0', fontFamily: 'Inter', system-ui, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {isMe ? '👤 Vos' : '🔴 ' + label}
       </div>
       <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ width: `${(score / 15) * 100}%`, height: '100%', background: isMe ? '#ffd700' : '#6a6a8a', borderRadius: 4, transition: 'width 0.5s' }} />
       </div>
-      <div style={{ width: 40, textAlign: 'right', fontFamily: 'Rajdhani', fontWeight: 700, color: isMe ? '#ffd700' : '#9090b0', fontSize: '0.85rem' }}>{score}/15</div>
+      <div style={{ width: 40, textAlign: 'right', fontFamily: 'Inter', system-ui, fontWeight: 700, color: isMe ? '#ffd700' : '#9090b0', fontSize: '0.85rem' }}>{score}/15</div>
       <div style={{ display: 'flex', gap: 3 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: tricks > i ? (isMe ? '#ffd700' : '#6a6a8a') : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }} />
@@ -106,26 +106,26 @@ function OfferBanner({ offer, type, onAccept, onReject, myUserId }) {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
     }}>
       <div>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: type === 'truco' ? '#fbbf24' : '#60a5fa' }}>
+        <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.1rem', color: type === 'truco' ? '#fbbf24' : '#60a5fa' }}>
           📣 {offer.byUsername} canta {label}
         </div>
         {type === 'truco' && (
-          <div style={{ fontSize: '0.78rem', color: '#9090b0', marginTop: 2 }}>
+          <div style={{ fontSize: '0.78rem', color: '#a5a6b8', marginTop: 2 }}>
             La mano valdría {offer.offeredPts} {offer.offeredPts === 1 ? 'punto' : 'puntos'}
           </div>
         )}
       </div>
       {!isMe ? (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onAccept} style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid #22c55e', color: '#22c55e', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem' }}>
+          <button onClick={onAccept} style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid #22c55e', color: '#22c55e', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.9rem' }}>
             ✓ QUIERO
           </button>
-          <button onClick={onReject} style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem' }}>
+          <button onClick={onReject} style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.9rem' }}>
             ✗ NO QUIERO
           </button>
         </div>
       ) : (
-        <div style={{ fontSize: '0.8rem', color: '#6a6a8a', fontFamily: 'Rajdhani' }}>Esperando respuesta...</div>
+        <div style={{ fontSize: '0.8rem', color: '#6f7088', fontFamily: 'Inter', system-ui }}>Esperando respuesta...</div>
       )}
     </div>
   );
@@ -145,7 +145,7 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
       display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
     }}>
       <div style={{ minWidth: 100 }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem', color: isCurrent ? '#fbbf24' : '#9090b0' }}>
+        <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.8rem', color: isCurrent ? '#fbbf24' : '#9090b0' }}>
           {isCurrent ? '⏳ ' : ''}{player.username}
           {player.team === 0 ? ' 🔵' : ' 🔴'}
         </div>
@@ -157,7 +157,7 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
       </div>
       {played.length > 0 && (
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Rajdhani' }}>Jugó:</span>
+          <span style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Inter', system-ui }}>Jugó:</span>
           {played.map((c, i) => <SpanishCard key={i} num={c.num} palo={c.palo} size="sm" />)}
         </div>
       )}
@@ -173,12 +173,12 @@ function TrickArea({ trick, lastTrick }) {
     <div style={{ textAlign: 'center', minHeight: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
       {display ? (
         <>
-          <div style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Rajdhani', letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
+          <div style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Inter', system-ui, letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'flex-end' }}>
             {display.map((t, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
                 <SpanishCard num={t.card.num} palo={t.card.palo} size="md" />
-                <div style={{ fontFamily: 'Rajdhani', fontSize: '0.65rem', color: '#6a6a8a', marginTop: 3 }}>{t.username}</div>
+                <div style={{ fontFamily: 'Inter', system-ui, fontSize: '0.65rem', color: '#6f7088', marginTop: 3 }}>{t.username}</div>
               </div>
             ))}
           </div>
@@ -190,7 +190,7 @@ function TrickArea({ trick, lastTrick }) {
           ))}
         </div>
       ) : (
-        <div style={{ color: '#2a2a3a', fontFamily: 'Rajdhani', fontSize: '0.9rem' }}>Mesa vacía</div>
+        <div style={{ color: '#2a2a3a', fontFamily: 'Inter', system-ui, fontSize: '0.9rem' }}>Mesa vacía</div>
       )}
     </div>
   );
@@ -208,14 +208,14 @@ function HandEndBanner({ result, players, myUserId, countdown }) {
       border: `1px solid ${won ? '#22c55e' : '#ef4444'}50`,
       borderRadius: 12, padding: '16px 20px', marginBottom: 12, textAlign: 'center',
     }}>
-      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: won ? '#22c55e' : '#ef4444' }}>
+      <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.4rem', color: won ? '#22c55e' : '#ef4444' }}>
         {result.mazo ? `🏳️ ${result.byUsername} se fue al mazo` : won ? '🏆 Ganaste la mano!' : '💔 Perdiste la mano'}
       </div>
-      <div style={{ color: '#9090b0', fontFamily: 'Rajdhani', marginTop: 4, fontSize: '0.85rem' }}>
+      <div style={{ color: '#a5a6b8', fontFamily: 'Inter', system-ui, marginTop: 4, fontSize: '0.85rem' }}>
         +{result.trucoPoints} {result.trucoPoints === 1 ? 'punto' : 'puntos'} para {won ? 'tu equipo' : 'el equipo rival'}
       </div>
       {countdown > 0 && (
-        <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#4a4a6a', fontFamily: 'Rajdhani' }}>
+        <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#4a4a6a', fontFamily: 'Inter', system-ui }}>
           Próxima mano en {countdown}s...
         </div>
       )}
@@ -241,17 +241,17 @@ function GameOverBanner({ gameOver, players, myUserId, onRematch, onLeave }) {
         boxShadow: `0 0 60px ${won ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.5)'}`,
       }}>
         <div style={{ fontSize: '4rem', marginBottom: 12 }}>{won ? '🏆' : '💀'}</div>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#9090b0', letterSpacing: '0.08em', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#9090b0', letterSpacing: '0.08em', marginBottom: 8 }}>
           {won ? '¡GANASTE!' : '¡PERDISTE!'}
         </div>
-        <div style={{ color: '#6a6a8a', fontFamily: 'Rajdhani', fontSize: '1rem', marginBottom: 24 }}>
+        <div style={{ color: '#6f7088', fontFamily: 'Inter', system-ui, fontSize: '1rem', marginBottom: 24 }}>
           {gameOver.scores[0]} — {gameOver.scores[1]}
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button onClick={onRematch} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', color: '#ffd700', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem' }}>
+          <button onClick={onRematch} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', color: '#ffd700', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1rem' }}>
             🔄 Revancha
           </button>
-          <button onClick={onLeave} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#9090b0', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem' }}>
+          <button onClick={onLeave} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#a5a6b8', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1rem' }}>
             Salir
           </button>
         </div>
@@ -265,41 +265,41 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#00e8c0', letterSpacing: '0.1em' }}>🀄 TRUCO ARGENTINO</div>
-        <div style={{ color: '#6a6a8a', fontFamily: 'Rajdhani', fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 o 2v2 · Primero a 15</div>
+        <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '2rem', color: '#ff2d7a', letterSpacing: '0.1em' }}>🀄 TRUCO ARGENTINO</div>
+        <div style={{ color: '#6f7088', fontFamily: 'Inter', system-ui, fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 o 2v2 · Primero a 15</div>
       </div>
 
       {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, justifyContent: 'center' }}>
-        <button onClick={() => onCreate('1v1')} disabled={loading} style={{ background: 'rgba(0,232,192,0.1)', border: '1px solid rgba(0,232,192,0.3)', color: '#00e8c0', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem' }}>
+        <button onClick={() => onCreate('1v1')} disabled={loading} style={{ background: 'rgba(255,45,122,0.08)', border: '1px solid rgba(255,45,122,0.28)', color: '#ff2d7a', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 1v1
         </button>
-        <button onClick={() => onCreate('2v2')} disabled={loading} style={{ background: 'rgba(0,232,192,0.06)', border: '1px solid rgba(0,232,192,0.2)', color: '#00e8c070', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem' }}>
+        <button onClick={() => onCreate('2v2')} disabled={loading} style={{ background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.18)', color: '#00e8c070', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 2v2
         </button>
       </div>
 
       {rooms.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#4a4a6a', fontFamily: 'Rajdhani' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#4a4a6a', fontFamily: 'Inter', system-ui }}>
           No hay salas disponibles — ¡creá la primera!
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rooms.map(r => (
             <div key={r.id} style={{
-              background: 'rgba(0,232,192,0.04)', border: '1px solid rgba(0,232,192,0.15)',
+              background: 'rgba(255,45,122,0.04)', border: '1px solid rgba(255,45,122,0.12)',
               borderRadius: 10, padding: '14px 18px',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
               <div>
-                <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#00e8c0', fontSize: '1rem' }}>{r.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6a6a8a', marginTop: 2 }}>
+                <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, color: '#ff2d7a', fontSize: '1rem' }}>{r.name}</div>
+                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 2 }}>
                   {r.mode} · {r.playerCount}/{r.maxPlayers} jugadores · {r.status === 'playing' ? '🟡 En curso' : '🟢 Esperando'}
                 </div>
               </div>
               {r.status === 'waiting' && r.playerCount < r.maxPlayers && (
-                <button onClick={() => onJoin(r.id)} style={{ background: 'rgba(0,232,192,0.15)', border: '1px solid rgba(0,232,192,0.35)', color: '#00e8c0', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700 }}>
+                <button onClick={() => onJoin(r.id)} style={{ background: 'rgba(255,45,122,0.12)', border: '1px solid rgba(255,45,122,0.35)', color: '#ff2d7a', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700 }}>
                   Unirse
                 </button>
               )}
@@ -318,9 +318,9 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
 
   return (
     <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'center' }}>
-      <div className="card" style={{ border: '1px solid rgba(0,232,192,0.2)', background: 'linear-gradient(135deg,rgba(0,232,192,0.04),#0a0a14)' }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#00e8c0', marginBottom: 4 }}>{room.name}</div>
-        <div style={{ fontSize: '0.8rem', color: '#6a6a8a', marginBottom: 24 }}>Modo: {room.mode} · Primero en llegar a 15 puntos</div>
+      <div className="card" style={{ border: '1px solid rgba(255,45,122,0.18)', background: 'linear-gradient(135deg,rgba(255,45,122,0.04),#0a0a14)' }}>
+        <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '1.4rem', color: '#ff2d7a', marginBottom: 4 }}>{room.name}</div>
+        <div style={{ fontSize: '0.8rem', color: '#6f7088', marginBottom: 24 }}>Modo: {room.mode} · Primero en llegar a 15 puntos</div>
 
         {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
 
@@ -329,19 +329,19 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
             const p = room.players[i];
             return (
               <div key={i} style={{
-                background: p ? 'rgba(0,232,192,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${p ? 'rgba(0,232,192,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                background: p ? 'rgba(255,45,122,0.07)' : 'rgba(255,255,255,0.02)',
+                border: `1px solid ${p ? 'rgba(255,45,122,0.25)' : 'rgba(255,255,255,0.06)'}`,
                 borderRadius: 8, padding: '10px 16px',
                 display: 'flex', alignItems: 'center', gap: 10,
               }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1a1a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>
                   {p ? (i % 2 === 0 ? '🔵' : '🔴') : '⏳'}
                 </div>
-                <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: p ? '#e0e0f0' : '#4a4a6a' }}>
+                <div style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, color: p ? '#e0e0f0' : '#4a4a6a' }}>
                   {p ? p.username : 'Esperando...'}
                 </div>
-                {p?.userId === myUserId && <span style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Rajdhani' }}>(vos)</span>}
-                <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#6a6a8a' }}>
+                {p?.userId === myUserId && <span style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter', system-ui }}>(vos)</span>}
+                <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#6f7088' }}>
                   {i % 2 === 0 ? 'Equipo 🔵' : 'Equipo 🔴'}
                 </div>
               </div>
@@ -351,24 +351,24 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           {isCreator && needed === 0 && (
-            <button className="btn btn-primary" onClick={onStart} style={{ fontFamily: 'Rajdhani', fontWeight: 700, padding: '12px 32px' }}>
+            <button className="btn btn-primary" onClick={onStart} style={{ fontFamily: 'Inter', system-ui, fontWeight: 700, padding: '12px 32px' }}>
               🀄 Empezar
             </button>
           )}
           {needed > 0 && (
-            <div style={{ color: '#6a6a8a', fontFamily: 'Rajdhani', fontSize: '0.85rem', marginTop: 8 }}>
+            <div style={{ color: '#6f7088', fontFamily: 'Inter', system-ui, fontSize: '0.85rem', marginTop: 8 }}>
               Faltan {needed} jugador{needed !== 1 ? 'es' : ''}...
             </div>
           )}
-          <button onClick={onLeave} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6a6a8a', borderRadius: 8, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>
+          <button onClick={onLeave} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6f7088', borderRadius: 8, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 600 }}>
             Salir
           </button>
         </div>
       </div>
 
       <div style={{ marginTop: 16, textAlign: 'center' }}>
-        <div style={{ fontSize: '0.75rem', color: '#4a4a6a', fontFamily: 'Rajdhani' }}>
-          Compartí la sala: <code style={{ color: '#00e8c0' }}>{room.id}</code>
+        <div style={{ fontSize: '0.75rem', color: '#4a4a6a', fontFamily: 'Inter', system-ui }}>
+          Compartí la sala: <code style={{ color: '#ff2d7a' }}>{room.id}</code>
         </div>
       </div>
     </div>
@@ -418,7 +418,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
         />
       )}
 
-      <div className="card" style={{ border: '1px solid rgba(0,232,192,0.15)', background: 'linear-gradient(135deg,#060610,#0a0a18)', padding: '16px' }}>
+      <div className="card" style={{ border: '1px solid rgba(255,45,122,0.12)', background: 'linear-gradient(135deg,#060610,#0a0a18)', padding: '16px' }}>
         {/* Score */}
         <ScoreBar scores={room.scores || [0, 0]} trickWins={room.trickWins || [0, 0]} players={players} myUserId={myUserId} />
 
@@ -431,7 +431,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
 
         {/* Envido result (after settled) */}
         {room.envidoResult && !room.envidoOffer && (
-          <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: '0.8rem', color: '#60a5fa', fontFamily: 'Rajdhani' }}>
+          <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: '0.8rem', color: '#60a5fa', fontFamily: 'Inter', system-ui }}>
             {room.envidoResult.rejected
               ? `Envido rechazado → +1 pt para ${players.find(p => room.teams[room.envidoResult.winnerTeam]?.includes(p.userId))?.username}`
               : `Envido: +${room.envidoResult.pts} pts → Equipo ${room.envidoResult.winnerTeam === myTeam ? 'vuestro 🔵' : 'rival 🔴'}`}
@@ -474,12 +474,12 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
         {/* My hand */}
         {room.phase !== 'waiting' && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: '0.7rem', color: '#6a6a8a', fontFamily: 'Rajdhani', letterSpacing: '0.1em', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '0.7rem', color: '#6f7088', fontFamily: 'Inter', system-ui, letterSpacing: '0.1em', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
               <span>TU MANO {isMyTurn ? '— Tu turno' : ''}</span>
               {myEnvido !== null && <span style={{ color: '#60a5fa' }}>Envido: {myEnvido} pts</span>}
             </div>
             {isMyTurn && !room.trucoOffer && !room.envidoOffer && selCard && (
-              <div style={{ textAlign: 'center', marginBottom: 8, fontSize: '0.78rem', color: '#fbbf24', fontFamily: 'Rajdhani' }}>
+              <div style={{ textAlign: 'center', marginBottom: 8, fontSize: '0.78rem', color: '#fbbf24', fontFamily: 'Inter', system-ui }}>
                 Volvé a clickear la carta para jugarla
               </div>
             )}
@@ -495,7 +495,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
                   onClick={() => handleCardClick(c)}
                 />
               )) : (
-                <div style={{ color: '#2a2a3a', fontFamily: 'Rajdhani', fontSize: '0.85rem', padding: '20px 0' }}>Sin cartas</div>
+                <div style={{ color: '#2a2a3a', fontFamily: 'Inter', system-ui, fontSize: '0.85rem', padding: '20px 0' }}>Sin cartas</div>
               )}
             </div>
           </div>
@@ -504,11 +504,11 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
         {/* Action buttons */}
         {room.phase === 'playing' && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-            <div style={{ fontSize: '0.68rem', color: '#4a4a6a', fontFamily: 'Rajdhani', letterSpacing: '0.1em', marginBottom: 8 }}>ENVITES</div>
+            <div style={{ fontSize: '0.68rem', color: '#4a4a6a', fontFamily: 'Inter', system-ui, letterSpacing: '0.1em', marginBottom: 8 }}>ENVITES</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {/* Truco calls */}
               {canCallTruco && (
-                <button onClick={() => onCallTruco(nextTrucoPts)} disabled={loading} style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem' }}>
+                <button onClick={() => onCallTruco(nextTrucoPts)} disabled={loading} style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.82rem' }}>
                   📣 {TRUCO_LABEL[nextTrucoPts]}
                 </button>
               )}
@@ -516,13 +516,13 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
               {/* Envido calls */}
               {canCallEnvido && (
                 <>
-                  <button onClick={() => onCallEnvido('envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.82rem' }}>
                     🎯 ENVIDO
                   </button>
-                  <button onClick={() => onCallEnvido('real_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('real_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.82rem' }}>
                     🎯 REAL ENVIDO
                   </button>
-                  <button onClick={() => onCallEnvido('falta_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('falta_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.82rem' }}>
                     🎯 FALTA ENVIDO
                   </button>
                 </>
@@ -530,7 +530,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
 
               {/* Mazo */}
               {canMazo && (
-                <button onClick={onMazo} disabled={loading} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', marginLeft: 'auto' }}>
+                <button onClick={onMazo} disabled={loading} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 700, fontSize: '0.82rem', marginLeft: 'auto' }}>
                   🏳️ AL MAZO
                 </button>
               )}
@@ -717,7 +717,7 @@ export default function Truco({ user }) {
   // Top bar with audio toggle
   const TopBar = () => view === 'room' ? (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-      <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#9090b0', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem' }}>
+      <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#a5a6b8', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Inter', system-ui, fontWeight: 600, fontSize: '0.85rem' }}>
         ← Volver al lobby
       </button>
       <button onClick={() => {
@@ -737,7 +737,7 @@ export default function Truco({ user }) {
     );
   }
 
-  if (!room) return <div style={{ textAlign: 'center', padding: 40, color: '#6a6a8a', fontFamily: 'Rajdhani' }}>Cargando sala...</div>;
+  if (!room) return <div style={{ textAlign: 'center', padding: 40, color: '#6f7088', fontFamily: 'Inter', system-ui }}>Cargando sala...</div>;
 
   if (room.status === 'waiting' || (room.status === 'playing' && !room.myCards?.length && room.phase === 'waiting')) {
     return (

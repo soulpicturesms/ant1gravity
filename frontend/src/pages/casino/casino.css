@@ -863,3 +863,191 @@
   text-align: center;
   width: 100%;
 }
+
+/* ── GLOBAL APP CLASS OVERRIDES inside casino shell ────── */
+
+.casino-shell .card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line2);
+  border-radius: var(--c-r);
+  padding: 16px;
+  color: var(--c-text);
+}
+
+.casino-shell .btn {
+  font-family: 'Unbounded', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 10px 22px;
+  border: none;
+  line-height: 1;
+}
+
+.casino-shell .btn-primary {
+  background: linear-gradient(135deg, var(--c-accent), #ff5f4b);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255,45,122,0.3);
+}
+
+.casino-shell .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(255,45,122,0.5);
+  transform: translateY(-1px);
+}
+
+.casino-shell .btn-primary:disabled {
+  background: var(--c-surface2);
+  color: var(--c-text4);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.casino-shell .btn-secondary {
+  background: var(--c-surface2);
+  border: 1px solid var(--c-line2) !important;
+  color: var(--c-text);
+}
+
+.casino-shell .btn-secondary:hover:not(:disabled) {
+  border-color: var(--c-line3) !important;
+}
+
+.casino-shell .btn-sm {
+  padding: 7px 14px;
+  font-size: 11px;
+}
+
+.casino-shell .input {
+  background: var(--c-bg1);
+  border: 1px solid var(--c-line2);
+  border-radius: 8px;
+  color: var(--c-text);
+  padding: 9px 12px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.casino-shell .input:focus  { border-color: var(--c-line3); }
+.casino-shell .input option { background: var(--c-bg1); }
+
+.casino-shell .alert {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.casino-shell .alert-error {
+  background: rgba(255,45,122,0.10);
+  border: 1px solid rgba(255,45,122,0.28);
+  color: #ff8aaa;
+}
+
+.casino-shell .loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--c-text3);
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 20px 0;
+  justify-content: center;
+}
+
+.casino-shell .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--c-line2);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: casinoSpin 0.7s linear infinite;
+}
+
+@keyframes casinoSpin { to { transform: rotate(360deg); } }
+
+.casino-shell .empty {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--c-text3);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.casino-shell .empty p { color: var(--c-text3); }
+
+.casino-shell .empty-icon {
+  font-size: 3rem;
+  opacity: 0.2;
+  margin-bottom: 12px;
+}
+
+/* ── CARD ANIMATIONS (poker / truco) ─────────────────────── */
+
+.casino-shell .card-deal {
+  animation: casinoCardDeal 0.25s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+.casino-shell .card-revealed {
+  animation: casinoCardReveal 0.3s ease both;
+}
+
+@keyframes casinoCardDeal {
+  from { transform: scale(0.7) translateY(-10px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);     opacity: 1; }
+}
+
+@keyframes casinoCardReveal {
+  from { transform: rotateY(90deg); opacity: 0.5; }
+  to   { transform: rotateY(0deg);  opacity: 1;   }
+}
+
+/* Current player pulse (poker) */
+.casino-shell .glow-pulse {
+  animation: casinoGlowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes casinoGlowPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255,215,0,0.35), 0 0 40px rgba(255,215,0,0.1); }
+  50%       { box-shadow: 0 0 24px rgba(255,215,0,0.6),  0 0 60px rgba(255,215,0,0.2); }
+}
+
+/* Truco offer animations */
+.casino-shell .bounce-in {
+  animation: casinoBounceIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes casinoBounceIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.casino-shell .shake {
+  animation: casinoShake 0.4s ease both;
+}
+
+@keyframes casinoShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX( 4px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX( 4px); }
+}
+
+/* Coin particle (blackjack win) */
+.casino-shell .coin-particle {
+  position: absolute;
+  font-size: 1.4rem;
+  animation: casinoCoinFly 1.2s ease-out forwards;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes casinoCoinFly {
+  0%   { transform: translateY(0)   rotate(0deg);   opacity: 1;   }
+  100% { transform: translateY(-90px) rotate(360deg); opacity: 0; }
+}

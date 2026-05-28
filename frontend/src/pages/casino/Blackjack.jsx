@@ -2,19 +2,18 @@ import React, { useState } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
-const C = {
-  bg:       '#0c1a24',
-  surface:  '#162534',
-  panel:    '#1e3040',
-  border:   '#273f52',
-  borderHi: '#3a5f78',
-  text:     '#c8d8e8',
-  textDim:  '#6a8fa8',
-  textFaint:'#3d5a70',
-  green:    '#00e676',
-  red:      '#ff4572',
-  gold:     '#f5c542',
-  cyan:     '#29b6f6',
+const T = {
+  bg:        '#0c0c14',
+  surface:   '#161623',
+  panel:     '#1d1d2c',
+  border:    'rgba(255,255,255,0.10)',
+  borderHi:  'rgba(255,255,255,0.16)',
+  text:      '#ecedf4',
+  textDim:   '#a5a6b8',
+  textFaint: '#4a4b60',
+  green:     '#6fff7d',
+  red:       '#ff2d7a',
+  gold:      '#f5c542',
 };
 
 const SUIT_RED = new Set(['♥', '♦']);
@@ -66,8 +65,9 @@ function HandArea({ cards, total, label }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <div style={{
-        fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', marginBottom: 12,
-        textTransform: 'uppercase', letterSpacing: '0.18em', fontFamily: 'Rajdhani', fontWeight: 700,
+        fontSize: '0.62rem', color: T.textFaint, marginBottom: 12,
+        textTransform: 'uppercase', letterSpacing: '0.18em',
+        fontFamily: "'Unbounded', system-ui", fontWeight: 700,
       }}>
         {label}
       </div>
@@ -81,10 +81,10 @@ function HandArea({ cards, total, label }) {
           display: 'inline-block',
           background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 8, padding: '4px 18px',
-          fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem',
-          color: total > 21 ? C.red : total === 21 ? C.gold : 'white',
+          fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.4rem',
+          color: total > 21 ? T.red : total === 21 ? T.gold : T.text,
         }}>
-          {total > 21 ? total : total}
+          {total}
         </div>
       )}
     </div>
@@ -92,51 +92,48 @@ function HandArea({ cards, total, label }) {
 }
 
 const RESULTS = {
-  win:       { label: 'Ganaste',    color: C.green, prefix: '+' },
-  blackjack: { label: 'Blackjack',  color: C.gold,  prefix: '+' },
-  push:      { label: 'Empate',     color: C.cyan,  prefix: '' },
-  lose:      { label: 'Perdiste',   color: C.red,   prefix: '' },
-  bust:      { label: 'Te pasaste', color: C.red,   prefix: '' },
+  win:       { label: 'Ganaste',    color: '#6fff7d', prefix: '+' },
+  blackjack: { label: 'Blackjack!', color: '#f5c542', prefix: '+' },
+  push:      { label: 'Empate',     color: '#a5a6b8', prefix: '' },
+  lose:      { label: 'Perdiste',   color: '#ff2d7a', prefix: '' },
+  bust:      { label: 'Te pasaste', color: '#ff2d7a', prefix: '' },
 };
 
 function BetInput({ value, onChange, balance, disabled }) {
-  const half = () => onChange(Math.max(10, Math.floor(value / 2)));
+  const half   = () => onChange(Math.max(10, Math.floor(value / 2)));
   const double = () => onChange(Math.min(balance, value * 2));
-  const max = () => onChange(balance);
+  const max    = () => onChange(balance);
 
   return (
-    <div style={{
-      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden',
-    }}>
+    <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
-        <span style={{ color: C.textFaint, fontSize: '0.7rem', fontFamily: 'Rajdhani', letterSpacing: '0.1em', flexShrink: 0, marginRight: 8 }}>APUESTA</span>
+        <span style={{ color: T.textFaint, fontSize: '0.6rem', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', flexShrink: 0, marginRight: 8 }}>APUESTA</span>
         <input
           type="number" min="10" value={value} disabled={disabled}
           onChange={e => onChange(Math.max(10, parseInt(e.target.value) || 10))}
           style={{
             flex: 1, background: 'none', border: 'none', outline: 'none',
-            color: C.text, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.05rem', textAlign: 'right',
+            color: T.text, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.05rem', textAlign: 'right',
           }}
         />
-        <span style={{ color: C.textFaint, fontSize: '0.7rem', fontFamily: 'Rajdhani', marginLeft: 6, flexShrink: 0 }}>TK</span>
+        <span style={{ color: T.textFaint, fontSize: '0.7rem', fontFamily: "'Inter', system-ui", marginLeft: 6, flexShrink: 0 }}>TK</span>
       </div>
-      <div style={{ display: 'flex', borderTop: `1px solid ${C.panel}` }}>
+      <div style={{ display: 'flex', borderTop: `1px solid ${T.panel}` }}>
         {[
           { label: '½', action: half },
           { label: '2×', action: double },
           { label: 'MAX', action: max },
         ].map((btn, i, arr) => (
           <button key={btn.label} onClick={btn.action} disabled={disabled} style={{
-            flex: 1, background: 'none',
-            border: 'none',
-            borderRight: i < arr.length - 1 ? `1px solid ${C.panel}` : 'none',
-            color: C.textDim, padding: '7px 0',
-            fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.75rem',
+            flex: 1, background: 'none', border: 'none',
+            borderRight: i < arr.length - 1 ? `1px solid ${T.panel}` : 'none',
+            color: T.textDim, padding: '7px 0',
+            fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.75rem',
             cursor: disabled ? 'not-allowed' : 'pointer', letterSpacing: '0.04em',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { if (!disabled) { e.target.style.color = C.cyan; e.target.style.background = C.surface; }}}
-          onMouseLeave={e => { e.target.style.color = C.textDim; e.target.style.background = 'none'; }}
+          onMouseEnter={e => { if (!disabled) { e.target.style.color = '#ff2d7a'; e.target.style.background = T.surface; }}}
+          onMouseLeave={e => { e.target.style.color = T.textDim; e.target.style.background = 'none'; }}
           >
             {btn.label}
           </button>
@@ -215,8 +212,8 @@ export default function Blackjack({ balance, onBalanceChange }) {
       {/* ── TABLE ── */}
       <div style={{
         background: 'radial-gradient(ellipse at 50% 30%, #1e7b3c 0%, #155d2d 50%, #0f4d26 100%)',
-        borderRadius: 18, border: '8px solid #5c3010',
-        boxShadow: '0 0 0 3px #9b6d28, 0 10px 44px rgba(0,0,0,0.8)',
+        borderRadius: 18, border: '8px solid #2e1a06',
+        boxShadow: '0 0 0 2px #3d2408, 0 0 0 4px rgba(255,45,122,0.15), 0 12px 48px rgba(0,0,0,0.9)',
         overflow: 'hidden', position: 'relative', minHeight: 260,
       }}>
         <div style={{
@@ -234,7 +231,7 @@ export default function Blackjack({ balance, onBalanceChange }) {
 
           {err && (
             <div style={{
-              background: 'rgba(255,69,114,0.18)', border: '1px solid rgba(255,69,114,0.4)',
+              background: 'rgba(255,45,122,0.15)', border: '1px solid rgba(255,45,122,0.35)',
               borderRadius: 8, padding: '8px 14px', marginBottom: 16,
               fontSize: '0.85rem', color: '#ff8aaa', textAlign: 'center',
             }}>
@@ -242,7 +239,6 @@ export default function Blackjack({ balance, onBalanceChange }) {
             </div>
           )}
 
-          {/* Result banner */}
           {isDone && result && (
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <div style={{
@@ -252,13 +248,13 @@ export default function Blackjack({ balance, onBalanceChange }) {
                 borderRadius: 12, padding: '14px 36px',
               }}>
                 <div style={{
-                  fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.9rem',
-                  color: result.color, letterSpacing: '0.08em',
+                  fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '1.5rem',
+                  color: result.color, letterSpacing: '0.03em',
                 }}>
                   {result.label}
                 </div>
                 {game.payout > 0 && (
-                  <div style={{ color: C.gold, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', marginTop: 4 }}>
+                  <div style={{ color: T.gold, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.1rem', marginTop: 6 }}>
                     {result.prefix}{game.payout.toLocaleString('es-AR')} TK
                   </div>
                 )}
@@ -266,7 +262,6 @@ export default function Blackjack({ balance, onBalanceChange }) {
             </div>
           )}
 
-          {/* Dealer */}
           {game && (
             <div style={{ marginBottom: 20 }}>
               <HandArea
@@ -279,14 +274,13 @@ export default function Blackjack({ balance, onBalanceChange }) {
 
           {game && <div style={{ width: '55%', height: 1, background: 'rgba(255,255,255,0.1)', margin: '0 auto 20px' }} />}
 
-          {/* Player */}
           {game && (
             <HandArea cards={game.playerCards} total={game.playerTotal} label="Tu mano" />
           )}
 
           {!game && (
             <div style={{ textAlign: 'center', padding: '36px 0' }}>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.25)', fontFamily: 'Rajdhani', letterSpacing: '0.2em' }}>
+              <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.18em' }}>
                 SELECCIONÁ TU APUESTA
               </div>
             </div>
@@ -296,27 +290,27 @@ export default function Blackjack({ balance, onBalanceChange }) {
 
       {/* ── CONTROLS ── */}
       <div style={{
-        marginTop: 12, background: C.surface,
-        border: `1px solid ${C.border}`, borderRadius: 12, padding: '18px 20px',
+        marginTop: 12, background: T.surface,
+        border: `1px solid ${T.border}`, borderRadius: 12, padding: '18px 20px',
       }}>
         {!game || isDone ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <BetInput value={bet} onChange={setBet} balance={balance} disabled={loading} />
             {bet > balance && (
-              <div style={{ fontSize: '0.75rem', color: C.red, fontFamily: 'Rajdhani', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.75rem', color: T.red, fontFamily: "'Inter', system-ui", textAlign: 'center' }}>
                 Tokens insuficientes
               </div>
             )}
             <button onClick={start} disabled={loading || bet < 10 || bet > balance} style={{
               height: 48, borderRadius: 10, border: 'none',
               background: loading || bet > balance
-                ? 'rgba(0,230,118,0.08)'
-                : 'linear-gradient(135deg, #00c65a, #00e676)',
-              color: loading || bet > balance ? '#3d5a70' : '#0c1a24',
-              fontSize: '1rem', fontWeight: 700, letterSpacing: '0.1em',
+                ? T.panel
+                : 'linear-gradient(135deg, #ff2d7a, #ff5f4b)',
+              color: loading || bet > balance ? T.textFaint : '#fff',
+              fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.1em',
               cursor: loading || bet > balance ? 'not-allowed' : 'pointer',
-              fontFamily: 'Rajdhani',
-              boxShadow: (!loading && bet <= balance) ? '0 0 16px rgba(0,230,118,0.25)' : 'none',
+              fontFamily: "'Unbounded', system-ui",
+              boxShadow: (!loading && bet <= balance) ? '0 4px 20px rgba(255,45,122,0.35)' : 'none',
               transition: 'all 0.2s',
             }}>
               {loading ? 'CARGANDO...' : isDone ? 'NUEVA PARTIDA' : 'REPARTIR'}
@@ -325,19 +319,20 @@ export default function Blackjack({ balance, onBalanceChange }) {
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => act('hit')} disabled={loading} style={{
-              flex: 1, height: 46, borderRadius: 10, border: 'none',
-              background: loading ? 'rgba(41,182,246,0.08)' : 'linear-gradient(135deg, #0288d1, #29b6f6)',
-              color: loading ? '#3d5a70' : '#0c1a24',
-              fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.08em',
+              flex: 1, height: 46, borderRadius: 10,
+              border: '1px solid rgba(111,255,125,0.35)',
+              background: loading ? T.panel : 'rgba(111,255,125,0.10)',
+              color: loading ? T.textFaint : '#6fff7d',
+              fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.08em',
               cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
             }}>
               PEDIR
             </button>
             <button onClick={() => act('stand')} disabled={loading} style={{
               flex: 1, height: 46, borderRadius: 10,
-              border: `1px solid ${C.borderHi}`,
-              background: C.panel,
-              color: C.text, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.08em',
+              border: `1px solid ${T.borderHi}`,
+              background: T.panel,
+              color: T.text, fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.08em',
               cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
             }}>
               PLANTARSE
@@ -345,13 +340,13 @@ export default function Blackjack({ balance, onBalanceChange }) {
             {game.playerCards?.length === 2 && (
               <button onClick={() => act('double')} disabled={loading || balance < bet} style={{
                 flex: 1, height: 46, borderRadius: 10,
-                border: `1px solid ${C.gold}40`,
-                background: 'rgba(245,197,66,0.1)',
-                color: C.gold, fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.08em',
+                border: `1px solid rgba(245,197,66,0.35)`,
+                background: 'rgba(245,197,66,0.10)',
+                color: T.gold, fontFamily: "'Unbounded', system-ui", fontWeight: 700, fontSize: '0.68rem', letterSpacing: '0.06em',
                 cursor: loading || balance < bet ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { if (!loading && balance >= bet) e.currentTarget.style.background = 'rgba(245,197,66,0.18)'; }}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,197,66,0.1)'}
+              onMouseEnter={e => { if (!loading && balance >= bet) e.currentTarget.style.background = 'rgba(245,197,66,0.2)'; }}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(245,197,66,0.10)'}
               >
                 DOBLAR ×2
               </button>
