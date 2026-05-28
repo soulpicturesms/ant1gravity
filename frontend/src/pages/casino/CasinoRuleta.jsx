@@ -73,8 +73,8 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) 
   const size = wheelSize;
   const half = size / 2;
 
-  // Ball position relative to wheel angle
-  const screenAngle = wheelRot + ballAngleRel;
+  // Ball screen angle is relative to the counter-clockwise rotation (-wheelRot)
+  const screenAngle = ballAngleRel - wheelRot;
   const rad = (screenAngle * Math.PI) / 180;
   const bx = half + Math.cos(rad) * ballRadius;
   const by = half + Math.sin(rad) * ballRadius;
@@ -89,6 +89,14 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) 
 
       {/* SVG Ball & Golden Turret */}
       <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+        <defs>
+          <radialGradient id="ball-grad" cx="35%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="65%" stopColor="#eeeeee" />
+            <stop offset="100%" stopColor="#aaaaaa" />
+          </radialGradient>
+        </defs>
+
         {/* Golden central turret head */}
         <circle cx={half} cy={half} r="18" fill="radial-gradient(circle, #f5c542, #8a640f)" stroke="#111" strokeWidth="1" opacity="0.1"/>
         <path d={`M${half-1},${half-12} L${half+1},${half-12} L${half+4},${half} L${half-4},${half} Z`} fill="#d4af37" opacity="0.8"/>
@@ -100,16 +108,16 @@ function RouletteWheel({ wheelRot, ballAngleRel, ballRadius, wheelSize = 420 }) 
         {/* Outer light pin pointer indicator */}
         <path d={`M${half},22 L${half-6},8 L${half+6},8 Z`} fill="#ff2d7a" filter="drop-shadow(0 0 6px #ff2d7a)"/>
 
-        {/* Floating ball */}
+        {/* Floating white pearl ball (glowing radial gradient) */}
         {ballRadius > 0 && (
           <circle
             cx={bx}
             cy={by}
-            r="7"
-            fill="radial-gradient(circle at 35% 35%, #ffffff 0%, #e6e6e6 65%, #999999 100%)"
-            stroke="#b3b3b3"
-            strokeWidth="0.5"
-            filter="drop-shadow(0 3px 5px rgba(0,0,0,0.65))"
+            r="8.5"
+            fill="url(#ball-grad)"
+            stroke="#d3d3d3"
+            strokeWidth="0.75"
+            filter="drop-shadow(0 3px 6px rgba(0,0,0,0.7))"
           />
         )}
       </svg>
@@ -433,8 +441,9 @@ function BettingGrid({ bets, onBet }) {
   };
 
   return (
-    <div style={{ overflowX: 'auto', width: '100%', paddingBottom: 4 }}>
-      <div style={{ position: 'relative', width: '100%', maxWidth: 684, aspectRatio: '684/144', marginBottom: 4 }}>
+    <div style={{ overflowX: 'hidden', width: '100%', paddingBottom: 4 }}>
+      {/* Container wraps and scales 100% of parent width */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: '100%', aspectRatio: '684/144', marginBottom: 6 }}>
         <canvas
           ref={canvasGridRef}
           onMouseMove={handleMouseMove}
@@ -444,8 +453,8 @@ function BettingGrid({ bets, onBet }) {
         />
       </div>
 
-      {/* Dozens */}
-      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(3, 28.07%) 7.89%', gap: 3, maxWidth: 684, marginBottom: 3 }}>
+      {/* Dozens - stretched */}
+      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(3, 28.07%) 7.89%', gap: 4, maxWidth: '100%', marginBottom: 4 }}>
         <div/>
         <Cell label="1st 12" type="dozen" value="1-12"/>
         <Cell label="2nd 12" type="dozen" value="13-24"/>
@@ -453,8 +462,8 @@ function BettingGrid({ bets, onBet }) {
         <div/>
       </div>
 
-      {/* Outside halfs, colors & parities */}
-      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(6, 14.03%) 7.89%', gap: 3, maxWidth: 684 }}>
+      {/* Outside - low/high low limits, colors & parities */}
+      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(6, 14.03%) 7.89%', gap: 4, maxWidth: '100%' }}>
         <div/>
         <Cell label="1-18"  type="half"   value="low"/>
         <Cell label="Par"   type="parity" value="even"/>
@@ -538,7 +547,9 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
       const duration = 5200;
 
       const initialWheelRot = wheelRot % 360;
-      const initialBallAngleScreen = (wheelRot + ballAngleRel) % 360;
+      
+      // Screen angle starts as (relative angle - wheelRot)
+      const initialBallAngleScreen = (ballAngleRel - wheelRot) % 360;
 
       rollRef.current = casinoAudio.playRouletteRoll();
       startTickSounds();
@@ -560,17 +571,17 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
           setSpinning(false);
           setResult(winningNum);
 
-          const net = res.payout - totalBet;
-          setSummary({ number: winningNum, payout: res.payout, net, color: colorOf(winningNum) });
+          const net = res.totalPayout - totalBet;
+          setSummary({ number: winningNum, payout: res.totalPayout, net, color: colorOf(winningNum) });
 
           onBalanceChange(res.balance);
-          if (res.payout > 0) triggerWinAnimation(res.payout);
+          if (res.totalPayout > 0) triggerWinAnimation(res.totalPayout);
           return;
         }
 
         const t = elapsed / duration;
 
-        // Decelerating wheel rotation
+        // Decelerating wheel rotation clockwise (positive)
         const currentWheelRot = initialWheelRot + (360 * 3.5) * easeOutQuad(t);
         setWheelRot(currentWheelRot);
 
@@ -579,14 +590,13 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
         let currentBallRadius;
 
         if (t < 0.62) {
-          // Spiraling orbit
           const ballT = t / 0.62;
           const totalBallSpins = 360 * 6.5;
           const ballAngleScreen = initialBallAngleScreen - totalBallSpins * easeOutQuad(ballT);
-          currentBallAngleRel = ((ballAngleScreen - currentWheelRot) % 360 + 360) % 360;
+          // Correct relative coordinate conversion (relative = screen + wheel)
+          currentBallAngleRel = ((ballAngleScreen + currentWheelRot) % 360 + 360) % 360;
           currentBallRadius = (145 - 22 * easeOutCubic(ballT)) * ballRadiusScale;
         } else {
-          // Bouncing off pocket dividers & settling
           const settleT = (t - 0.62) / 0.38;
           const bounceAmp = 12 * Math.exp(-settleT * 2.8) * Math.sin(settleT * Math.PI * 4.5);
           currentBallRadius = (110 + bounceAmp) * ballRadiusScale;
@@ -740,7 +750,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
         }
       `}</style>
 
-      {/* ── LEFT PANEL: Restored professional sidebar ── */}
+      {/* ── LEFT PANEL: Professional Sidebar ── */}
       <div className="casino-roul-panel">
         
         {/* Active Chip selector */}
@@ -933,7 +943,7 @@ export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnima
             )}
           </div>
 
-          {/* Betting board felt on the right */}
+          {/* Betting board felt on the right (Stretched to 100%) */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
