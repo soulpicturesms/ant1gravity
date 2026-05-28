@@ -2,20 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
-const T = {
-  bg:        '#0c0c14',
-  surface:   '#161623',
-  panel:     '#1d1d2c',
-  border:    'rgba(255,255,255,0.10)',
-  text:      '#ecedf4',
-  textDim:   '#a5a6b8',
-  textFaint: '#4a4b60',
-  green:     '#6fff7d',
-  red:       '#ff2d7a',
-  gold:      '#f5c542',
-  accent:    '#ff2d7a',
-};
-
 const PLINKO_MULTIPLIERS = {
   bajo:  [5.6, 1.6, 1.2, 1.0, 0.7, 0.5, 0.5, 0.5, 0.7, 1.0, 1.2, 1.6, 5.6],
   medio: [13.0, 4.0, 1.5, 1.1, 0.7, 0.4, 0.2, 0.4, 0.7, 1.1, 1.5, 4.0, 13.0],
@@ -119,8 +105,7 @@ export default function Plinko({ balance, onBalanceChange }) {
       lastTime = now;
       ctx.clearRect(0, 0, logicalW, logicalH);
 
-      // Dark background
-      ctx.fillStyle = 'rgba(12,12,20,1)';
+      ctx.fillStyle = '#0c0c14';
       ctx.fillRect(0, 0, logicalW, logicalH);
 
       // Pegs
@@ -218,115 +203,109 @@ export default function Plinko({ balance, onBalanceChange }) {
   const setMax = () => setBet(balance);
 
   return (
-    <div style={{ maxWidth: 660, margin: '0 auto' }}>
+    <div className="casino-roul-view">
 
-      {/* Canvas area */}
-      <div style={{
-        background: T.bg, border: `1px solid ${T.border}`, borderRadius: 14,
-        padding: '14px 0 10px', overflow: 'hidden', position: 'relative', marginBottom: 10,
-      }}>
-        <canvas ref={canvasRef} width={500} height={480} style={{
-          display: 'block', margin: '0 auto', width: '100%', height: 'auto', maxWidth: 500,
-        }} />
-      </div>
+      {/* ── LEFT PANEL ───────────────────────────────── */}
+      <div className="casino-roul-panel">
+        <div className="casino-roul-panel__title">Plinko</div>
 
-      {/* Controls panel */}
-      <div style={{
-        background: T.surface, border: `1px solid ${T.border}`,
-        borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14,
-      }}>
-
-        {err && (
-          <div style={{
-            background: 'rgba(255,45,122,0.10)', border: '1px solid rgba(255,45,122,0.28)',
-            borderRadius: 8, padding: '7px 12px', color: '#ff8aaa',
-            fontSize: '0.82rem', textAlign: 'center', fontFamily: "'Inter', system-ui",
-          }}>
-            {err}
+        {/* Risk selector */}
+        <div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Riesgo
           </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {/* Risk */}
-          <div>
-            <div style={{
-              fontSize: '0.6rem', color: T.textFaint, marginBottom: 7,
-              fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase',
-            }}>RIESGO</div>
-            <div style={{ display: 'flex', gap: 5 }}>
-              {['bajo', 'medio', 'alto'].map(r => (
-                <button key={r} onClick={() => setRisk(r)} style={{
-                  flex: 1, padding: '8px 4px', borderRadius: 7, cursor: 'pointer',
-                  background: risk === r ? RISK_COLORS[r] + '18' : T.panel,
-                  border: `1px solid ${risk === r ? RISK_COLORS[r] + '50' : T.border}`,
-                  color: risk === r ? RISK_COLORS[r] : T.textDim,
-                  fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.75rem',
-                  letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s',
-                }}>
-                  {RISK_LABELS[r]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Bet input */}
-          <div>
-            <div style={{
-              fontSize: '0.6rem', color: T.textFaint, marginBottom: 7,
-              fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase',
-            }}>APUESTA</div>
-            <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px', height: 36 }}>
-                <input
-                  type="number" min="10" value={bet} disabled={loading}
-                  onChange={e => setBet(Math.max(10, parseInt(e.target.value) || 10))}
-                  style={{
-                    flex: 1, background: 'none', border: 'none', outline: 'none',
-                    color: T.text, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '0.95rem', textAlign: 'right',
-                  }}
-                />
-                <span style={{ color: T.textFaint, fontSize: '0.65rem', fontFamily: "'Inter', system-ui", marginLeft: 5 }}>TK</span>
-              </div>
-              <div style={{ display: 'flex', borderTop: `1px solid ${T.panel}` }}>
-                {[['½', half], ['2×', double], ['MAX', setMax]].map(([label, action], i, arr) => (
-                  <button key={label} onClick={action} disabled={loading} style={{
-                    flex: 1, background: 'none', border: 'none',
-                    borderRight: i < arr.length - 1 ? `1px solid ${T.panel}` : 'none',
-                    color: T.textDim, padding: '5px 0',
-                    fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.7rem',
-                    cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { if (!loading) { e.target.style.color = T.accent; e.target.style.background = T.surface; }}}
-                  onMouseLeave={e => { e.target.style.color = T.textDim; e.target.style.background = 'none'; }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['bajo', 'medio', 'alto'].map(r => (
+              <button key={r} onClick={() => setRisk(r)} style={{
+                flex: 1, padding: '9px 4px', borderRadius: 8, cursor: 'pointer',
+                background: risk === r ? RISK_COLORS[r] + '18' : 'var(--c-surface2)',
+                border: `1px solid ${risk === r ? RISK_COLORS[r] + '55' : 'var(--c-line2)'}`,
+                color: risk === r ? RISK_COLORS[r] : 'var(--c-text3)',
+                fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.75rem',
+                letterSpacing: '0.06em', textTransform: 'uppercase', transition: 'all 0.15s',
+              }}>
+                {RISK_LABELS[r]}
+              </button>
+            ))}
           </div>
         </div>
 
-        <button onClick={dropBall} disabled={loading || bet < 10 || bet > balance} style={{
-          height: 48, borderRadius: 10, border: 'none',
-          background: loading || bet > balance
-            ? T.panel
-            : 'linear-gradient(135deg, #ff2d7a, #ff5f4b)',
-          color: loading || bet > balance ? T.textFaint : '#fff',
-          fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em',
-          cursor: loading || bet > balance ? 'not-allowed' : 'pointer',
-          fontFamily: "'Unbounded', system-ui",
-          boxShadow: (!loading && bet <= balance) ? '0 4px 20px rgba(255,45,122,0.35)' : 'none',
-          transition: 'all 0.2s',
-        }}>
+        {/* Bet input */}
+        <div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Apuesta
+          </div>
+          <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
+              <input
+                type="number" min="10" value={bet} disabled={loading}
+                onChange={e => setBet(Math.max(10, parseInt(e.target.value) || 10))}
+                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.1rem', textAlign: 'right' }}
+              />
+              <span style={{ color: 'var(--c-text4)', fontSize: '0.68rem', marginLeft: 6 }}>TK</span>
+            </div>
+            <div style={{ display: 'flex', borderTop: '1px solid var(--c-surface2)' }}>
+              {[['½', half], ['2×', double], ['MAX', setMax]].map(([label, action], i, arr) => (
+                <button key={label} onClick={action} disabled={loading} style={{
+                  flex: 1, background: 'none', border: 'none',
+                  borderRight: i < arr.length - 1 ? '1px solid var(--c-surface2)' : 'none',
+                  color: 'var(--c-text3)', padding: '7px 0',
+                  fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.72rem',
+                  cursor: loading ? 'not-allowed' : 'pointer', transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => { if (!loading) e.target.style.color = 'var(--c-accent)'; }}
+                onMouseLeave={e => { e.target.style.color = 'var(--c-text3)'; }}
+                >{label}</button>
+              ))}
+            </div>
+          </div>
+          {bet > balance && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--c-accent)', marginTop: 5, textAlign: 'center' }}>
+              Tokens insuficientes
+            </div>
+          )}
+        </div>
+
+        {err && <div className="casino-err">{err}</div>}
+
+        <button onClick={dropBall} disabled={loading || bet < 10 || bet > balance} className="roul-spin-btn">
           {loading ? 'CARGANDO...' : 'SOLTAR BOLA'}
         </button>
 
-        {bet > balance && (
-          <div style={{ fontSize: '0.73rem', color: T.red, fontFamily: "'Inter', system-ui", textAlign: 'center', marginTop: -8 }}>
-            Tokens insuficientes
+        {/* Multiplier preview */}
+        <div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Multiplicadores
           </div>
-        )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {PLINKO_MULTIPLIERS[risk].filter((m, i, arr) => arr.indexOf(m) === i).sort((a, b) => b - a).slice(0, 6).map(mult => (
+              <span key={mult} style={{
+                fontSize: '0.72rem', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                color: getBucketTextColor(mult),
+                background: getBucketColor(mult),
+                border: `1px solid ${getBucketTextColor(mult)}30`,
+                borderRadius: 5, padding: '2px 7px',
+              }}>{mult}x</span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6 }}>
+          12 filas · 13 canales<br />La bola rebota aleatoriamente
+        </div>
+      </div>
+
+      {/* ── RIGHT STAGE ─────────────────────────────── */}
+      <div className="casino-roul-stage" style={{ alignItems: 'center' }}>
+        <div style={{
+          background: 'var(--c-bg)', border: '1px solid var(--c-line2)',
+          borderRadius: 14, padding: '14px 0 10px', overflow: 'hidden',
+          position: 'relative', width: '100%',
+        }}>
+          <canvas ref={canvasRef} width={500} height={480} style={{
+            display: 'block', margin: '0 auto', width: '100%', height: 'auto', maxWidth: 500,
+          }} />
+        </div>
       </div>
     </div>
   );

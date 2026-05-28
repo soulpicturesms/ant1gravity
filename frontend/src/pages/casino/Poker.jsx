@@ -46,17 +46,11 @@ function PlayerSeat({ player, isMe, isCurrent, myCards }) {
   const allIn  = player.status === 'allIn';
 
   return (
-    <div style={{
-      width: 128, textAlign: 'center', opacity: folded ? 0.5 : 1,
-      transition: 'opacity 0.3s, box-shadow 0.3s',
-    }}>
-      {/* Cards above panel */}
+    <div style={{ width: 128, textAlign: 'center', opacity: folded ? 0.5 : 1, transition: 'opacity 0.3s, box-shadow 0.3s' }}>
       <div style={{ display: 'flex', gap: 3, justifyContent: 'center', marginBottom: 4 }}>
         <Card key={`card0-${cards[0] ? cards[0].value + cards[0].suit : 'hidden'}`} card={isMe ? cards[0] : null} faceDown={!isMe || !cards[0]} size="sm" />
         <Card key={`card1-${cards[1] ? cards[1].value + cards[1].suit : 'hidden'}`} card={isMe ? cards[1] : null} faceDown={!isMe || !cards[1]} size="sm" />
       </div>
-
-      {/* Info panel */}
       <div className={isCurrent ? 'glow-pulse' : ''} style={{
         background: isCurrent ? 'rgba(255,215,0,0.18)' : isMe ? 'rgba(255,45,122,0.10)' : 'rgba(0,0,0,0.55)',
         border: `2px solid ${isCurrent ? '#ffd700' : isMe ? 'rgba(255,45,122,0.45)' : 'rgba(255,255,255,0.08)'}`,
@@ -88,7 +82,6 @@ function PlayerSeat({ player, isMe, isCurrent, myCards }) {
 }
 
 // ─── Oval Table layout ────────────────────────────────────────────────────────
-// Seat positions for N players: [x%, y%] centered, me always at index 0 (bottom)
 const SEAT_POS = {
   1: [[50,92]],
   2: [[50,92],[50,2]],
@@ -105,41 +98,34 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
     : players;
   const n = Math.min(Math.max(ordered.length, 1), 6);
   const positions = SEAT_POS[n] || SEAT_POS[6];
-
-  // Map original index to current player
   const currentPlayer = players[currentIdx];
 
   return (
     <div style={{ position: 'relative', width: '100%', maxWidth: 740, margin: '0 auto', height: 540 }}>
 
-      {/* ── Oval felt table ── */}
+      {/* Oval felt */}
       <div style={{
         position: 'absolute', left: '14%', right: '14%', top: '13%', bottom: '10%',
         background: 'radial-gradient(ellipse at 50% 38%, #1e7b3c 0%, #176634 45%, #0f5028 75%, #0a3d1e 100%)',
         borderRadius: '50%',
         border: '10px solid #5c3010',
         boxShadow: '0 0 0 3px #9b6d28, 0 8px 60px rgba(0,0,0,0.85), inset 0 2px 60px rgba(0,0,0,0.45)',
-        overflow: 'hidden',
-        zIndex: 1,
+        overflow: 'hidden', zIndex: 1,
       }}>
-        {/* Felt texture overlay */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 6px)', pointerEvents: 'none' }} />
 
-        {/* Phase badge */}
         {phase && phase !== 'waiting' && (
           <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, system-ui', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
             {phase === 'preflop' ? '● PRE-FLOP' : phase === 'flop' ? '● FLOP' : phase === 'turn' ? '● TURN' : phase === 'river' ? '● RIVER' : phase.toUpperCase()}
           </div>
         )}
 
-        {/* Community cards */}
         <div style={{ position: 'absolute', top: '36%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', gap: 6, justifyContent: 'center' }}>
           {Array.from({ length: 5 }, (_, i) => (
             <Card key={`comm-${i}-${community?.[i] ? community[i].value + community[i].suit : 'hidden'}`} card={community?.[i] || null} faceDown={!community?.[i]} size="md" />
           ))}
         </div>
 
-        {/* Pot */}
         <div style={{ position: 'absolute', bottom: '20%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
           {pot > 0 && (
             <div style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 20, padding: '4px 18px', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', whiteSpace: 'nowrap' }}>
@@ -148,7 +134,6 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
           )}
         </div>
 
-        {/* Showdown result on table */}
         {showdown?.winner && (
           <div style={{ position: 'absolute', top: '60%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
             <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: '#ffd700', background: 'rgba(0,0,0,0.7)', padding: '5px 16px', borderRadius: 10, border: '1px solid rgba(255,215,0,0.4)', whiteSpace: 'nowrap' }}>
@@ -158,24 +143,18 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
         )}
       </div>
 
-      {/* ── Player seats ── */}
+      {/* Player seats */}
       {ordered.map((player, i) => {
         const [px, py] = positions[i] || [50, 50];
         const isMe = player.userId === myUserId;
         const isCurrent = player.userId === currentPlayer?.userId;
         return (
-          <div key={player.userId} style={{
-            position: 'absolute',
-            left: `${px}%`, top: `${py}%`,
-            transform: 'translate(-50%,-50%)',
-            zIndex: 2,
-          }}>
+          <div key={player.userId} style={{ position: 'absolute', left: `${px}%`, top: `${py}%`, transform: 'translate(-50%,-50%)', zIndex: 2 }}>
             <PlayerSeat player={player} isMe={isMe} isCurrent={isCurrent} myCards={isMe ? myCards : []} />
           </div>
         );
       })}
 
-      {/* Empty seat indicator */}
       {ordered.length === 0 && (
         <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontFamily: 'Inter, system-ui', fontSize: '1.1rem', zIndex: 2 }}>
           Esperando jugadores...
@@ -185,7 +164,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
   );
 }
 
-// ─── Room List ────────────────────────────────────────────────────────────────
+// ─── Room List (Lobby) ────────────────────────────────────────────────────────
 function RoomList({ onJoin }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -225,7 +204,6 @@ function RoomList({ onJoin }) {
 
   return (
     <div style={{ maxWidth: 640, margin: '0 auto' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.5rem', color: '#ff2d7a', letterSpacing: '0.08em' }}>♠ TEXAS HOLD'EM</div>
@@ -238,7 +216,6 @@ function RoomList({ onJoin }) {
 
       {err && <div className="alert alert-error" style={{ marginBottom: 12 }}>{err}</div>}
 
-      {/* Create form */}
       {showCreate && (
         <div className="card" style={{ border: '1px solid rgba(255,45,122,0.25)', background: 'rgba(255,45,122,0.05)', marginBottom: 16 }}>
           <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a', marginBottom: 14 }}>Nueva Mesa</div>
@@ -263,7 +240,6 @@ function RoomList({ onJoin }) {
         </div>
       )}
 
-      {/* Room list */}
       {loading && <div className="loading"><div className="spinner" /> Cargando salas...</div>}
       {!loading && rooms.length === 0 && !showCreate && (
         <div className="empty">
@@ -286,12 +262,7 @@ function RoomList({ onJoin }) {
                   <span style={{ marginLeft: 8, color: isPlaying ? '#ffd700' : '#00cc66' }}>● {isPlaying ? 'En juego' : 'Esperando'}</span>
                 </div>
               </div>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => join(r.id)}
-                disabled={isFull || isPlaying}
-                style={{ flexShrink: 0 }}
-              >
+              <button className="btn btn-primary btn-sm" onClick={() => join(r.id)} disabled={isFull || isPlaying} style={{ flexShrink: 0 }}>
                 {isPlaying ? 'En juego' : isFull ? 'Llena' : 'Unirse →'}
               </button>
             </div>
@@ -304,7 +275,7 @@ function RoomList({ onJoin }) {
 
 // ─── Main Poker Component ─────────────────────────────────────────────────────
 export default function Poker({ user }) {
-  const [view, setView]       = useState('lobby'); // 'lobby' | 'game'
+  const [view, setView]       = useState('lobby');
   const [roomId, setRoomId]   = useState(null);
   const [gameState, setGameState] = useState(null);
   const [myCards, setMyCards] = useState([]);
@@ -319,7 +290,6 @@ export default function Poker({ user }) {
   const prevPotRef = useRef(0);
   const prevPhaseRef = useRef('');
 
-  // ── Polling ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!roomId || view !== 'game') return;
     const poll = async () => {
@@ -334,49 +304,32 @@ export default function Poker({ user }) {
     return () => clearInterval(iv);
   }, [roomId, view]);
 
-  // ── Sound triggers on game updates ───────────────────────────────────────────
   useEffect(() => {
     if (!gameState) return;
     const state = gameState;
     const players = state.players || [];
-    const me = players.find(p => p.userId === user.id);
     const currentPlayer = players[state.currentIdx];
     const isMyTurn = currentPlayer?.userId === user.id && state.phase !== 'waiting' && state.phase !== 'showdown';
 
-    // 1. Alert when it becomes my turn
-    if (isMyTurn && !prevMyTurnRef.current) {
-      casinoAudio.playTurnAlert();
-    }
+    if (isMyTurn && !prevMyTurnRef.current) casinoAudio.playTurnAlert();
     prevMyTurnRef.current = isMyTurn;
 
-    // 2. Play slide sound on new community cards
     const commCount = state.community?.filter(Boolean).length || 0;
-    if (commCount > prevCommCountRef.current) {
-      casinoAudio.playCardSlide();
-    }
+    if (commCount > prevCommCountRef.current) casinoAudio.playCardSlide();
     prevCommCountRef.current = commCount;
 
-    // 3. Play chip sound when pot changes
-    if (state.pot > prevPotRef.current) {
-      casinoAudio.playChip();
-    }
+    if (state.pot > prevPotRef.current) casinoAudio.playChip();
     prevPotRef.current = state.pot;
 
-    // 4. Play win/lose on showdown
     if (state.phase === 'showdown' && prevPhaseRef.current !== 'showdown') {
       const winner = state.showdown?.winner;
       if (winner) {
-        if (winner.userId === user.id) {
-          casinoAudio.playWin();
-        } else {
-          casinoAudio.playLose();
-        }
+        winner.userId === user.id ? casinoAudio.playWin() : casinoAudio.playLose();
       }
     }
     prevPhaseRef.current = state.phase;
   }, [gameState, user.id]);
 
-  // ── Auto next-hand after showdown ────────────────────────────────────────────
   useEffect(() => {
     if (gameState?.phase === 'showdown' && !nextHandTimer.current) {
       nextHandTimer.current = setTimeout(async () => {
@@ -396,11 +349,7 @@ export default function Poker({ user }) {
   }, [gameState?.phase, roomId]);
 
   const handleJoin = (id, state, cards) => {
-    setRoomId(id);
-    setGameState(state);
-    setMyCards(cards || []);
-    setErr('');
-    setView('game');
+    setRoomId(id); setGameState(state); setMyCards(cards || []); setErr(''); setView('game');
   };
 
   const handleLeave = async () => {
@@ -442,142 +391,229 @@ export default function Poker({ user }) {
   const canStart = isWaiting && players.length >= 2 && me;
   const isShowdown = state.phase === 'showdown';
 
-  return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+  const actionBtnBase = {
+    height: 44, borderRadius: 9, border: 'none', fontFamily: "'Unbounded', system-ui",
+    fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.06em',
+    cursor: actionLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+  };
 
-      {/* Top bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div>
-          <span style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: '#ff2d7a' }}>♠ {state.name || 'Mesa Poker'}</span>
-          <span style={{ marginLeft: 12, fontSize: '0.75rem', color: '#6f7088', fontFamily: 'Inter, system-ui' }}>
-            Buy-in: {(state.buyIn || 100).toLocaleString('es-AR')} · {players.length}/{state.maxPlayers || 6} jugadores
-          </span>
+  return (
+    <div className="casino-roul-view">
+
+      {/* ── LEFT PANEL ───────────────────────────────── */}
+      <div className="casino-roul-panel">
+        <div className="casino-roul-panel__title">♠ Texas Hold'em</div>
+
+        {/* Room info */}
+        <div style={{ fontSize: '0.75rem', color: 'var(--c-text3)', fontFamily: 'Inter, system-ui' }}>
+          <span style={{ color: 'var(--c-accent)', fontWeight: 700 }}>{state.name || 'Mesa Poker'}</span>
+          <br />
+          Buy-in: {(state.buyIn || 100).toLocaleString('es-AR')} · {players.length}/{state.maxPlayers || 6} jugadores
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={() => {
-            const nowMuted = casinoAudio.toggleMute();
-            setMuted(nowMuted);
-          }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', color: 'rgba(255,255,255,0.3)', padding: 4 }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
+
+        {/* Phase + Pot */}
+        {state.phase && state.phase !== 'waiting' && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{
+              fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em',
+              color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui",
+              background: 'var(--c-surface2)', border: '1px solid var(--c-line2)',
+              borderRadius: 6, padding: '4px 10px', textTransform: 'uppercase',
+            }}>
+              {state.phase === 'preflop' ? 'Pre-Flop' : state.phase === 'flop' ? 'Flop' : state.phase === 'turn' ? 'Turn' : state.phase === 'river' ? 'River' : state.phase}
+            </div>
+            {state.pot > 0 && (
+              <div style={{ fontSize: '0.85rem', color: '#ffd700', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                🏆 {state.pot.toLocaleString('es-AR')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* My hand */}
+        {myCards.length > 0 && (
+          <div style={{
+            background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.2)',
+            borderRadius: 10, padding: '10px 12px',
+          }}>
+            <div style={{ fontSize: '0.55rem', color: 'var(--c-text4)', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui", marginBottom: 8 }}>
+              Tu mano
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 8 }}>
+              {myCards.map((c, i) => <Card key={i} card={c} size="lg" />)}
+            </div>
+            {me?.chips !== undefined && (
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                  ⚡ {(me.chips || 0).toLocaleString('es-AR')}
+                </span>
+                {me.roundBet > 0 && (
+                  <span style={{ fontSize: '0.72rem', color: '#ff2d7a', fontFamily: 'Inter, system-ui', marginLeft: 10 }}>
+                    Bet: {me.roundBet.toLocaleString('es-AR')}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Start button */}
+        {canStart && (
+          <button onClick={doStart} className="roul-spin-btn">
+            🃏 Iniciar Partida
+          </button>
+        )}
+
+        {/* Action buttons when it's my turn */}
+        {isMyTurn && !actionLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {callAmt === 0
+              ? (
+                <button onClick={() => doAction('check')} style={{
+                  ...actionBtnBase,
+                  background: 'var(--c-surface2)', border: '1px solid var(--c-line3)',
+                  color: 'var(--c-text)',
+                }}>CHECK</button>
+              ) : (
+                <button onClick={() => doAction('call')} style={{
+                  ...actionBtnBase,
+                  background: 'rgba(111,255,125,0.10)', border: '1px solid rgba(111,255,125,0.35)',
+                  color: '#6fff7d',
+                }}>CALL {callAmt.toLocaleString('es-AR')}</button>
+              )
+            }
+
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                type="number"
+                placeholder="Raise..."
+                min={(state.currentBet || 0) + (state.minRaise || state.buyIn || 100)}
+                value={raiseAmt}
+                onChange={e => setRaiseAmt(e.target.value)}
+                style={{
+                  flex: 1, background: 'var(--c-bg1)', border: '1px solid var(--c-line2)',
+                  borderRadius: 7, padding: '0 10px', height: 44,
+                  color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 700, fontSize: '0.9rem', outline: 'none',
+                }}
+              />
+              <button
+                onClick={() => doAction('raise', raiseAmt)}
+                disabled={!raiseAmt || parseInt(raiseAmt) <= (state.currentBet || 0)}
+                style={{
+                  ...actionBtnBase, width: 64,
+                  background: raiseAmt ? 'rgba(255,45,122,0.15)' : 'var(--c-surface2)',
+                  border: `1px solid ${raiseAmt ? 'rgba(255,45,122,0.4)' : 'var(--c-line2)'}`,
+                  color: raiseAmt ? 'var(--c-accent)' : 'var(--c-text4)',
+                }}
+              >RAISE</button>
+            </div>
+
+            <button onClick={() => doAction('allin')} style={{
+              ...actionBtnBase,
+              background: 'rgba(255,215,0,0.10)', border: '1px solid rgba(255,215,0,0.4)',
+              color: '#ffd700',
+            }}>ALL IN ♠</button>
+
+            <button onClick={() => doAction('fold')} style={{
+              ...actionBtnBase,
+              background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.4)',
+              color: '#ef4444',
+            }}>FOLD</button>
+          </div>
+        )}
+
+        {actionLoading && (
+          <div style={{ textAlign: 'center', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>
+            Procesando...
+          </div>
+        )}
+
+        {!isMyTurn && !isWaiting && !isShowdown && currentPlayer && (
+          <div style={{
+            background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
+            borderRadius: 8, padding: '8px 12px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>Turno de</div>
+            <div style={{ fontSize: '0.9rem', color: '#ffd700', fontWeight: 700, fontFamily: 'Inter, system-ui' }}>
+              {currentPlayer.username}
+            </div>
+          </div>
+        )}
+
+        {err && <div className="casino-err">{err}</div>}
+
+        {/* Footer buttons */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+          <button
+            onClick={() => { const m = casinoAudio.toggleMute(); setMuted(m); }}
+            style={{ background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7, padding: '7px 12px', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '1rem' }}
+            title={muted ? 'Activar sonido' : 'Silenciar'}
+          >
             {muted ? '🔇' : '🔊'}
           </button>
-          <button onClick={handleLeave} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6f7088', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Inter, system-ui' }}>
+          <button
+            onClick={handleLeave}
+            style={{
+              flex: 1, background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7,
+              padding: '7px 14px', cursor: 'pointer', color: 'var(--c-text3)',
+              fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,45,122,0.4)'; e.currentTarget.style.color = '#ff2d7a'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--c-line2)'; e.currentTarget.style.color = 'var(--c-text3)'; }}
+          >
             ← Salir
           </button>
         </div>
       </div>
 
-      {err && <div className="alert alert-error" style={{ marginBottom: 10 }}>{err}</div>}
+      {/* ── RIGHT STAGE ─────────────────────────────── */}
+      <div className="casino-roul-stage" style={{ flexDirection: 'column', minHeight: 560 }}>
 
-      {/* Showdown banner */}
-      {isShowdown && state.showdown?.winner && (
-        <div style={{ textAlign: 'center', padding: '12px 20px', background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.35)', borderRadius: 10, marginBottom: 10 }}>
-          <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.4rem', color: '#ffd700', marginBottom: 6 }}>
-            🏆 {state.showdown.winner.username} gana · {state.showdown.winner.handName}!
-          </div>
-          {state.showdown.players?.length > 0 && (
-            <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {state.showdown.players.map(p => (
-                <div key={p.userId} style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>{p.username}</div>
-                  <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 4 }}>
-                    {p.holeCards?.map((c, i) => <Card key={i} card={c} size="sm" />)}
+        {/* Showdown banner */}
+        {isShowdown && state.showdown?.winner && (
+          <div style={{
+            textAlign: 'center', padding: '12px 20px',
+            background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.3)',
+            borderRadius: 10, width: '100%',
+          }}>
+            <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.3rem', color: '#ffd700', marginBottom: 6 }}>
+              🏆 {state.showdown.winner.username} gana · {state.showdown.winner.handName}!
+            </div>
+            {state.showdown.players?.length > 0 && (
+              <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {state.showdown.players.map(p => (
+                  <div key={p.userId} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>{p.username}</div>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 4 }}>
+                      {p.holeCards?.map((c, i) => <Card key={i} card={c} size="sm" />)}
+                    </div>
+                    {p.bestHand && <div style={{ fontSize: '0.68rem', color: '#ff2d7a', marginTop: 3, fontFamily: 'Inter, system-ui', fontWeight: 700 }}>{p.bestHand.name}</div>}
                   </div>
-                  {p.bestHand && <div style={{ fontSize: '0.68rem', color: '#ff2d7a', marginTop: 3, fontFamily: 'Inter, system-ui', fontWeight: 700 }}>{p.bestHand.name}</div>}
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ fontSize: '0.75rem', color: '#4a4a6a', marginTop: 8, fontFamily: 'Inter, system-ui' }}>Próxima mano en 5s...</div>
-        </div>
-      )}
-
-      {/* The Poker Table */}
-      <PokerTable
-        players={players}
-        myUserId={user.id}
-        myCards={myCards}
-        community={state.community}
-        pot={state.pot}
-        phase={state.phase}
-        currentIdx={state.currentIdx}
-        showdown={state.showdown}
-      />
-
-      {/* My cards (large display) */}
-      {myCards.length > 0 && (
-        <div style={{ textAlign: 'center', marginTop: -20, marginBottom: 12 }}>
-          <div style={{ fontSize: '0.68rem', color: '#6f7088', fontFamily: 'Inter, system-ui', fontWeight: 700, letterSpacing: '0.15em', marginBottom: 6 }}>TU MANO</div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-            {myCards.map((c, i) => <Card key={i} card={c} size="lg" />)}
-          </div>
-          {me?.chips !== undefined && (
-            <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui' }}>
-              Chips: <span style={{ color: '#ffd700', fontWeight: 700 }}>⚡ {(me.chips || 0).toLocaleString('es-AR')}</span>
-              {me.roundBet > 0 && <span style={{ marginLeft: 12 }}>Apuesta actual: <span style={{ color: '#ff2d7a' }}>{me.roundBet.toLocaleString('es-AR')}</span></span>}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Waiting for players */}
-      {isWaiting && players.length < 2 && (
-        <div style={{ textAlign: 'center', padding: '16px', color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.9rem' }}>
-          Esperando más jugadores... ({players.length}/2 mínimo)
-        </div>
-      )}
-
-      {/* Action bar */}
-      <div className="card" style={{ border: '1px solid #1e1e30', marginTop: 8 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-
-          {canStart && (
-            <button className="btn btn-primary" onClick={doStart} style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, padding: '10px 28px' }}>
-              🃏 Iniciar Partida
-            </button>
-          )}
-
-          {isMyTurn && !actionLoading && (
-            <>
-              <button onClick={() => doAction('fold')} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', borderRadius: 6, padding: '10px 22px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background='rgba(239,68,68,0.3)'}
-                onMouseLeave={e => e.currentTarget.style.background='rgba(239,68,68,0.15)'}>
-                FOLD
-              </button>
-
-              {callAmt === 0
-                ? <button className="btn btn-secondary" onClick={() => doAction('check')} style={{ padding: '10px 22px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>CHECK</button>
-                : <button className="btn btn-secondary" onClick={() => doAction('call')} style={{ padding: '10px 22px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>CALL {callAmt.toLocaleString('es-AR')}</button>
-              }
-
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <input
-                  className="input" type="number" placeholder="Monto..."
-                  min={(state.currentBet || 0) + (state.minRaise || state.buyIn || 100)}
-                  value={raiseAmt} onChange={e => setRaiseAmt(e.target.value)}
-                  style={{ width: 100, fontFamily: 'Inter, system-ui', fontWeight: 700 }}
-                />
-                <button className="btn btn-primary btn-sm" onClick={() => doAction('raise', raiseAmt)} disabled={!raiseAmt || parseInt(raiseAmt) <= state.currentBet}
-                  style={{ padding: '8px 16px', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>
-                  RAISE
-                </button>
+                ))}
               </div>
+            )}
+            <div style={{ fontSize: '0.72rem', color: 'var(--c-text4)', marginTop: 8, fontFamily: 'Inter, system-ui' }}>Próxima mano en 5s...</div>
+          </div>
+        )}
 
-              <button onClick={() => doAction('allin')} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.45)', color: '#ffd700', borderRadius: 6, padding: '10px 18px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background='rgba(255,215,0,0.25)'}
-                onMouseLeave={e => e.currentTarget.style.background='rgba(255,215,0,0.12)'}>
-                ALL IN ♠
-              </button>
-            </>
-          )}
+        {/* Poker table */}
+        <PokerTable
+          players={players}
+          myUserId={user.id}
+          myCards={myCards}
+          community={state.community}
+          pot={state.pot}
+          phase={state.phase}
+          currentIdx={state.currentIdx}
+          showdown={state.showdown}
+        />
 
-          {actionLoading && <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui' }}>...</div>}
-
-          {!isMyTurn && !isWaiting && !isShowdown && (
-            <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.88rem' }}>
-              Turno de: <span style={{ color: '#ffd700', fontWeight: 700 }}>{currentPlayer?.username}</span>...
-            </div>
-          )}
-        </div>
+        {isWaiting && players.length < 2 && (
+          <div style={{ textAlign: 'center', padding: '16px', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.9rem' }}>
+            Esperando más jugadores... ({players.length}/2 mínimo)
+          </div>
+        )}
       </div>
     </div>
   );

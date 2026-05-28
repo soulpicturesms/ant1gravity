@@ -3,7 +3,7 @@ import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
 const T = {
-  bg:        '#0c0c14',
+  bg:        '#07070c',
   surface:   '#161623',
   panel:     '#1d1d2c',
   border:    'rgba(255,255,255,0.10)',
@@ -127,7 +127,7 @@ export default function Slots({ balance, onBalanceChange }) {
     const render = () => {
       if (isDestroyed) return;
       ctx.clearRect(0, 0, logicalW, logicalH);
-      ctx.fillStyle = 'rgba(7,7,12,0.92)';
+      ctx.fillStyle = '#0e0e1c';
       ctx.fillRect(0, 0, logicalW, logicalH);
 
       for (let c = 0; c < colCount; c++) {
@@ -148,9 +148,8 @@ export default function Slots({ balance, onBalanceChange }) {
           }
         }
 
-        // Reel column separator
         if (c > 0) {
-          ctx.fillStyle = 'rgba(255,255,255,0.04)';
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
           ctx.fillRect(c * colWidth, 0, 1, logicalH);
         }
 
@@ -161,19 +160,23 @@ export default function Slots({ balance, onBalanceChange }) {
           const symbol = reel.symbols[symbolIndex] || 'Cherry';
           const x = c * colWidth; const y = r * rowHeight + drawOffset;
           ctx.save();
-          ctx.font = 'bold 44px Inter, system-ui';
+          ctx.font = 'bold 42px Arial, sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           if (symbol === 'Seven' || symbol === 'Wild') {
-            ctx.shadowColor = symbol === 'Seven' ? '#ff2d7a' : '#a855f7'; ctx.shadowBlur = 12;
-          } else { ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2; }
-          let emoji = SYMBOL_EMOJIS[symbol] || '🍒';
+            ctx.shadowColor = symbol === 'Seven' ? '#ff2d7a' : '#a855f7'; ctx.shadowBlur = 14;
+          } else { ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 3; }
+          ctx.globalAlpha = 1;
+          const emoji = SYMBOL_EMOJIS[symbol] || '🍒';
           if (reel.speed > 16) {
             const steps = 3; const blurAmt = reel.speed * 0.12;
             for (let j = 0; j < steps; j++) {
-              ctx.globalAlpha = j === 0 ? 0.5 : 0.15;
+              ctx.globalAlpha = j === 0 ? 0.55 : 0.18;
               ctx.fillText(emoji, x + colWidth / 2, y + rowHeight / 2 + (j - steps / 2) * blurAmt);
             }
-          } else { ctx.fillText(emoji, x + colWidth / 2, y + rowHeight / 2); }
+          } else {
+            ctx.globalAlpha = 1;
+            ctx.fillText(emoji, x + colWidth / 2, y + rowHeight / 2);
+          }
           ctx.restore();
         }
       }
@@ -187,8 +190,8 @@ export default function Slots({ balance, onBalanceChange }) {
           const color = colors[line.lineIndex % colors.length];
           ctx.strokeStyle = color;
           if (isActive) {
-            ctx.lineWidth = 5; ctx.shadowColor = color; ctx.shadowBlur = 14;
             ctx.lineWidth = 5 * (1 + Math.sin(Date.now() / 120) * 0.2);
+            ctx.shadowColor = color; ctx.shadowBlur = 14;
           } else { ctx.lineWidth = 1.5; ctx.globalAlpha = 0.18; }
           line.positions.forEach(([cIndex, rIndex], step) => {
             const px = cIndex * colWidth + colWidth / 2; const py = rIndex * rowHeight + rowHeight / 2;
@@ -204,7 +207,7 @@ export default function Slots({ balance, onBalanceChange }) {
             });
             const lastPos = line.positions[line.positions.length - 1];
             const lx = lastPos[0] * colWidth + colWidth / 2; const ly = lastPos[1] * rowHeight + rowHeight / 2;
-            ctx.font = 'bold 11px Inter, system-ui'; ctx.fillStyle = color; ctx.shadowBlur = 4; ctx.textAlign = 'center';
+            ctx.font = 'bold 11px Arial, sans-serif'; ctx.fillStyle = color; ctx.shadowBlur = 4; ctx.textAlign = 'center';
             ctx.fillText(`+${line.payout} TK`, Math.min(logicalW - 55, Math.max(55, lx)), ly - 38);
           }
           ctx.restore();
@@ -288,195 +291,190 @@ export default function Slots({ balance, onBalanceChange }) {
   const maxBet = () => { if (!spinning) setBet(Math.min(900, Math.max(9, Math.floor(balance / 9) * 9))); };
 
   return (
-    <div style={{ maxWidth: 660, margin: '0 auto' }}>
+    <div className="casino-roul-view">
 
-      {/* Jackpot banner */}
-      <div style={{
-        background: T.surface, border: `1px solid ${T.border}`,
-        borderRadius: 12, padding: '12px 20px', textAlign: 'center', marginBottom: 10,
-        position: 'relative', overflow: 'hidden',
-      }}>
+      {/* ── LEFT PANEL ───────────────────────────────── */}
+      <div className="casino-roul-panel">
+        <div className="casino-roul-panel__title">Slots Pro</div>
+
+        {/* Jackpot */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-          background: `linear-gradient(90deg, ${T.gold}, #ff6b00, ${T.gold})`,
-        }} />
-        <div style={{
-          fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.2em',
-          color: T.textFaint, textTransform: 'uppercase', marginBottom: 3,
-          fontFamily: "'Unbounded', system-ui",
+          background: 'rgba(245,197,66,0.06)', border: '1px solid rgba(245,197,66,0.2)',
+          borderRadius: 10, padding: '10px 14px', textAlign: 'center',
+          position: 'relative', overflow: 'hidden',
         }}>
-          JACKPOT GLOBAL
-        </div>
-        <div style={{
-          fontSize: '2rem', fontWeight: 900, color: T.gold,
-          fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.06em',
-          textShadow: `0 0 16px ${T.gold}60`,
-        }}>
-          {jackpot.toLocaleString('es-AR')}
-          <span style={{ fontSize: '0.9rem', fontWeight: 700, marginLeft: 6, color: T.textDim, fontFamily: "'Inter', system-ui" }}>TK</span>
-        </div>
-      </div>
-
-      {/* Reels cabinet */}
-      <div style={{
-        border: `5px solid ${T.panel}`, borderRadius: 14, overflow: 'hidden',
-        boxShadow: `inset 0 0 30px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,45,122,0.12), 0 0 20px rgba(0,0,0,0.5)`,
-        background: T.bg, marginBottom: 10, touchAction: 'none', position: 'relative',
-      }}>
-        <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: 'auto', maxHeight: 270 }} />
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
-          boxShadow: 'inset 0 18px 28px rgba(0,0,0,0.9), inset 0 -18px 28px rgba(0,0,0,0.9)',
-        }} />
-
-        {showBigWin && (
           <div style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,0.7)', pointerEvents: 'none', animation: 'fadeIn 0.3s forwards',
+            position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+            background: 'linear-gradient(90deg, #f5c542, #ff6b00, #f5c542)',
+          }} />
+          <div style={{
+            fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em',
+            color: 'var(--c-text4)', textTransform: 'uppercase', marginBottom: 3,
+            fontFamily: "'Unbounded', system-ui",
+          }}>JACKPOT GLOBAL</div>
+          <div style={{
+            fontSize: '1.6rem', fontWeight: 900, color: '#f5c542',
+            fontFamily: "'JetBrains Mono', monospace",
+            textShadow: '0 0 16px rgba(245,197,66,0.6)',
           }}>
-            <div style={{
-              fontSize: '2.8rem', fontWeight: 900, color: T.gold,
-              fontFamily: "'Unbounded', system-ui",
-              textShadow: `0 0 20px ${T.gold}, 0 0 40px #ff9500`,
-              letterSpacing: '0.06em', animation: 'scaleUpPulse 0.5s infinite alternate ease-in-out',
-            }}>BIG WIN</div>
-            <div style={{ fontSize: '1.2rem', color: T.green, fontWeight: 700, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+            {jackpot.toLocaleString('es-AR')}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, marginLeft: 5, color: 'var(--c-text3)', fontFamily: "'Inter', system-ui" }}>TK</span>
+          </div>
+        </div>
+
+        {/* Last win */}
+        {lastWin > 0 && (
+          <div style={{
+            background: 'rgba(111,255,125,0.08)', border: '1px solid rgba(111,255,125,0.25)',
+            borderRadius: 8, padding: '8px 14px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '0.55rem', color: 'var(--c-text4)', letterSpacing: '0.15em', fontFamily: "'Unbounded', system-ui", marginBottom: 2, textTransform: 'uppercase' }}>Ganancia</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#6fff7d', fontFamily: "'JetBrains Mono', monospace" }}>
               +{lastWin.toLocaleString('es-AR')} TK
             </div>
           </div>
         )}
 
-        {showJackpotWon && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(7,7,12,0.92)', pointerEvents: 'none', animation: 'fadeIn 0.3s forwards',
-            border: `3px solid ${T.gold}`, borderRadius: 8,
-          }}>
-            <div style={{ fontSize: '0.9rem', color: T.red, fontWeight: 800, letterSpacing: '0.25em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui" }}>
-              MEGA JACKPOT
-            </div>
-            <div style={{
-              fontSize: '3rem', fontWeight: 900, color: T.gold,
-              fontFamily: "'JetBrains Mono', monospace",
-              textShadow: `0 0 20px ${T.gold}, 0 0 40px #ff3b30`,
-              letterSpacing: '0.06em', animation: 'scaleUpPulse 0.4s infinite alternate ease-in-out',
-            }}>
-              {lastWin.toLocaleString('es-AR')}
-            </div>
-            <div style={{ fontSize: '1rem', color: T.green, fontWeight: 700, fontFamily: "'Unbounded', system-ui" }}>TOKENS</div>
+        {/* Bet input */}
+        <div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Apuesta · 9 líneas
           </div>
-        )}
-      </div>
-
-      {/* Stats bar */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
-        background: T.surface, border: `1px solid ${T.border}`,
-        borderRadius: 12, padding: '10px 14px', marginBottom: 10,
-        textAlign: 'center',
-      }}>
-        {[
-          { label: 'APUESTA', value: bet, color: T.text },
-          { label: 'GANANCIA', value: lastWin > 0 ? `+${lastWin}` : '—', color: lastWin > 0 ? T.green : T.textFaint },
-          { label: 'SALDO', value: balance.toLocaleString('es-AR'), color: T.green },
-        ].map(({ label, value, color }) => (
-          <div key={label}>
-            <div style={{ fontSize: '0.6rem', color: T.textFaint, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui", marginBottom: 3 }}>{label}</div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color, fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: '16px 18px' }}>
-        {err && (
-          <div style={{
-            background: 'rgba(255,45,122,0.10)', border: '1px solid rgba(255,45,122,0.28)',
-            borderRadius: 8, padding: '7px 12px', color: '#ff8aaa',
-            fontSize: '0.82rem', textAlign: 'center', marginBottom: 12,
-            fontFamily: "'Inter', system-ui",
-          }}>
-            {err}
-          </div>
-        )}
-
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: '0.6rem', color: T.textFaint, fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', marginBottom: 6 }}>
-            APUESTA · 9 LÍNEAS ACTIVAS
-          </div>
-          <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
-              <span style={{ color: T.textFaint, fontSize: '0.6rem', fontFamily: "'Unbounded', system-ui", marginRight: 8, flexShrink: 0, letterSpacing: '0.08em' }}>TOKENS</span>
               <input
                 type="number" min="9" step="9" value={bet} disabled={spinning}
                 onChange={e => setBet(Math.max(9, parseInt(e.target.value) || 9))}
-                style={{
-                  flex: 1, background: 'none', border: 'none', outline: 'none',
-                  color: T.text, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.05rem', textAlign: 'right',
-                }}
+                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '1.1rem', textAlign: 'right' }}
               />
-              <span style={{ color: T.textFaint, fontSize: '0.68rem', fontFamily: "'Inter', system-ui", marginLeft: 6 }}>
-                ({(bet / 9).toFixed(1)}/lín)
-              </span>
+              <span style={{ color: 'var(--c-text4)', fontSize: '0.68rem', marginLeft: 6 }}>TK</span>
             </div>
-            <div style={{ display: 'flex', borderTop: `1px solid ${T.panel}` }}>
+            <div style={{ display: 'flex', borderTop: '1px solid var(--c-surface2)' }}>
               {[['½', half], ['2×', double], ['MAX', maxBet]].map(([label, action], i, arr) => (
                 <button key={label} onClick={action} disabled={spinning} style={{
                   flex: 1, background: 'none', border: 'none',
-                  borderRight: i < arr.length - 1 ? `1px solid ${T.panel}` : 'none',
-                  color: T.textDim, padding: '7px 0',
-                  fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.75rem',
-                  cursor: spinning ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
+                  borderRight: i < arr.length - 1 ? '1px solid var(--c-surface2)' : 'none',
+                  color: 'var(--c-text3)', padding: '7px 0',
+                  fontFamily: "'Inter', system-ui", fontWeight: 700, fontSize: '0.72rem',
+                  cursor: spinning ? 'not-allowed' : 'pointer', transition: 'color 0.15s',
                 }}
-                onMouseEnter={e => { if (!spinning) { e.target.style.color = T.accent; e.target.style.background = T.surface; }}}
-                onMouseLeave={e => { e.target.style.color = T.textDim; e.target.style.background = 'none'; }}
-                >
-                  {label}
-                </button>
+                onMouseEnter={e => { if (!spinning) e.target.style.color = 'var(--c-accent)'; }}
+                onMouseLeave={e => { e.target.style.color = 'var(--c-text3)'; }}
+                >{label}</button>
               ))}
             </div>
           </div>
         </div>
 
         {/* Quick bets */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 5, marginBottom: 12 }}>
-          {QUICK_BETS.map(val => (
-            <button key={val} disabled={spinning} onClick={() => setBet(val)} style={{
-              padding: '6px 2px', borderRadius: 6,
-              background: bet === val ? 'rgba(255,45,122,0.15)' : T.panel,
-              border: `1px solid ${bet === val ? 'rgba(255,45,122,0.4)' : T.border}`,
-              color: bet === val ? T.accent : T.textDim,
-              fontSize: '0.78rem', fontWeight: 700,
-              cursor: spinning ? 'not-allowed' : 'pointer',
-              fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s',
-            }}>
-              {val}
-            </button>
-          ))}
+        <div>
+          <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Apuesta rápida
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+            {QUICK_BETS.map(val => (
+              <button key={val} disabled={spinning} onClick={() => setBet(val)} style={{
+                padding: '7px 4px', borderRadius: 7,
+                background: bet === val ? 'rgba(255,45,122,0.15)' : 'var(--c-surface2)',
+                border: `1px solid ${bet === val ? 'rgba(255,45,122,0.4)' : 'var(--c-line2)'}`,
+                color: bet === val ? 'var(--c-accent)' : 'var(--c-text3)',
+                fontSize: '0.8rem', fontWeight: 700, cursor: spinning ? 'not-allowed' : 'pointer',
+                fontFamily: "'JetBrains Mono', monospace", transition: 'all 0.15s',
+              }}>{val}</button>
+            ))}
+          </div>
         </div>
 
         {bet > balance && (
-          <div style={{ fontSize: '0.73rem', color: T.red, fontFamily: "'Inter', system-ui", textAlign: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--c-accent)', textAlign: 'center' }}>
             Tokens insuficientes
           </div>
         )}
 
-        <button onClick={startSpin} disabled={spinning} style={{
-          width: '100%', height: 50, borderRadius: 10, border: 'none',
-          background: spinning
-            ? T.panel
-            : 'linear-gradient(135deg, #ff2d7a, #ff5f4b)',
-          color: spinning ? T.textFaint : '#fff',
-          fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em',
-          cursor: spinning ? 'not-allowed' : 'pointer',
-          fontFamily: "'Unbounded', system-ui",
-          boxShadow: !spinning ? '0 4px 20px rgba(255,45,122,0.35)' : 'none',
-          transition: 'all 0.2s',
-        }}>
+        {err && <div className="casino-err">{err}</div>}
+
+        <button onClick={startSpin} disabled={spinning || bet > balance} className="roul-spin-btn">
           {spinning ? 'GIRANDO...' : 'GIRAR'}
         </button>
+
+        <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6 }}>
+          9 líneas activas · Wild multiplica<br />Jackpot acumulativo global
+        </div>
+      </div>
+
+      {/* ── RIGHT STAGE ─────────────────────────────── */}
+      <div className="casino-roul-stage" style={{ flexDirection: 'column', gap: 10 }}>
+
+        {/* Reels cabinet */}
+        <div style={{
+          border: '5px solid var(--c-surface2)', borderRadius: 14, overflow: 'hidden',
+          boxShadow: 'inset 0 0 30px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,45,122,0.12), 0 0 20px rgba(0,0,0,0.5)',
+          background: '#07070c', touchAction: 'none', position: 'relative', width: '100%',
+        }}>
+          <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: 'auto', maxHeight: 270 }} />
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
+            boxShadow: 'inset 0 18px 28px rgba(0,0,0,0.9), inset 0 -18px 28px rgba(0,0,0,0.9)',
+          }} />
+
+          {showBigWin && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.7)', pointerEvents: 'none', animation: 'fadeIn 0.3s forwards',
+            }}>
+              <div style={{
+                fontSize: '2.8rem', fontWeight: 900, color: '#f5c542',
+                fontFamily: "'Unbounded', system-ui",
+                textShadow: '0 0 20px #f5c542, 0 0 40px #ff9500',
+                letterSpacing: '0.06em', animation: 'scaleUpPulse 0.5s infinite alternate ease-in-out',
+              }}>BIG WIN</div>
+              <div style={{ fontSize: '1.2rem', color: '#6fff7d', fontWeight: 700, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
+                +{lastWin.toLocaleString('es-AR')} TK
+              </div>
+            </div>
+          )}
+
+          {showJackpotWon && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(7,7,12,0.92)', pointerEvents: 'none', animation: 'fadeIn 0.3s forwards',
+              border: '3px solid #f5c542', borderRadius: 8,
+            }}>
+              <div style={{ fontSize: '0.9rem', color: '#ff2d7a', fontWeight: 800, letterSpacing: '0.25em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui" }}>
+                MEGA JACKPOT
+              </div>
+              <div style={{
+                fontSize: '3rem', fontWeight: 900, color: '#f5c542',
+                fontFamily: "'JetBrains Mono', monospace",
+                textShadow: '0 0 20px #f5c542, 0 0 40px #ff3b30',
+                letterSpacing: '0.06em', animation: 'scaleUpPulse 0.4s infinite alternate ease-in-out',
+              }}>
+                {lastWin.toLocaleString('es-AR')}
+              </div>
+              <div style={{ fontSize: '1rem', color: '#6fff7d', fontWeight: 700, fontFamily: "'Unbounded', system-ui" }}>TOKENS</div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats bar */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+          background: 'var(--c-surface)', border: '1px solid var(--c-line2)',
+          borderRadius: 12, padding: '10px 14px', textAlign: 'center', width: '100%',
+        }}>
+          {[
+            { label: 'APUESTA',  value: bet,                                  color: 'var(--c-text)' },
+            { label: 'GANANCIA', value: lastWin > 0 ? `+${lastWin}` : '—',   color: lastWin > 0 ? '#6fff7d' : 'var(--c-text4)' },
+            { label: 'SALDO',    value: balance.toLocaleString('es-AR'),      color: '#6fff7d' },
+          ].map(({ label, value, color }) => (
+            <div key={label}>
+              <div style={{ fontSize: '0.58rem', color: 'var(--c-text4)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'Unbounded', system-ui", marginBottom: 3 }}>{label}</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color, fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <style>{`

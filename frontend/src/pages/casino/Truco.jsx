@@ -13,7 +13,7 @@ const ENVIDO_LABEL = {
 // Card images from the open-source Spanish deck by Basquetteur (CC BY-SA 3.0)
 // via jsDelivr CDN mirroring mcmd/playingcards.io-spanish.playing.cards
 const CDN = 'https://cdn.jsdelivr.net/gh/mcmd/playingcards.io-spanish.playing.cards@master/img';
-const cardUrl  = (num, palo) => `${CDN}/${String(num).padStart(2, '0')}-${palo.toLowerCase()}.png`;
+const cardUrl   = (num, palo) => `${CDN}/${String(num).padStart(2, '0')}-${palo.toLowerCase()}.png`;
 const reversoUrl = `${CDN}/reverso.png`;
 
 // ─── Card component ───────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function SpanishCard({ num, palo, hidden, size = 'md', selected, selectable, onC
 
 // ─── Score bar ────────────────────────────────────────────────────────────────
 function ScoreBar({ scores, trickWins, players, myUserId }) {
-  const myTeam = players.find(p => p.userId === myUserId)?.team ?? 0;
+  const myTeam  = players.find(p => p.userId === myUserId)?.team ?? 0;
   const oppTeam = myTeam === 0 ? 1 : 0;
   const myScore  = scores[myTeam]  || 0;
   const oppScore = scores[oppTeam] || 0;
@@ -63,25 +63,25 @@ function ScoreBar({ scores, trickWins, players, myUserId }) {
   };
 
   const ScoreRow = ({ score, label, isMe, tricks }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-      <div style={{ width: 90, fontSize: '0.72rem', color: isMe ? '#ffd700' : '#9090b0', fontFamily: 'Inter, system-ui', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+      <div style={{ width: 80, fontSize: '0.7rem', color: isMe ? '#ffd700' : '#a5a6b8', fontFamily: 'Inter, system-ui', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {isMe ? '👤 Vos' : '🔴 ' + label}
       </div>
-      <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>
-        <div style={{ width: `${(score / 15) * 100}%`, height: '100%', background: isMe ? '#ffd700' : '#6a6a8a', borderRadius: 4, transition: 'width 0.5s' }} />
+      <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ width: `${(score / 15) * 100}%`, height: '100%', background: isMe ? '#ffd700' : '#6f7088', borderRadius: 3, transition: 'width 0.5s' }} />
       </div>
-      <div style={{ width: 40, textAlign: 'right', fontFamily: 'Inter, system-ui', fontWeight: 700, color: isMe ? '#ffd700' : '#9090b0', fontSize: '0.85rem' }}>{score}/15</div>
+      <div style={{ width: 32, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: isMe ? '#ffd700' : '#a5a6b8', fontSize: '0.78rem' }}>{score}/15</div>
       <div style={{ display: 'flex', gap: 3 }}>
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: tricks > i ? (isMe ? '#ffd700' : '#6a6a8a') : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }} />
+          <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: tricks > i ? (isMe ? '#ffd700' : '#6f7088') : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }} />
         ))}
       </div>
     </div>
   );
 
   return (
-    <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-      <ScoreRow score={myScore}  label={teamLabel(myTeam)}  isMe tricks={trickWins[myTeam]}  />
+    <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <ScoreRow score={myScore}  label={teamLabel(myTeam)}  isMe       tricks={trickWins[myTeam]} />
       <ScoreRow score={oppScore} label={teamLabel(oppTeam)} isMe={false} tricks={trickWins[oppTeam]} />
     </div>
   );
@@ -102,25 +102,25 @@ function OfferBanner({ offer, type, onAccept, onReject, myUserId }) {
     <div className={animClass} style={{
       background: type === 'truco' ? 'rgba(251,191,36,0.12)' : 'rgba(96,165,250,0.12)',
       border: `1px solid ${type === 'truco' ? '#fbbf24' : '#60a5fa'}60`,
-      borderRadius: 10, padding: '14px 16px', marginBottom: 12,
+      borderRadius: 10, padding: '12px 14px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10,
     }}>
       <div>
-        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.1rem', color: type === 'truco' ? '#fbbf24' : '#60a5fa' }}>
+        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem', color: type === 'truco' ? '#fbbf24' : '#60a5fa' }}>
           📣 {offer.byUsername} canta {label}
         </div>
         {type === 'truco' && (
-          <div style={{ fontSize: '0.78rem', color: '#a5a6b8', marginTop: 2 }}>
+          <div style={{ fontSize: '0.75rem', color: '#a5a6b8', marginTop: 2 }}>
             La mano valdría {offer.offeredPts} {offer.offeredPts === 1 ? 'punto' : 'puntos'}
           </div>
         )}
       </div>
       {!isMe ? (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onAccept} style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid #22c55e', color: '#22c55e', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem' }}>
+          <button onClick={onAccept} style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid #22c55e', color: '#22c55e', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.85rem' }}>
             ✓ QUIERO
           </button>
-          <button onClick={onReject} style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 7, padding: '7px 18px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.9rem' }}>
+          <button onClick={onReject} style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.85rem' }}>
             ✗ NO QUIERO
           </button>
         </div>
@@ -141,15 +141,15 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
     <div style={{
       background: isCurrent && !isMe ? 'rgba(251,191,36,0.06)' : 'transparent',
       border: isCurrent && !isMe ? '1px solid rgba(251,191,36,0.3)' : '1px solid transparent',
-      borderRadius: 10, padding: '8px 12px',
+      borderRadius: 10, padding: '6px 10px',
       display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
     }}>
-      <div style={{ minWidth: 100 }}>
-        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.8rem', color: isCurrent ? '#fbbf24' : '#9090b0' }}>
+      <div style={{ minWidth: 90 }}>
+        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.78rem', color: isCurrent ? '#fbbf24' : '#a5a6b8' }}>
           {isCurrent ? '⏳ ' : ''}{player.username}
           {player.team === 0 ? ' 🔵' : ' 🔴'}
         </div>
-        <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+        <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
           {Array.from({ length: hidden }).map((_, i) => (
             <SpanishCard key={i} hidden size="sm" />
           ))}
@@ -157,7 +157,7 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
       </div>
       {played.length > 0 && (
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Inter, system-ui' }}>Jugó:</span>
+          <span style={{ fontSize: '0.62rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>Jugó:</span>
           {played.map((c, i) => <SpanishCard key={i} num={c.num} palo={c.palo} size="sm" />)}
         </div>
       )}
@@ -173,12 +173,12 @@ function TrickArea({ trick, lastTrick }) {
     <div style={{ textAlign: 'center', minHeight: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
       {display ? (
         <>
-          <div style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
+          <div style={{ fontSize: '0.62rem', color: '#4a4b60', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'flex-end' }}>
             {display.map((t, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
                 <SpanishCard num={t.card.num} palo={t.card.palo} size="md" />
-                <div style={{ fontFamily: 'Inter, system-ui', fontSize: '0.65rem', color: '#6f7088', marginTop: 3 }}>{t.username}</div>
+                <div style={{ fontFamily: 'Inter, system-ui', fontSize: '0.62rem', color: '#6f7088', marginTop: 3 }}>{t.username}</div>
               </div>
             ))}
           </div>
@@ -190,7 +190,7 @@ function TrickArea({ trick, lastTrick }) {
           ))}
         </div>
       ) : (
-        <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.9rem' }}>Mesa vacía</div>
+        <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>Mesa vacía</div>
       )}
     </div>
   );
@@ -206,16 +206,16 @@ function HandEndBanner({ result, players, myUserId, countdown }) {
     <div className="bounce-in" style={{
       background: won ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)',
       border: `1px solid ${won ? '#22c55e' : '#ef4444'}50`,
-      borderRadius: 12, padding: '16px 20px', marginBottom: 12, textAlign: 'center',
+      borderRadius: 10, padding: '12px 16px', textAlign: 'center',
     }}>
-      <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.4rem', color: won ? '#22c55e' : '#ef4444' }}>
+      <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.2rem', color: won ? '#22c55e' : '#ef4444' }}>
         {result.mazo ? `🏳️ ${result.byUsername} se fue al mazo` : won ? '🏆 Ganaste la mano!' : '💔 Perdiste la mano'}
       </div>
-      <div style={{ color: '#a5a6b8', fontFamily: 'Inter, system-ui', marginTop: 4, fontSize: '0.85rem' }}>
+      <div style={{ color: '#a5a6b8', fontFamily: 'Inter, system-ui', marginTop: 4, fontSize: '0.82rem' }}>
         +{result.trucoPoints} {result.trucoPoints === 1 ? 'punto' : 'puntos'} para {won ? 'tu equipo' : 'el equipo rival'}
       </div>
       {countdown > 0 && (
-        <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#4a4a6a', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
           Próxima mano en {countdown}s...
         </div>
       )}
@@ -236,12 +236,12 @@ function GameOverBanner({ gameOver, players, myUserId, onRematch, onLeave }) {
     }}>
       <div style={{
         background: 'linear-gradient(135deg,#0a0a18,#0f0f22)',
-        border: `2px solid ${won ? '#ffd700' : '#6a6a8a'}`,
+        border: `2px solid ${won ? '#ffd700' : '#6f7088'}`,
         borderRadius: 20, padding: '40px 48px', textAlign: 'center', maxWidth: 400,
         boxShadow: `0 0 60px ${won ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.5)'}`,
       }}>
         <div style={{ fontSize: '4rem', marginBottom: 12 }}>{won ? '🏆' : '💀'}</div>
-        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#9090b0', letterSpacing: '0.08em', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#a5a6b8', letterSpacing: '0.08em', marginBottom: 8 }}>
           {won ? '¡GANASTE!' : '¡PERDISTE!'}
         </div>
         <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '1rem', marginBottom: 24 }}>
@@ -275,13 +275,13 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
         <button onClick={() => onCreate('1v1')} disabled={loading} style={{ background: 'rgba(255,45,122,0.08)', border: '1px solid rgba(255,45,122,0.28)', color: '#ff2d7a', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 1v1
         </button>
-        <button onClick={() => onCreate('2v2')} disabled={loading} style={{ background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.18)', color: '#00e8c070', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
+        <button onClick={() => onCreate('2v2')} disabled={loading} style={{ background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.18)', color: 'rgba(255,45,122,0.7)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 2v2
         </button>
       </div>
 
       {rooms.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#4a4a6a', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
           No hay salas disponibles — ¡creá la primera!
         </div>
       ) : (
@@ -337,7 +337,7 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1a1a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>
                   {p ? (i % 2 === 0 ? '🔵' : '🔴') : '⏳'}
                 </div>
-                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: p ? '#e0e0f0' : '#4a4a6a' }}>
+                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: p ? '#e0e0f0' : '#4a4b60' }}>
                   {p ? p.username : 'Esperando...'}
                 </div>
                 {p?.userId === myUserId && <span style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter, system-ui' }}>(vos)</span>}
@@ -367,7 +367,7 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
       </div>
 
       <div style={{ marginTop: 16, textAlign: 'center' }}>
-        <div style={{ fontSize: '0.75rem', color: '#4a4a6a', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ fontSize: '0.75rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
           Compartí la sala: <code style={{ color: '#ff2d7a' }}>{room.id}</code>
         </div>
       </div>
@@ -376,7 +376,7 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
 }
 
 // ─── Main game board ──────────────────────────────────────────────────────────
-function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, onCallEnvido, onRespondEnvido, onMazo, onRematch, onLeave, err, loading }) {
+function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, onCallEnvido, onRespondEnvido, onMazo, onRematch, onLeave, err, loading, muted, onToggleMute }) {
   const [selCard, setSelCard] = useState(null);
   const myCards    = room.myCards || [];
   const myEnvido   = room.myEnvido;
@@ -387,10 +387,13 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
   const teammates  = players.filter(p => p.team === myTeam && p.userId !== myUserId);
   const isMyTurn   = room.currentUserId === myUserId && room.phase === 'playing';
   const lastTrick  = room.trickHistory?.length ? room.trickHistory[room.trickHistory.length - 1] : null;
+  const currentOpponent = opponents.find(p => p.userId === room.currentUserId);
 
   const canCallTruco  = room.phase === 'playing' && !room.trucoOffer && room.trucoPts < 4;
   const canCallEnvido = room.phase === 'playing' && !room.envidoOffer && !room.envidoSettled && (room.tricksCompleted || 0) === 0;
   const canMazo       = room.phase === 'playing' && !room.trucoOffer && !room.envidoOffer;
+
+  const nextTrucoPts = room.trucoPts < 2 ? 2 : room.trucoPts < 3 ? 3 : 4;
 
   const handleCardClick = (card) => {
     if (!isMyTurn) return;
@@ -403,11 +406,16 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
     }
   };
 
-  const nextTrucoPts = room.trucoPts < 2 ? 2 : room.trucoPts < 3 ? 3 : 4;
+  const callBtnStyle = (color) => ({
+    height: 40, borderRadius: 8, border: `1px solid ${color}50`,
+    background: `${color}12`, color,
+    fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.78rem',
+    cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s',
+  });
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto', position: 'relative' }}>
-      {/* Game over overlay */}
+    <div style={{ position: 'relative' }}>
+      {/* Game over overlay (full screen, outside layout) */}
       {room.gameOver && (
         <GameOverBanner
           gameOver={room.gameOver}
@@ -418,125 +426,193 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
         />
       )}
 
-      <div className="card" style={{ border: '1px solid rgba(255,45,122,0.12)', background: 'linear-gradient(135deg,#060610,#0a0a18)', padding: '16px' }}>
-        {/* Score */}
-        <ScoreBar scores={room.scores || [0, 0]} trickWins={room.trickWins || [0, 0]} players={players} myUserId={myUserId} />
+      <div className="casino-roul-view">
 
-        {err && <div className="alert alert-error" style={{ marginBottom: 10, fontSize: '0.82rem' }}>{err}</div>}
+        {/* ── LEFT PANEL ───────────────────────────────── */}
+        <div className="casino-roul-panel">
+          <div className="casino-roul-panel__title">🀄 Truco</div>
 
-        {/* Hand end result */}
-        {room.phase === 'hand_end' && !room.gameOver && room.handEndResult && (
-          <HandEndBanner result={room.handEndResult} players={players} myUserId={myUserId} countdown={0} />
-        )}
+          {/* Score */}
+          <ScoreBar
+            scores={room.scores || [0, 0]}
+            trickWins={room.trickWins || [0, 0]}
+            players={players}
+            myUserId={myUserId}
+          />
 
-        {/* Envido result (after settled) */}
-        {room.envidoResult && !room.envidoOffer && (
-          <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10, fontSize: '0.8rem', color: '#60a5fa', fontFamily: 'Inter, system-ui' }}>
-            {room.envidoResult.rejected
-              ? `Envido rechazado → +1 pt para ${players.find(p => room.teams[room.envidoResult.winnerTeam]?.includes(p.userId))?.username}`
-              : `Envido: +${room.envidoResult.pts} pts → Equipo ${room.envidoResult.winnerTeam === myTeam ? 'vuestro 🔵' : 'rival 🔴'}`}
-          </div>
-        )}
-
-        {/* Truco offer */}
-        <OfferBanner
-          offer={room.trucoOffer}
-          type="truco"
-          myUserId={myUserId}
-          onAccept={() => onRespondTruco(true)}
-          onReject={() => onRespondTruco(false)}
-        />
-
-        {/* Envido offer */}
-        <OfferBanner
-          offer={room.envidoOffer}
-          type="envido"
-          myUserId={myUserId}
-          onAccept={() => onRespondEnvido(true)}
-          onReject={() => onRespondEnvido(false)}
-        />
-
-        {/* Opponents */}
-        <div style={{ marginBottom: 10 }}>
-          {opponents.map(p => (
-            <PlayerArea key={p.userId} player={p} isCurrent={room.currentUserId === p.userId} isMe={false} />
-          ))}
-          {teammates.map(p => (
-            <PlayerArea key={p.userId} player={p} isCurrent={room.currentUserId === p.userId} isMe={false} />
-          ))}
-        </div>
-
-        {/* Current trick */}
-        <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: '12px', marginBottom: 10, minHeight: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <TrickArea trick={room.trick} lastTrick={lastTrick} />
-        </div>
-
-        {/* My hand */}
-        {room.phase !== 'waiting' && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: '0.7rem', color: '#6f7088', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-              <span>TU MANO {isMyTurn ? '— Tu turno' : ''}</span>
-              {myEnvido !== null && <span style={{ color: '#60a5fa' }}>Envido: {myEnvido} pts</span>}
+          {/* Turn status */}
+          {isMyTurn ? (
+            <div style={{
+              background: 'rgba(111,255,125,0.08)', border: '1px solid rgba(111,255,125,0.25)',
+              borderRadius: 8, padding: '7px 12px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '0.6rem', color: '#4a4b60', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Tu turno</div>
+              {selCard
+                ? <div style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'Inter, system-ui' }}>Clickeá de nuevo para jugar</div>
+                : <div style={{ fontSize: '0.75rem', color: '#6fff7d', fontFamily: 'Inter, system-ui' }}>Seleccioná una carta</div>
+              }
             </div>
-            {isMyTurn && !room.trucoOffer && !room.envidoOffer && selCard && (
-              <div style={{ textAlign: 'center', marginBottom: 8, fontSize: '0.78rem', color: '#fbbf24', fontFamily: 'Inter, system-ui' }}>
-                Volvé a clickear la carta para jugarla
+          ) : room.phase === 'playing' && currentOpponent ? (
+            <div style={{
+              background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.18)',
+              borderRadius: 8, padding: '7px 12px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '0.6rem', color: '#4a4b60', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Turno de</div>
+              <div style={{ fontSize: '0.85rem', color: '#ffd700', fontWeight: 700, fontFamily: 'Inter, system-ui' }}>{currentOpponent.username}</div>
+            </div>
+          ) : null}
+
+          {/* My hand */}
+          {room.phase !== 'waiting' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  Tu mano
+                </div>
+                {myEnvido !== null && (
+                  <div style={{ fontSize: '0.7rem', color: '#60a5fa', fontFamily: 'Inter, system-ui', fontWeight: 700 }}>
+                    Envido: {myEnvido}
+                  </div>
+                )}
               </div>
-            )}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              {myCards.length > 0 ? myCards.map(c => (
-                <SpanishCard
-                  key={c.id}
-                  num={c.num}
-                  palo={c.palo}
-                  size="lg"
-                  selectable={isMyTurn && !room.trucoOffer && !room.envidoOffer}
-                  selected={selCard?.id === c.id}
-                  onClick={() => handleCardClick(c)}
-                />
-              )) : (
-                <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', padding: '20px 0' }}>Sin cartas</div>
+              {myCards.length > 0 ? (
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {myCards.map(c => (
+                    <SpanishCard
+                      key={c.id}
+                      num={c.num}
+                      palo={c.palo}
+                      size="lg"
+                      selectable={isMyTurn && !room.trucoOffer && !room.envidoOffer}
+                      selected={selCard?.id === c.id}
+                      onClick={() => handleCardClick(c)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.82rem', textAlign: 'center', padding: '10px 0' }}>Sin cartas</div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action buttons */}
-        {room.phase === 'playing' && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-            <div style={{ fontSize: '0.68rem', color: '#4a4a6a', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em', marginBottom: 8 }}>ENVITES</div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {/* Truco calls */}
+          {/* Call buttons */}
+          {room.phase === 'playing' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {canCallTruco && (
-                <button onClick={() => onCallTruco(nextTrucoPts)} disabled={loading} style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.82rem' }}>
+                <button onClick={() => onCallTruco(nextTrucoPts)} disabled={loading} style={callBtnStyle('#fbbf24')}>
                   📣 {TRUCO_LABEL[nextTrucoPts]}
                 </button>
               )}
-
-              {/* Envido calls */}
               {canCallEnvido && (
                 <>
-                  <button onClick={() => onCallEnvido('envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('envido')} disabled={loading} style={callBtnStyle('#60a5fa')}>
                     🎯 ENVIDO
                   </button>
-                  <button onClick={() => onCallEnvido('real_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('real_envido')} disabled={loading} style={callBtnStyle('#60a5fa')}>
                     🎯 REAL ENVIDO
                   </button>
-                  <button onClick={() => onCallEnvido('falta_envido')} disabled={loading} style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.3)', color: '#60a5fa', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.82rem' }}>
+                  <button onClick={() => onCallEnvido('falta_envido')} disabled={loading} style={callBtnStyle('#60a5fa')}>
                     🎯 FALTA ENVIDO
                   </button>
                 </>
               )}
-
-              {/* Mazo */}
               {canMazo && (
-                <button onClick={onMazo} disabled={loading} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444', borderRadius: 7, padding: '7px 14px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.82rem', marginLeft: 'auto' }}>
+                <button onClick={onMazo} disabled={loading} style={callBtnStyle('#ef4444')}>
                   🏳️ AL MAZO
                 </button>
               )}
             </div>
+          )}
+
+          {err && <div className="casino-err">{err}</div>}
+
+          {/* Leave + mute */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+            <button
+              onClick={onToggleMute}
+              style={{ background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7, padding: '7px 12px', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '1rem' }}
+              title={muted ? 'Activar sonido' : 'Silenciar'}
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
+            <button
+              onClick={onLeave}
+              style={{
+                flex: 1, background: 'none', border: '1px solid var(--c-line2)', borderRadius: 7,
+                padding: '7px 14px', cursor: 'pointer', color: 'var(--c-text3)',
+                fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,45,122,0.4)'; e.currentTarget.style.color = '#ff2d7a'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--c-line2)'; e.currentTarget.style.color = 'var(--c-text3)'; }}
+            >
+              ← Salir
+            </button>
           </div>
-        )}
+        </div>
+
+        {/* ── RIGHT STAGE ─────────────────────────────── */}
+        <div className="casino-roul-stage" style={{ flexDirection: 'column', gap: 10, minHeight: 400 }}>
+
+          {/* Hand end result */}
+          {room.phase === 'hand_end' && !room.gameOver && room.handEndResult && (
+            <HandEndBanner result={room.handEndResult} players={players} myUserId={myUserId} countdown={0} />
+          )}
+
+          {/* Envido result */}
+          {room.envidoResult && !room.envidoOffer && (
+            <div style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 8, padding: '8px 12px', fontSize: '0.8rem', color: '#60a5fa', fontFamily: 'Inter, system-ui' }}>
+              {room.envidoResult.rejected
+                ? `Envido rechazado → +1 pt para ${players.find(p => room.teams?.[room.envidoResult.winnerTeam]?.includes(p.userId))?.username}`
+                : `Envido: +${room.envidoResult.pts} pts → Equipo ${room.envidoResult.winnerTeam === myTeam ? 'vuestro 🔵' : 'rival 🔴'}`}
+            </div>
+          )}
+
+          {/* Offer banners */}
+          <OfferBanner
+            offer={room.trucoOffer}
+            type="truco"
+            myUserId={myUserId}
+            onAccept={() => onRespondTruco(true)}
+            onReject={() => onRespondTruco(false)}
+          />
+          <OfferBanner
+            offer={room.envidoOffer}
+            type="envido"
+            myUserId={myUserId}
+            onAccept={() => onRespondEnvido(true)}
+            onReject={() => onRespondEnvido(false)}
+          />
+
+          {/* Opponents + teammates */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {opponents.map(p => (
+              <PlayerArea key={p.userId} player={p} isCurrent={room.currentUserId === p.userId} isMe={false} />
+            ))}
+            {teammates.map(p => (
+              <PlayerArea key={p.userId} player={p} isCurrent={room.currentUserId === p.userId} isMe={false} />
+            ))}
+          </div>
+
+          {/* Table / trick area */}
+          <div style={{
+            flex: 1,
+            background: 'radial-gradient(ellipse at 50% 50%, #1e7b3c 0%, #155d2d 50%, #0f4d26 100%)',
+            borderRadius: 14, border: '5px solid #2e1a06',
+            boxShadow: '0 0 0 2px #3d2408, 0 8px 32px rgba(0,0,0,0.8)',
+            padding: '16px 20px', minHeight: 140, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.03) 3px,rgba(0,0,0,0.03) 6px)', pointerEvents: 'none' }} />
+            <TrickArea trick={room.trick} lastTrick={lastTrick} />
+          </div>
+
+          {/* Waiting message */}
+          {room.phase === 'waiting' && (
+            <div style={{ textAlign: 'center', color: 'var(--c-text4)', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>
+              Esperando para iniciar...
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -544,7 +620,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Truco({ user }) {
-  const [view, setView]     = useState('list');   // 'list' | 'room'
+  const [view, setView]     = useState('list');
   const [rooms, setRooms]   = useState([]);
   const [roomId, setRoomId] = useState(null);
   const [room, setRoom]     = useState(null);
@@ -555,18 +631,16 @@ export default function Truco({ user }) {
   const pollRef      = useRef(null);
   const roomsRef     = useRef(null);
   const nextHandRef  = useRef(null);
-  const countdown    = useRef(null);
 
-  const prevMyTurnRef = useRef(false);
-  const prevPlayedCardsRef = useRef(0);
-  const prevPhaseRef = useRef('');
-  const prevTrucoOfferRef = useRef(null);
-  const prevEnvidoOfferRef = useRef(null);
-  const prevGameOverRef = useRef(false);
+  const prevMyTurnRef         = useRef(false);
+  const prevPlayedCardsRef    = useRef(0);
+  const prevPhaseRef          = useRef('');
+  const prevTrucoOfferRef     = useRef(null);
+  const prevEnvidoOfferRef    = useRef(null);
+  const prevGameOverRef       = useRef(false);
 
   const myUserId = user?.id;
 
-  // Poll active room
   const pollRoom = useCallback(async () => {
     if (!roomId) return;
     try {
@@ -574,7 +648,7 @@ export default function Truco({ user }) {
       setRoom(r);
 
       if (r.phase === 'hand_end' && !r.gameOver) {
-        if (nextHandRef.current) return; // already scheduled
+        if (nextHandRef.current) return;
         nextHandRef.current = setTimeout(async () => {
           try {
             const next = await api.trucoNextHand(roomId);
@@ -596,64 +670,39 @@ export default function Truco({ user }) {
     return () => { clearInterval(pollRef.current); clearTimeout(nextHandRef.current); };
   }, [roomId, pollRoom]);
 
-  // Sound triggers on room state updates
   useEffect(() => {
     if (!room) return;
     const myPlayer = room.players?.find(p => p.userId === user?.id);
     const myTeam = myPlayer?.team ?? 0;
-    
-    // 1. My turn alert
+
     const isMyTurn = room.currentUserId === user?.id && room.phase === 'playing' && !room.trucoOffer && !room.envidoOffer;
-    if (isMyTurn && !prevMyTurnRef.current) {
-      casinoAudio.playTurnAlert();
-    }
+    if (isMyTurn && !prevMyTurnRef.current) casinoAudio.playTurnAlert();
     prevMyTurnRef.current = isMyTurn;
 
-    // 2. Play slide sound when cards are played
     const totalPlayed = room.players?.reduce((sum, p) => sum + (p.playedCards?.length || 0), 0) || 0;
-    if (totalPlayed > prevPlayedCardsRef.current) {
-      casinoAudio.playCardSlide();
-    }
+    if (totalPlayed > prevPlayedCardsRef.current) casinoAudio.playCardSlide();
     prevPlayedCardsRef.current = totalPlayed;
 
-    // 3. Play chip/ding sound when offers are made
-    if (room.trucoOffer && !prevTrucoOfferRef.current) {
-      casinoAudio.playTurnAlert();
-    }
+    if (room.trucoOffer && !prevTrucoOfferRef.current) casinoAudio.playTurnAlert();
     prevTrucoOfferRef.current = room.trucoOffer;
 
-    if (room.envidoOffer && !prevEnvidoOfferRef.current) {
-      casinoAudio.playTurnAlert();
-    }
+    if (room.envidoOffer && !prevEnvidoOfferRef.current) casinoAudio.playTurnAlert();
     prevEnvidoOfferRef.current = room.envidoOffer;
 
-    // 4. Play win/lose on hand end
     if (room.phase === 'hand_end' && prevPhaseRef.current !== 'hand_end') {
       const won = room.handEndResult?.winnerTeam === myTeam;
-      if (won) {
-        casinoAudio.playWin();
-      } else {
-        casinoAudio.playLose();
-      }
+      won ? casinoAudio.playWin() : casinoAudio.playLose();
     }
     prevPhaseRef.current = room.phase;
 
-    // 5. Play win/lose on game over
     if (room.gameOver && !prevGameOverRef.current) {
       const won = room.gameOver.winnerTeam === myTeam;
-      if (won) {
-        casinoAudio.playWin();
-      } else {
-        casinoAudio.playLose();
-      }
+      won ? casinoAudio.playWin() : casinoAudio.playLose();
       prevGameOverRef.current = true;
     }
-    if (!room.gameOver) {
-      prevGameOverRef.current = false;
-    }
+    if (!room.gameOver) prevGameOverRef.current = false;
   }, [room, user?.id]);
 
-  // Poll rooms list
   useEffect(() => {
     if (view !== 'list') { clearInterval(roomsRef.current); return; }
     const load = () => api.trucoGetRooms().then(setRooms).catch(() => {});
@@ -666,9 +715,7 @@ export default function Truco({ user }) {
     setLoading(true); setErr('');
     try {
       const r = await api.trucoCreateRoom({ mode, name: `Sala de ${user?.username || 'jugador'}` });
-      setRoomId(r.id);
-      setRoom(r);
-      setView('room');
+      setRoomId(r.id); setRoom(r); setView('room');
     } catch (e) { setErr(e.message); }
     setLoading(false);
   };
@@ -677,9 +724,7 @@ export default function Truco({ user }) {
     setLoading(true); setErr('');
     try {
       const r = await api.trucoJoinRoom(id);
-      setRoomId(r.id || id);
-      setRoom(r);
-      setView('room');
+      setRoomId(r.id || id); setRoom(r); setView('room');
     } catch (e) { setErr(e.message); }
     setLoading(false);
   };
@@ -693,10 +738,8 @@ export default function Truco({ user }) {
 
   const startGame = async () => {
     setLoading(true); setErr('');
-    try {
-      const r = await api.trucoStart(roomId);
-      setRoom(r);
-    } catch (e) { setErr(e.message); }
+    try { const r = await api.trucoStart(roomId); setRoom(r); }
+    catch (e) { setErr(e.message); }
     setLoading(false);
   };
 
@@ -714,27 +757,8 @@ export default function Truco({ user }) {
     </div>
   );
 
-  // Top bar with audio toggle
-  const TopBar = () => view === 'room' ? (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-      <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#a5a6b8', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.85rem' }}>
-        ← Volver al lobby
-      </button>
-      <button onClick={() => {
-        const nowMuted = casinoAudio.toggleMute();
-        setMuted(nowMuted);
-      }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'rgba(255,255,255,0.3)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
-        {muted ? '🔇' : '🔊'}
-      </button>
-    </div>
-  ) : null;
-
   if (view === 'list') {
-    return (
-      <div>
-        <RoomList rooms={rooms} onCreate={createRoom} onJoin={joinRoom} err={err} loading={loading} />
-      </div>
-    );
+    return <RoomList rooms={rooms} onCreate={createRoom} onJoin={joinRoom} err={err} loading={loading} />;
   }
 
   if (!room) return <div style={{ textAlign: 'center', padding: 40, color: '#6f7088', fontFamily: 'Inter, system-ui' }}>Cargando sala...</div>;
@@ -742,31 +766,37 @@ export default function Truco({ user }) {
   if (room.status === 'waiting' || (room.status === 'playing' && !room.myCards?.length && room.phase === 'waiting')) {
     return (
       <div>
-        <TopBar />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid var(--c-line2)', color: 'var(--c-text3)', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 600, fontSize: '0.85rem' }}>
+            ← Volver al lobby
+          </button>
+          <button onClick={() => { const m = casinoAudio.toggleMute(); setMuted(m); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'rgba(255,255,255,0.3)', padding: 4 }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
+            {muted ? '🔇' : '🔊'}
+          </button>
+        </div>
         <WaitingRoom room={room} myUserId={myUserId} onStart={startGame} onLeave={leaveRoom} err={err} />
       </div>
     );
   }
 
   return (
-    <div>
-      <TopBar />
-      <GameBoard
-        room={room}
-        myUserId={myUserId}
-        err={err}
-        loading={loading}
-        onPlayCard={cardId   => act(() => api.trucoPlayCard(roomId, { cardId }))}
-        onCallTruco={pts     => act(() => api.trucoCallTruco(roomId, { offeredPts: pts }))}
-        onRespondTruco={acc  => act(() => api.trucoRespondTruco(roomId, { accept: acc }))}
-        onCallEnvido={type   => act(() => api.trucoCallEnvido(roomId, { type }))}
-        onRespondEnvido={acc => act(() => api.trucoRespondEnvido(roomId, { accept: acc }))}
-        onMazo={() => {
-          if (window.confirm('¿Seguro que te vas al mazo?')) act(() => api.trucoMazo(roomId));
-        }}
-        onRematch={() => act(() => api.trucoRematch(roomId))}
-        onLeave={leaveRoom}
-      />
-    </div>
+    <GameBoard
+      room={room}
+      myUserId={myUserId}
+      err={err}
+      loading={loading}
+      muted={muted}
+      onToggleMute={() => { const m = casinoAudio.toggleMute(); setMuted(m); }}
+      onPlayCard={cardId   => act(() => api.trucoPlayCard(roomId, { cardId }))}
+      onCallTruco={pts     => act(() => api.trucoCallTruco(roomId, { offeredPts: pts }))}
+      onRespondTruco={acc  => act(() => api.trucoRespondTruco(roomId, { accept: acc }))}
+      onCallEnvido={type   => act(() => api.trucoCallEnvido(roomId, { type }))}
+      onRespondEnvido={acc => act(() => api.trucoRespondEnvido(roomId, { accept: acc }))}
+      onMazo={() => {
+        if (window.confirm('¿Seguro que te vas al mazo?')) act(() => api.trucoMazo(roomId));
+      }}
+      onRematch={() => act(() => api.trucoRematch(roomId))}
+      onLeave={leaveRoom}
+    />
   );
 }
