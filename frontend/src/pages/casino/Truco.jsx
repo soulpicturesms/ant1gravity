@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../../api/api';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const PALO_ICON  = { Espadas: '⚔️', Bastos: '🏑', Copas: '🏆', Oros: '🌟' };
-const PALO_COLOR = { Espadas: '#60a5fa', Bastos: '#4ade80', Copas: '#c084fc', Oros: '#fbbf24' };
-
 const TRUCO_LABEL = {
   2: 'TRUCO', 3: 'RETRUCO', 4: 'VALE CUATRO',
 };
@@ -12,43 +9,40 @@ const ENVIDO_LABEL = {
   envido: 'ENVIDO', real_envido: 'REAL ENVIDO', falta_envido: 'FALTA ENVIDO',
 };
 
+// Card images from the open-source Spanish deck by Basquetteur (CC BY-SA 3.0)
+// via jsDelivr CDN mirroring mcmd/playingcards.io-spanish.playing.cards
+const CDN = 'https://cdn.jsdelivr.net/gh/mcmd/playingcards.io-spanish.playing.cards@master/img';
+const cardUrl  = (num, palo) => `${CDN}/${String(num).padStart(2, '0')}-${palo.toLowerCase()}.png`;
+const reversoUrl = `${CDN}/reverso.png`;
+
 // ─── Card component ───────────────────────────────────────────────────────────
 function SpanishCard({ num, palo, hidden, size = 'md', selected, selectable, onClick }) {
-  const sz = { sm: [44, 62, '0.7rem', '1.1rem'], md: [58, 82, '0.85rem', '1.5rem'], lg: [68, 96, '1rem', '1.8rem'] }[size] || [58, 82, '0.85rem', '1.5rem'];
-  const [w, h, numFz, iconFz] = sz;
-
-  if (hidden) {
-    return (
-      <div style={{
-        width: w, height: h, borderRadius: 7, flexShrink: 0,
-        background: 'linear-gradient(145deg,#1e3a8a,#1e40af)',
-        border: '2px solid rgba(255,255,255,0.15)',
-        boxShadow: '3px 5px 14px rgba(0,0,0,0.7)',
-        backgroundImage: 'repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,255,255,0.04) 4px,rgba(255,255,255,0.04) 8px)',
-      }} />
-    );
-  }
-
-  const col = PALO_COLOR[palo] || '#ccc';
+  const [w, h] = { sm: [44, 66], md: [60, 90], lg: [76, 114] }[size] || [60, 90];
 
   return (
-    <div onClick={selectable ? onClick : undefined} style={{
-      width: w, height: h, borderRadius: 7, flexShrink: 0,
-      background: 'linear-gradient(145deg,#ffffff,#f0f0f0)',
-      border: `2px solid ${selected ? '#ffd700' : 'rgba(0,0,0,0.15)'}`,
-      boxShadow: selected ? '0 0 0 2px #ffd700, 0 8px 20px rgba(255,215,0,0.4)' : '3px 5px 14px rgba(0,0,0,0.6)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'space-between',
-      padding: '4px 5px',
-      cursor: selectable ? 'pointer' : 'default',
-      transform: selected ? 'translateY(-10px) scale(1.05)' : 'none',
-      transition: 'all 0.15s',
-      position: 'relative',
-      userSelect: 'none',
-    }}>
-      <div style={{ color: col, fontFamily: 'Rajdhani', fontWeight: 800, fontSize: numFz, alignSelf: 'flex-start', lineHeight: 1 }}>{num}</div>
-      <div style={{ fontSize: iconFz, lineHeight: 1 }}>{PALO_ICON[palo]}</div>
-      <div style={{ color: col, fontFamily: 'Rajdhani', fontWeight: 800, fontSize: numFz, alignSelf: 'flex-end', transform: 'rotate(180deg)', lineHeight: 1 }}>{num}</div>
+    <div
+      onClick={selectable ? onClick : undefined}
+      style={{
+        width: w, height: h, flexShrink: 0,
+        borderRadius: 5,
+        cursor: selectable ? 'pointer' : 'default',
+        userSelect: 'none',
+        transform: selected ? 'translateY(-12px) scale(1.07)' : 'none',
+        transition: 'transform 0.15s, filter 0.15s',
+        filter: selected
+          ? 'drop-shadow(0 0 8px rgba(255,215,0,0.9)) drop-shadow(0 4px 8px rgba(0,0,0,0.6))'
+          : 'drop-shadow(2px 4px 6px rgba(0,0,0,0.7))',
+        outline: selected ? '2px solid #ffd700' : 'none',
+        outlineOffset: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={hidden ? reversoUrl : cardUrl(num, palo)}
+        alt={hidden ? 'carta' : `${num} de ${palo}`}
+        style={{ width: '100%', height: '100%', objectFit: 'fill', display: 'block', borderRadius: 5 }}
+        loading="lazy"
+      />
     </div>
   );
 }
