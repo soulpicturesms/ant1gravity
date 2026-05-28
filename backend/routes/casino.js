@@ -143,6 +143,10 @@ async function finishBlackjack(id, user, trigger) {
 
 // ── ROULETTE ──────────────────────────────────────────────────────────────────
 const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const AMERICAN_POCKETS = [
+  '0', '28', '9', '26', '30', '11', '7', '20', '32', '17', '5', '22', '34', '15', '3', '24', '36', '13', '1',
+  '00', '27', '10', '25', '29', '12', '8', '19', '31', '18', '6', '21', '33', '16', '4', '23', '35', '14', '2'
+];
 
 router.post('/roulette/spin', requireAuth, async (req, res) => {
   const { bets } = req.body;
@@ -154,8 +158,12 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
   if (!user || user.coins < totalBet) return res.status(400).json({ error: 'Tokens insuficientes' });
 
-  const number = Math.floor(Math.random() * 37);
-  const color  = number === 0 ? 'green' : RED_NUMS.has(number) ? 'red' : 'black';
+  // Spin American Roulette
+  const pocketIndex = Math.floor(Math.random() * 38);
+  const winningPocket = AMERICAN_POCKETS[pocketIndex]; // String e.g. '0', '00', '1'...'36'
+  
+  const isGreen = winningPocket === '0' || winningPocket === '00';
+  const color = isGreen ? 'green' : RED_NUMS.has(parseInt(winningPocket)) ? 'red' : 'black';
 
   let totalPayout = 0;
   const results = [];
@@ -164,17 +172,37 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
     const amount = parseInt(b.amount) || 0;
     if (!amount) continue;
     let mult = 0;
-    if (b.type === 'number' && parseInt(b.value) === number) mult = 36;
-    else if (b.type === 'color'  && b.value === color && number !== 0) mult = 2;
-    else if (b.type === 'parity' && number !== 0 && (b.value === 'even') === (number % 2 === 0)) mult = 2;
-    else if (b.type === 'half'   && number !== 0 && (b.value === 'low') === (number <= 18)) mult = 2;
-    else if (b.type === 'dozen') {
-      const map = { '1-12': n => n >= 1&&n <= 12, '13-24': n => n >= 13&&n <= 24, '25-36': n => n >= 25&&n <= 36 };
-      if (map[b.value]?.(number)) mult = 3;
-    } else if (b.type === 'column' && number !== 0) {
-      const map = { '1': n => n % 3 === 1, '2': n => n % 3 === 2, '3': n => n % 3 === 0 };
-      if (map[b.value]?.(number)) mult = 3;
+
+    if (b.type === 'number') {
+      if (b.value === winningPocket) mult = 36;
+    } else if (b.type === 'split') {
+      const nums = b.value.split(',');
+      if (nums.includes(winningPocket)) mult = 18;
+    } else if (b.type === 'corner') {
+      const nums = b.value.split(',');
+      if (nums.includes(winningPocket)) mult = 9;
+    } else if (!isGreen) {
+      const numVal = parseInt(winningPocket);
+      if (b.type === 'color' && b.value === color) mult = 2;
+      else if (b.type === 'parity' && (b.value === 'even') === (numVal % 2 === 0)) mult = 2;
+      else if (b.type === 'half' && (b.value === 'low') === (numVal <= 18)) mult = 2;
+      else if (b.type === 'dozen') {
+        const map = { 
+          '1-12': n => n >= 1 && n <= 12, 
+          '13-24': n => n >= 13 && n <= 24, 
+          '25-36': n => n >= 25 && n <= 36 
+        };
+        if (map[b.value]?.(numVal)) mult = 3;
+      } else if (b.type === 'column') {
+        const map = { 
+          '1': n => n % 3 === 1, 
+          '2': n => n % 3 === 2, 
+          '3': n => n % 3 === 0 
+        };
+        if (map[b.value]?.(numVal)) mult = 3;
+      }
     }
+
     const payout = Math.floor(amount * mult);
     totalPayout += payout;
     results.push({ ...b, payout, won: mult > 0 });
@@ -185,10 +213,10 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
   await supabase.from('coin_transactions').insert({
     user_id: req.user.id, username: user.username,
     amount: net, type: 'casino',
-    reason: `Ruleta Casino — nro ${number} (${color}) ${net >= 0 ? '+' : ''}${net}`,
+    reason: `Ruleta Casino — nro ${winningPocket} (${color}) ${net >= 0 ? '+' : ''}${net}`,
   });
 
-  res.json({ number, color, results, totalPayout, net, balance: user.coins + net });
+  res.json({ number: winningPocket, color, results, totalPayout, net, balance: user.coins + net });
 });
 
 // ── PLINKO ────────────────────────────────────────────────────────────────────
