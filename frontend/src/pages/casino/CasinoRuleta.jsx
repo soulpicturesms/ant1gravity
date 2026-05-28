@@ -292,15 +292,35 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
           casinoAudio.playRouletteTick();
         }
 
-        // Settle condition
-        if (bounceIntensityRef.current <= 0.05 && Math.abs(diff) < 0.015) {
+        // Transition to smooth settling instead of abrupt snap
+        if (bounceIntensityRef.current <= 0.05 && Math.abs(relAngleVelRef.current) < 0.008) {
+          ballStateRef.current = 'settling';
+          bounceTimerRef.current = 0; // reuse as settling frame counter
+          casinoAudio.playRouletteSettle();
+        }
+      }
+      else if (ballStateRef.current === 'settling') {
+        // Smooth exponential ease-out to final pocket position over ~45 frames
+        bounceTimerRef.current++;
+        const targetIdx = WHEEL_NUMBERS.indexOf(String(resultRef.current));
+        const targetRelAngle = (targetIdx + 0.5) * (2 * Math.PI / 38) - Math.PI / 2;
+        
+        // Exponential interpolation: each frame closes 8% of remaining gap
+        let diff = targetRelAngle - relAngleRef.current;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        relAngleRef.current += diff * 0.08;
+        
+        // Gently ease radius to pocket depth
+        ballRadiusRef.current += ((R - 14) - ballRadiusRef.current) * 0.12;
+        
+        ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
+        
+        // Complete after enough frames and close enough to target
+        if (bounceTimerRef.current > 30 && Math.abs(diff) < 0.003) {
           relAngleRef.current = targetRelAngle;
           ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
           ballRadiusRef.current = R - 14;
           ballStateRef.current = 'settled';
-
-          // Play settle double-clack sound!
-          casinoAudio.playRouletteSettle();
 
           if (onSpinCompleteRef.current) {
             onSpinCompleteRef.current();

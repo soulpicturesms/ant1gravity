@@ -368,33 +368,30 @@ router.post('/slots/spin', requireAuth, async (req, res) => {
       reels[4][lineCoords[4]],
     ];
 
-    // Check wild count
+    let bestSymbol = null;
+    let bestCount = 0;
+    let bestStartIdx = 0;
+    let bestPayoutType = 0;
+
+    // Check pure Wilds from left to right
     let wildCount = 0;
     for (let i = 0; i < 5; i++) {
       if (lineSymbols[i] === 'Wild') wildCount++;
       else break;
     }
-
-    let bestSymbol = null;
-    let bestCount = 0;
-    let bestPayoutType = 0;
-
-    // Check pure Wilds
     if (wildCount >= 3) {
       bestSymbol = 'Wild';
       bestCount = wildCount;
+      bestStartIdx = 0;
       bestPayoutType = SLOTS_PAYTABLE.Wild[wildCount] || 0;
     }
 
-    // Check other symbols
+    // Check other symbols from left to right (with Wild as wildcard)
     for (const S of ['Seven', 'Diamond', 'Bell', 'Plum', 'Orange', 'Lemon', 'Cherry']) {
       let count = 0;
       for (let i = 0; i < 5; i++) {
-        if (lineSymbols[i] === S || lineSymbols[i] === 'Wild') {
-          count++;
-        } else {
-          break;
-        }
+        if (lineSymbols[i] === S || lineSymbols[i] === 'Wild') count++;
+        else break;
       }
 
       if (count >= 2) {
@@ -403,11 +400,13 @@ router.post('/slots/spin', requireAuth, async (req, res) => {
           if (mult === 'JACKPOT') {
             bestSymbol = S;
             bestCount = count;
+            bestStartIdx = 0;
             bestPayoutType = 'JACKPOT';
-            break; // Jackpot is the max possible, stop checks for this line
+            break;
           } else if (bestPayoutType !== 'JACKPOT' && mult > bestPayoutType) {
             bestSymbol = S;
             bestCount = count;
+            bestStartIdx = 0;
             bestPayoutType = mult;
           }
         }
