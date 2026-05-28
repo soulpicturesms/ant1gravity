@@ -404,10 +404,21 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
   );
 }
 
+const CHIP_COLORS = { 10:'#546e7a', 50:'#00897b', 100:'#0288d1', 500:'#7b1fa2', 1000:'#f9a825' };
+
 function BetChip({ value, active, onClick }) {
-  const colors = { 10:'#6a6a8a', 50:'#00aa66', 100:'#00d4ff', 500:'#a78bfa', 1000:'#ffd700' };
+  const color = CHIP_COLORS[value] || '#546e7a';
   return (
-    <div onClick={onClick} style={{ width: 46, height: 46, borderRadius: '50%', background: colors[value] || '#6a6a8a', border: `3.5px dashed ${active ? 'white' : 'rgba(255,255,255,0.25)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 900, fontSize: '0.8rem', color: 'white', boxShadow: active ? '0 0 14px rgba(255,255,255,0.65)' : 'none', transition: 'all 0.15s', userSelect: 'none' }}>
+    <div onClick={onClick} style={{
+      width: 44, height: 44, borderRadius: '50%',
+      background: active ? color : 'transparent',
+      border: `2px solid ${active ? color : color + '60'}`,
+      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
+      color: active ? 'white' : color + 'cc',
+      boxShadow: active ? `0 0 12px ${color}55` : 'none',
+      transition: 'all 0.15s', userSelect: 'none',
+    }}>
       {value >= 1000 ? `${value/1000}K` : value}
     </div>
   );
@@ -801,14 +812,13 @@ function BettingGrid({ bets, onBet }) {
 }
 
 export default function CasinoRuleta({ balance, onBalanceChange }) {
-  const [bets, setBets]     = useState([]);
-  const [chip, setChip]     = useState(100);
+  const [bets, setBets]         = useState([]);
+  const [chip, setChip]         = useState(100);
   const [spinning, setSpinning] = useState(false);
-  const [result, setResult] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [err, setErr]       = useState('');
+  const [result, setResult]     = useState(null);
+  const [summary, setSummary]   = useState(null);
+  const [err, setErr]           = useState('');
   const [pendingSummary, setPendingSummary] = useState(null);
-  const [muted, setMuted] = useState(casinoAudio.muted);
 
   const totalBet = bets.reduce((s, b) => s + b.amount, 0);
 
@@ -839,94 +849,135 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
       setSummary(pendingSummary);
       setSpinning(false);
       setBets([]);
-      
-      if (pendingSummary.net >= 0) {
-        casinoAudio.playWin();
-      } else {
-        casinoAudio.playLose();
-      }
+      pendingSummary.net >= 0 ? casinoAudio.playWin() : casinoAudio.playLose();
     }
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: 1300, margin: '0 auto', padding: '0 10px' }}>
-      <div className="card" style={{ border: '1px solid rgba(255,215,0,0.2)', background: 'linear-gradient(135deg, #0d0d1e, #06060c)', padding: 24, boxShadow: '0 15px 40px rgba(0,0,0,0.7)' }}>
-        
-        {/* Header & Mute toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <div style={{ width: 32 }} />
-          <div style={{ textAlign: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.8rem', color: '#ffd700', letterSpacing: '0.12em', margin: 0, textShadow: '0 0 10px rgba(255,215,0,0.3)' }}>
-            🎰 RULETA CASINO (AMERICAN ROULETTE 00) <span style={{ fontSize: '0.75rem', color: '#6a6a8a', verticalAlign: 'middle', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 4, marginLeft: 8 }}>v2.3.0</span>
+    <div style={{ width: '100%', maxWidth: 1300, margin: '0 auto' }}>
+      <div style={{
+        background: '#0e1e2c', border: '1px solid #273f52',
+        borderRadius: 14, padding: '20px 22px',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+      }}>
+
+        {err && (
+          <div style={{
+            background: 'rgba(255,69,114,0.12)', border: '1px solid rgba(255,69,114,0.3)',
+            borderRadius: 8, padding: '7px 14px', marginBottom: 14,
+            fontSize: '0.82rem', color: '#ff8aaa', textAlign: 'center',
+          }}>
+            {err}
           </div>
-          <button onClick={() => {
-            const nowMuted = casinoAudio.toggleMute();
-            setMuted(nowMuted);
-          }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.3rem', color: 'rgba(255,255,255,0.45)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
-            {muted ? '🔇' : '🔊'}
-          </button>
-        </div>
+        )}
 
-        {err && <div className="alert alert-error" style={{ marginBottom: 16 }}>{err}</div>}
-
-        {/* 2-Column Side-by-Side Responsive Layout */}
+        {/* 2-column layout */}
         <div className="roulette-layout">
-          
-          {/* Left Column: Large Wheel + Chips + Spin Controls */}
+
+          {/* Left: Wheel + chip selector + action */}
           <div className="roulette-wheel-col">
             <RouletteWheel spinning={spinning} result={result} onSpinComplete={handleSpinComplete} />
-            
+
             {/* Chip selector */}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 22, marginBottom: 16 }}>
-              {[10,50,100,500,1000].map(v => <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)} />)}
+            <div style={{ display: 'flex', gap: 7, justifyContent: 'center', marginTop: 18, marginBottom: 14 }}>
+              {[10, 50, 100, 500, 1000].map(v => (
+                <BetChip key={v} value={v} active={chip === v} onClick={() => setChip(v)} />
+              ))}
             </div>
 
-            {/* Totals & Actions */}
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.45)', padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize: '0.85rem', color: '#6a6a8a', letterSpacing: '0.05em' }}>Apuesta total:</span>
-                <strong style={{ color: '#ffd700', fontSize: '1.25rem', fontFamily: 'Rajdhani', textShadow: '0 0 8px rgba(255,215,0,0.4)' }}>{totalBet.toLocaleString('es-AR')} tokens</strong>
+            {/* Total bet + spin */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                background: '#0c1a24', border: '1px solid #273f52',
+                padding: '9px 14px', borderRadius: 8,
+              }}>
+                <span style={{ fontSize: '0.68rem', color: '#6a8fa8', fontFamily: 'Rajdhani', letterSpacing: '0.1em' }}>APUESTA TOTAL</span>
+                <span style={{ color: '#c8d8e8', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem' }}>
+                  {totalBet.toLocaleString('es-AR')}
+                  <span style={{ color: '#3d5a70', fontSize: '0.7rem', marginLeft: 4 }}>TK</span>
+                </span>
               </div>
-              
-              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+
+              <div style={{ display: 'flex', gap: 7 }}>
                 {bets.length > 0 && (
-                  <button onClick={() => setBets([])} style={{ flex: '1', padding: '10px 12px', background: 'rgba(255, 68, 102, 0.08)', border: '1px solid rgba(255, 68, 102, 0.25)', color: '#ff4466', borderRadius: 8, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.2s' }}>
-                    ✕ Limpiar
+                  <button onClick={() => setBets([])} style={{
+                    flex: 1, height: 44, borderRadius: 8,
+                    background: 'rgba(255,69,114,0.08)', border: '1px solid rgba(255,69,114,0.28)',
+                    color: '#ff4572', cursor: 'pointer',
+                    fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,69,114,0.14)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,69,114,0.08)'}
+                  >
+                    LIMPIAR
                   </button>
                 )}
-                <button className="btn btn-primary" onClick={spin} disabled={spinning || !bets.length} style={{ flex: '2', padding: '10px 16px', fontFamily: 'Rajdhani', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, letterSpacing: '0.1em' }}>
-                  {spinning ? '⏳ Girando...' : '🎰 Girar'}
+                <button onClick={spin} disabled={spinning || !bets.length} style={{
+                  flex: 2, height: 44, borderRadius: 8, border: 'none',
+                  background: spinning || !bets.length
+                    ? 'rgba(0,230,118,0.06)'
+                    : 'linear-gradient(135deg, #00c65a, #00e676)',
+                  color: spinning || !bets.length ? '#3d5a70' : '#0c1a24',
+                  fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.1em',
+                  cursor: spinning || !bets.length ? 'not-allowed' : 'pointer',
+                  boxShadow: (!spinning && bets.length) ? '0 0 16px rgba(0,230,118,0.22)' : 'none',
+                  transition: 'all 0.2s',
+                }}>
+                  {spinning ? 'GIRANDO...' : 'GIRAR'}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Wide Betting Grid + Result Summary */}
+          {/* Right: Result + betting grid + hint */}
           <div className="roulette-grid-col">
-            
-            {/* Win/Loss Summary Display */}
+
             {summary && (
-              <div style={{ width: '100%', textAlign: 'center', marginBottom: 16, padding: '12px 18px', background: summary.net >= 0 ? 'rgba(0,204,102,0.1)' : 'rgba(255,68,102,0.1)', border: `1px solid ${summary.net >= 0 ? '#00cc6633' : '#ff446633'}`, borderRadius: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
-                  <div style={{ background: numberColor(summary.number), width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 900, color: 'white', fontSize: '1.2rem', boxShadow: '0 0 10px rgba(255,255,255,0.2)' }}>
-                    {summary.number}
-                  </div>
-                  <div style={{ fontFamily: 'Rajdhani', fontWeight: 900, fontSize: '1.4rem', color: summary.net >= 0 ? '#00cc66' : '#ff4466', letterSpacing: '0.05em' }}>
-                    {summary.net >= 0 ? `¡Ganaste +${summary.net.toLocaleString('es-AR')}!` : `Perdiste ${summary.net.toLocaleString('es-AR')} tokens`}
-                  </div>
+              <div style={{
+                width: '100%', marginBottom: 12,
+                padding: '10px 16px',
+                background: summary.net >= 0 ? 'rgba(0,230,118,0.08)' : 'rgba(255,69,114,0.08)',
+                border: `1px solid ${summary.net >= 0 ? 'rgba(0,230,118,0.25)' : 'rgba(255,69,114,0.25)'}`,
+                borderRadius: 8,
+                display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <div style={{
+                  background: numberColor(summary.number),
+                  width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'Rajdhani', fontWeight: 900, color: 'white', fontSize: '1.1rem',
+                }}>
+                  {summary.number}
+                </div>
+                <div style={{
+                  fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.15rem',
+                  color: summary.net >= 0 ? '#00e676' : '#ff4572',
+                  letterSpacing: '0.04em',
+                }}>
+                  {summary.net >= 0
+                    ? `+${summary.net.toLocaleString('es-AR')} TK`
+                    : `${summary.net.toLocaleString('es-AR')} TK`}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#6a8fa8', marginLeft: 'auto' }}>
+                  {summary.color?.toUpperCase()}
                 </div>
               </div>
             )}
 
             <BettingGrid bets={bets} onBet={addBet} />
-            
-            {/* Split / Corner Instruction Help Banner */}
-            <div style={{ width: '100%', marginTop: 14, background: 'rgba(255, 215, 0, 0.04)', border: '1px dashed rgba(255, 215, 0, 0.25)', borderRadius: 8, padding: '8px 12px', fontSize: '0.8rem', color: '#8e8eaf', textAlign: 'center', lineHeight: 1.4 }}>
-              💡 <strong>Soporte para Apuestas Múltiples:</strong> Pasa el mouse por el borde de 2 números (Apuesta Split - paga 18x) o por la intersección de 4 números (Apuesta Corner - paga 9x). Los números correspondientes se resaltarán. ¡Haz clic para apostar!
+
+            <div style={{
+              width: '100%', marginTop: 10,
+              background: '#0c1a24', border: '1px solid #1e3040',
+              borderRadius: 7, padding: '7px 12px',
+              fontSize: '0.72rem', color: '#3d5a70', lineHeight: 1.45,
+            }}>
+              Hover sobre el borde de 2 números para apostar Split (18x) · En intersección de 4 para Corner (9x)
             </div>
           </div>
 
         </div>
-
       </div>
     </div>
   );
