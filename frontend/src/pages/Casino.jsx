@@ -66,17 +66,14 @@ function GameCard({ game, onClick }) {
     <div className="casino-gcard" onClick={onClick}>
       <div className="casino-gcard__bg" style={{ background: game.bg }} />
       <div className="casino-gcard__art">{game.art}</div>
+      {/* Live count — top left */}
       {game.live > 0 && (
         <div className="casino-gcard__live">{game.live.toLocaleString()}</div>
       )}
+      {/* Tag — top right */}
       {game.tag === 'hot'  && <span className="casino-gcard__tag casino-gcard__tag--hot">HOT</span>}
       {game.tag === 'new'  && <span className="casino-gcard__tag casino-gcard__tag--new">NEW</span>}
-      {game.tag === 'live' && (
-        <span className="casino-gcard__tag casino-gcard__tag--live">
-          <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6fff7d', boxShadow: '0 0 5px #6fff7d', display: 'inline-block', flexShrink: 0 }} />
-          LIVE
-        </span>
-      )}
+      {game.tag === 'live' && <span className="casino-gcard__tag">● LIVE</span>}
       <div className="casino-gcard__label">
         <span className="casino-gcard__name">{game.name}</span>
         <span className="casino-gcard__desc">{game.desc}</span>
@@ -151,30 +148,29 @@ export default function Casino() {
       {!activeGame && (
         <div className="casino-lobby">
 
-          {/* Header */}
-          <div className="casino-lobby-head">
-            <div className="casino-lobby-eyebrow">
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--c-accent2)', boxShadow: '0 0 8px var(--c-accent2)' }} />
-              Casino ant1gravity · Solo miembros
+          {/* Hero */}
+          <div className="casino-hero">
+            <div className="casino-hero__content">
+              <div className="casino-hero__title">
+                Apuesta sin <span className="c-acc">gravedad</span>.
+              </div>
+              <p className="casino-hero__sub">
+                6 juegos originales · Solo para miembros · Sin ánimo de lucro.
+              </p>
+              <div className="casino-hero__actions">
+                <button
+                  className="casino-hero-btn"
+                  onClick={() => setActiveGame('ruleta')}
+                >
+                  Jugar ahora
+                </button>
+              </div>
             </div>
-            <div className="casino-lobby-title">
-              Apuesta sin <span className="c-acc">gravedad</span>.
-            </div>
-            <p className="casino-lobby-sub">
-              6 juegos originales · RTP transparente · Sin ánimo de lucro
-            </p>
-            <div className="casino-balance-pill">
-              <span style={{ fontSize: 9, fontFamily: 'Unbounded,system-ui', fontWeight: 700, letterSpacing: '0.14em', color: 'var(--c-text4)', textTransform: 'uppercase' }}>Balance</span>
-              <span style={{ fontFamily: 'JetBrains Mono,monospace', fontWeight: 700, fontSize: 17, color: 'var(--c-accent2)' }}>
-                {balance.toLocaleString('es-AR')}
-              </span>
-              <span style={{ fontSize: 9, color: 'var(--c-text4)', fontFamily: 'Inter,sans-serif' }}>tokens</span>
-              <button
-                onClick={refreshBalance}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-text4)', fontSize: '0.9rem', padding: 0, lineHeight: 1 }}
-                onMouseEnter={e => e.target.style.color = 'var(--c-accent2)'}
-                onMouseLeave={e => e.target.style.color = 'var(--c-text4)'}
-              >↻</button>
+            <div className="casino-hero__art" />
+            <div className="casino-hero__chips">
+              <div className="casino-chip-big">100</div>
+              <div className="casino-chip-big">500</div>
+              <div className="casino-chip-big">1K</div>
             </div>
           </div>
 
@@ -204,7 +200,7 @@ export default function Casino() {
 
           {/* Games */}
           <div className="casino-section-head">
-            <h2>Juegos <span className="c-acc">originales</span></h2>
+            <h2>Juegos <span className="c-acc">ant1gravity</span></h2>
           </div>
           <div className="casino-gcards">
             {GAMES.map(g => (

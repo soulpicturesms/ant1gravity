@@ -458,8 +458,10 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
       const idx        = WHEEL_NUMBERS.indexOf(winningNum);
       const segAngle   = 360 / N;
 
-      // Wheel: spin 5 full turns + land on winning pocket at top
-      const newWheelRot = wheelRot + 360*5 + (360 - idx * segAngle);
+      // Wheel: spin 5 full turns + land with pocket CENTER at top
+      // Use (idx + 0.5) so the center of the sector aligns with the pointer,
+      // not the leading edge (which would look like "between two numbers").
+      const newWheelRot = wheelRot + 360*5 + (360 - (idx + 0.5) * segAngle);
       // Ball: spin 9 full counter-clockwise turns → ends at top (matching wheel)
       const newBallRot  = ballRot - 360*9;
 
