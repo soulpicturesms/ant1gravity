@@ -32,6 +32,7 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
   const ballRadiusVelRef = useRef(0);
   const lastSlotRef = useRef(-1);
   const animRef = useRef(null);
+  const rollSoundRef = useRef(null); // Ref for continuous rolling sound loop
   
   const N = WHEEL_NUMBERS.length; // 38
   const wheelSpeed = 0.012; // slow constant rotation clockwise
@@ -181,8 +182,14 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
       if (result === null) {
         // Start infinite spin rolling on the outer track
         ballStateRef.current = 'outer_rim';
-        ballSpeedRef.current = -0.22; // opposite direction (counter-clockwise)
+        ballSpeedRef.current = -0.26; // opposite direction (counter-clockwise)
         ballRadiusRef.current = R + 4; // outer rim track
+        
+        // Start roll sound
+        if (rollSoundRef.current) {
+          rollSoundRef.current.stop();
+        }
+        rollSoundRef.current = casinoAudio.playRouletteRoll();
       }
     }
   }, [spinning, result]);
@@ -209,19 +216,32 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
       if (ballStateRef.current === 'outer_rim') {
         if (resultRef.current !== null) {
           // Response received! Slow down ball until it falls
-          ballSpeedRef.current *= 0.991;
-          if (Math.abs(ballSpeedRef.current) < 0.07) {
+          ballSpeedRef.current *= 0.993; // slow down more gradually (takes ~2.5s)
+          if (Math.abs(ballSpeedRef.current) < 0.085) {
             ballStateRef.current = 'falling';
-            ballRadiusVelRef.current = -2.5; // moves inward
+            ballRadiusVelRef.current = -0.05; // starts slow inward spiraling
           }
         }
         ballAngleRef.current += ballSpeedRef.current;
         ballRadiusRef.current = R + 4; // keep on outer track
+
+        // Update rolling sound speed
+        if (rollSoundRef.current) {
+          const speedPercent = Math.min(Math.abs(ballSpeedRef.current) / 0.26, 1.0);
+          rollSoundRef.current.setSpeed(speedPercent);
+        }
       } 
       else if (ballStateRef.current === 'falling') {
-        ballSpeedRef.current *= 0.985;
+        ballSpeedRef.current *= 0.992;
         ballAngleRef.current += ballSpeedRef.current;
         ballRadiusRef.current += ballRadiusVelRef.current;
+        ballRadiusVelRef.current -= 0.004; // accelerate inward
+
+        // Update rolling sound speed
+        if (rollSoundRef.current) {
+          const speedPercent = Math.min(Math.abs(ballSpeedRef.current) / 0.26, 1.0);
+          rollSoundRef.current.setSpeed(speedPercent);
+        }
         
         // Check if ball hits the pocket ring (R - 14)
         if (ballRadiusRef.current <= R - 14) {
@@ -231,6 +251,12 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
           relAngleRef.current = ballAngleRef.current - wheelAngleRef.current;
           relAngleVelRef.current = ballSpeedRef.current - wheelSpeed;
           bounceIntensityRef.current = 1.0;
+
+          // Stop rolling sound when hitting pockets
+          if (rollSoundRef.current) {
+            rollSoundRef.current.stop();
+            rollSoundRef.current = null;
+          }
         }
       }
       else if (ballStateRef.current === 'bouncing') {
@@ -248,15 +274,15 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
           if (Math.random() < 0.16) {
             relAngleVelRef.current += (Math.random() - 0.5) * 0.28 * bounceIntensityRef.current;
           }
-          bounceIntensityRef.current *= 0.955;
+          bounceIntensityRef.current *= 0.97; // slower bounce decay for more hops
         }
         
         relAngleVelRef.current *= 0.83; // friction
         relAngleRef.current += relAngleVelRef.current;
         ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
         
-        // Hop vertically while bouncing elastically
-        ballRadiusRef.current = (R - 14) + Math.abs(Math.sin(bounceTimerRef.current * 0.35)) * 9 * bounceIntensityRef.current;
+        // Hop vertically while bouncing elastically (increased height)
+        ballRadiusRef.current = (R - 14) + Math.abs(Math.sin(bounceTimerRef.current * 0.40)) * 14 * bounceIntensityRef.current;
         
         // Sound ticks on dividers crossing
         const relativeAngle = relAngleRef.current;
@@ -272,6 +298,10 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
           ballAngleRef.current = wheelAngleRef.current + relAngleRef.current;
           ballRadiusRef.current = R - 14;
           ballStateRef.current = 'settled';
+
+          // Play settle double-clack sound!
+          casinoAudio.playRouletteSettle();
+
           if (onSpinCompleteRef.current) {
             onSpinCompleteRef.current();
           }
@@ -303,7 +333,12 @@ function RouletteWheel({ spinning, result, onSpinComplete }) {
     };
 
     animRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animRef.current);
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      if (rollSoundRef.current) {
+        rollSoundRef.current.stop();
+      }
+    };
   }, []);
 
   return (
@@ -676,7 +711,7 @@ function BettingGrid({ bets, onBet }) {
   return (
     <div style={{ overflowX: 'auto', paddingBottom: 8, width: '100%' }}>
       {/* Canvas container for numbers, 0, 00, splits, and corners */}
-      <div style={{ position: 'relative', width: 684, height: 144, marginBottom: 6 }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: 684, aspectRatio: '684/144', marginBottom: 6 }}>
         <canvas
           ref={canvasGridRef}
           onMouseMove={handleMouseMove}
@@ -687,7 +722,7 @@ function BettingGrid({ bets, onBet }) {
       </div>
 
       {/* Dozens Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '54px repeat(3, 192px) 54px', gap: 3, width: 684, marginBottom: 3 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(3, 28.07%) 7.89%', gap: 3, width: '100%', maxWidth: 684, marginBottom: 3 }}>
         <div style={{ visibility: 'hidden' }} />
         <Cell label="1st 12" type="dozen" value="1-12" />
         <Cell label="2nd 12" type="dozen" value="13-24" />
@@ -696,7 +731,7 @@ function BettingGrid({ bets, onBet }) {
       </div>
 
       {/* Low/High, Red/Black, Even/Odd Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '54px repeat(6, 96px) 54px', gap: 3, width: 684 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '7.89% repeat(6, 14.03%) 7.89%', gap: 3, width: '100%', maxWidth: 684 }}>
         <div style={{ visibility: 'hidden' }} />
         <Cell label="1-18" type="half" value="low" />
         <Cell label="Even" type="parity" value="even" />

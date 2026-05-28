@@ -650,8 +650,8 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 .roulette-wheel-col {
-  flex: 0 0 380px;
-  width: 380px;
+  flex: 1 1 340px;
+  width: 100%;
   max-width: 380px;
   display: flex;
   flex-direction: column;
@@ -659,15 +659,15 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 .roulette-grid-col {
-  flex: 0 0 684px;
-  width: 684px;
+  flex: 1 2 640px;
+  width: 100%;
   max-width: 684px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 960px) {
   .roulette-layout {
     flex-direction: column;
     align-items: center;
