@@ -216,14 +216,14 @@ function BetChip({ value, active, onClick }) {
 }
 
 function BettingGrid({ bets, onBet }) {
-  const Cell = ({ label, type, value, size = 1 }) => {
+  const Cell = ({ label, type, value }) => {
     const myBet = bets.filter(b => b.type === type && b.value === value).reduce((s, b) => s + b.amount, 0);
     return (
       <div onClick={() => onBet(type, value)} style={{
-        gridColumn: `span ${size}`, minHeight: 44, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        border: '1px solid rgba(255,215,0,0.3)', borderRadius: 4, cursor: 'pointer', userSelect: 'none',
+        minHeight: 38, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        border: '1px solid rgba(255,215,0,0.25)', borderRadius: 4, cursor: 'pointer', userSelect: 'none',
         background: myBet > 0 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.03)',
-        transition: 'background 0.1s', fontSize: '0.82rem', fontFamily: 'Rajdhani', fontWeight: 700, color: '#e0e0f0', position: 'relative',
+        transition: 'background 0.1s', fontSize: '0.8rem', fontFamily: 'Rajdhani', fontWeight: 700, color: '#e0e0f0', position: 'relative',
       }}
         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,215,0,0.1)'}
         onMouseLeave={e => e.currentTarget.style.background = myBet > 0 ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.03)'}>
@@ -234,40 +234,80 @@ function BettingGrid({ bets, onBet }) {
   };
 
   return (
-    <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 3, minWidth: 300, marginBottom: 6 }}>
-        {/* Numbers 1-36 in groups of 12 */}
-        {Array.from({length: 12}, (_, i) => i).map(row => (
-          [1,2,3].map(col => {
-            const n = row*3 + col;
-            return <div key={n} onClick={() => onBet('number', String(n))} style={{
-              height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: RED_NUMS.has(n) ? 'rgba(139,26,42,0.7)' : 'rgba(20,20,40,0.7)',
-              border: `1px solid ${bets.some(b => b.type==='number' && b.value===String(n)) ? '#ffd700' : 'rgba(255,215,0,0.2)'}`,
-              borderRadius: 3, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem', color: 'white',
-              boxShadow: bets.some(b => b.type==='number' && b.value===String(n)) ? '0 0 8px rgba(255,215,0,0.5)' : 'none',
-            }}>{n}</div>;
-          })
+    <div style={{ overflowX: 'auto', paddingBottom: 8, width: '100%' }}>
+      {/* Grid container for numbers 0-36 and Columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: '44px repeat(12, 1fr) 50px', gap: 3, minWidth: 500, marginBottom: 6 }}>
+        {/* Green 0 cell */}
+        <div onClick={() => onBet('number', '0')} style={{
+          gridRow: 'span 3', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: '#1a5c1a', border: `1px solid ${bets.some(b => b.type==='number' && b.value==='0') ? '#ffd700' : 'rgba(255,215,0,0.2)'}`,
+          borderRadius: 3, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', position: 'relative'
+        }}>
+          0
+          {bets.some(b => b.type==='number' && b.value==='0') && (
+            <span style={{ position: 'absolute', top: 2, right: 4, fontSize: '0.65rem', color: '#ffd700' }}>
+              {bets.filter(b => b.type==='number' && b.value==='0').reduce((s, b) => s + b.amount, 0)}
+            </span>
+          )}
+        </div>
+
+        {/* Numbers & Columns by Row */}
+        {[3, 2, 1].map(rowNum => (
+          <React.Fragment key={rowNum}>
+            {/* 12 numbers for this row */}
+            {Array.from({ length: 12 }, (_, colIdx) => {
+              const n = colIdx * 3 + rowNum;
+              const myBet = bets.filter(b => b.type === 'number' && b.value === String(n)).reduce((s, b) => s + b.amount, 0);
+              return (
+                <div key={n} onClick={() => onBet('number', String(n))} style={{
+                  height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: RED_NUMS.has(n) ? 'rgba(139,26,42,0.7)' : 'rgba(20,20,40,0.7)',
+                  border: `1px solid ${myBet > 0 ? '#ffd700' : 'rgba(255,215,0,0.2)'}`,
+                  borderRadius: 3, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem', color: 'white',
+                  position: 'relative',
+                  boxShadow: myBet > 0 ? '0 0 8px rgba(255,215,0,0.5)' : 'none',
+                }}>
+                  {n}
+                  {myBet > 0 && <span style={{ position: 'absolute', top: 1, right: 2, fontSize: '0.65rem', color: '#ffd700' }}>{myBet}</span>}
+                </div>
+              );
+            })}
+            {/* Column bet cell aligned at the end of the row */}
+            <div onClick={() => onBet('column', String(rowNum))} style={{
+              height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.03)', border: `1px solid ${bets.some(b => b.type==='column' && b.value===String(rowNum)) ? '#ffd700' : 'rgba(255,215,0,0.2)'}`,
+              borderRadius: 3, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.72rem', color: '#e0e0f0', position: 'relative'
+            }}>
+              2to1
+              {bets.some(b => b.type==='column' && b.value===String(rowNum)) && (
+                <span style={{ position: 'absolute', top: 1, right: 2, fontSize: '0.65rem', color: '#ffd700' }}>
+                  {bets.filter(b => b.type==='column' && b.value===String(rowNum)).reduce((s, b) => s + b.amount, 0)}
+                </span>
+              )}
+            </div>
+          </React.Fragment>
         ))}
       </div>
-      {/* 0 */}
-      <div onClick={() => onBet('number', '0')} style={{ height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a5c1a', border: `1px solid ${bets.some(b => b.value==='0') ? '#ffd700' : 'rgba(255,215,0,0.2)'}`, borderRadius: 3, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', marginBottom: 6 }}>0 (Verde)</div>
-      {/* Outside bets */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 3, marginBottom: 3 }}>
-        <Cell label="1-18" type="half" value="low" />
-        <Cell label="19-36" type="half" value="high" />
-        <Cell label="Par" type="parity" value="even" />
-        <Cell label="Impar" type="parity" value="odd" />
-        <Cell label="🔴 Rojo" type="color" value="red" />
-        <Cell label="⚫ Negro" type="color" value="black" />
+
+      {/* Dozens Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '44px repeat(3, 1fr) 50px', gap: 3, minWidth: 500, marginBottom: 3 }}>
+        <div style={{ visibility: 'hidden' }} />
+        <Cell label="1st 12" type="dozen" value="1-12" />
+        <Cell label="2nd 12" type="dozen" value="13-24" />
+        <Cell label="3rd 12" type="dozen" value="25-36" />
+        <div style={{ visibility: 'hidden' }} />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 3 }}>
-        <Cell label="1-12" type="dozen" value="1-12" />
-        <Cell label="13-24" type="dozen" value="13-24" />
-        <Cell label="25-36" type="dozen" value="25-36" />
-        <Cell label="Col 1" type="column" value="1" />
-        <Cell label="Col 2" type="column" value="2" />
-        <Cell label="Col 3" type="column" value="3" />
+
+      {/* Low/High, Red/Black, Even/Odd Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '44px repeat(6, 1fr) 50px', gap: 3, minWidth: 500 }}>
+        <div style={{ visibility: 'hidden' }} />
+        <Cell label="1-18" type="half" value="low" />
+        <Cell label="Even" type="parity" value="even" />
+        <Cell label="Red" type="color" value="red" />
+        <Cell label="Black" type="color" value="black" />
+        <Cell label="Odd" type="parity" value="odd" />
+        <Cell label="19-36" type="half" value="high" />
+        <div style={{ visibility: 'hidden' }} />
       </div>
     </div>
   );
@@ -322,8 +362,8 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
   };
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto' }}>
-      <div className="card" style={{ border: '1px solid rgba(255,215,0,0.2)', background: 'linear-gradient(135deg, #0a0a18, #0f0f22)' }}>
+    <div style={{ maxWidth: 880, margin: '0 auto', padding: '0 10px' }}>
+      <div className="card" style={{ border: '1px solid rgba(255,215,0,0.2)', background: 'linear-gradient(135deg, #0a0a18, #0f0f22)', padding: 20 }}>
         
         {/* Header & Mute toggle */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
@@ -341,35 +381,58 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
 
         {err && <div className="alert alert-error" style={{ marginBottom: 12 }}>{err}</div>}
 
-        {/* Result */}
-        {summary && (
-          <div style={{ textAlign: 'center', marginBottom: 20, padding: '14px', background: summary.net >= 0 ? 'rgba(0,204,102,0.1)' : 'rgba(255,68,102,0.1)', border: `1px solid ${summary.net >= 0 ? '#00cc6644' : '#ff446644'}`, borderRadius: 10 }}>
-            <div style={{ marginBottom: 4, background: numberColor(summary.number), width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', fontSize: '1.2rem' }}>{summary.number}</div>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.3rem', color: summary.net >= 0 ? '#00cc66' : '#ff4466' }}>
-              {summary.net >= 0 ? `+${summary.net.toLocaleString('es-AR')}` : summary.net.toLocaleString('es-AR')} tokens
+        {/* 2-Column Side-by-Side Responsive Layout */}
+        <div style={{ display: 'flex', gap: 24, alignItems: 'start', justifyContent: 'center', flexWrap: 'wrap' }}>
+          
+          {/* Left Column: Wheel + Chips + Spin Controls */}
+          <div style={{ flex: '1 1 320px', maxWidth: 340, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <RouletteWheel spinning={spinning} result={result} onSpinComplete={handleSpinComplete} />
+            
+            {/* Chip selector */}
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 18, marginBottom: 14 }}>
+              {[10,50,100,500,1000].map(v => <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)} />)}
+            </div>
+
+            {/* Totals & Actions */}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize: '0.85rem', color: '#6a6a8a' }}>Apuesta total:</span>
+                <strong style={{ color: '#ffd700', fontSize: '1.1rem', fontFamily: 'Rajdhani' }}>{totalBet.toLocaleString('es-AR')} tokens</strong>
+              </div>
+              
+              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                {bets.length > 0 && (
+                  <button onClick={() => setBets([])} style={{ flex: '1', padding: '10px 12px', background: 'rgba(255, 68, 102, 0.08)', border: '1px solid rgba(255, 68, 102, 0.25)', color: '#ff4466', borderRadius: 8, cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.2s' }}>
+                    ✕ Limpiar
+                  </button>
+                )}
+                <button className="btn btn-primary" onClick={spin} disabled={spinning || !bets.length} style={{ flex: '2', padding: '10px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 38 }}>
+                  {spinning ? '⏳ Girando...' : '🎰 Girar'}
+                </button>
+              </div>
             </div>
           </div>
-        )}
 
-        <RouletteWheel spinning={spinning} result={result} onSpinComplete={handleSpinComplete} />
+          {/* Right Column: Betting Grid + Result Summary */}
+          <div style={{ flex: '1 1 380px', minWidth: 320, width: '100%' }}>
+            
+            {/* Win/Loss Summary Display */}
+            {summary && (
+              <div style={{ textAlign: 'center', marginBottom: 14, padding: '10px 14px', background: summary.net >= 0 ? 'rgba(0,204,102,0.1)' : 'rgba(255,68,102,0.1)', border: `1px solid ${summary.net >= 0 ? '#00cc6633' : '#ff446633'}`, borderRadius: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                  <div style={{ background: numberColor(summary.number), width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', fontSize: '1rem' }}>
+                    {summary.number}
+                  </div>
+                  <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: summary.net >= 0 ? '#00cc66' : '#ff4466' }}>
+                    {summary.net >= 0 ? `+${summary.net.toLocaleString('es-AR')}` : summary.net.toLocaleString('es-AR')} tokens
+                  </div>
+                </div>
+              </div>
+            )}
 
-        <div style={{ marginTop: 20 }}>
-          {/* Chip selector */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 14 }}>
-            {[10,50,100,500,1000].map(v => <BetChip key={v} value={v} active={chip===v} onClick={() => setChip(v)} />)}
+            <BettingGrid bets={bets} onBet={addBet} />
           </div>
 
-          <BettingGrid bets={bets} onBet={addBet} />
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, flexWrap: 'wrap', gap: 8 }}>
-            <div style={{ fontSize: '0.85rem', color: '#6a6a8a' }}>
-              Apuesta total: <strong style={{ color: '#ffd700' }}>{totalBet.toLocaleString('es-AR')}</strong>
-              {bets.length > 0 && <button onClick={() => setBets([])} style={{ marginLeft: 12, background: 'none', border: 'none', color: '#ff4466', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani' }}>✕ Limpiar</button>}
-            </div>
-            <button className="btn btn-primary" onClick={spin} disabled={spinning || !bets.length} style={{ fontFamily: 'Rajdhani', fontWeight: 700 }}>
-              {spinning ? '⏳ Girando...' : '🎰 Girar'}
-            </button>
-          </div>
         </div>
       </div>
     </div>
