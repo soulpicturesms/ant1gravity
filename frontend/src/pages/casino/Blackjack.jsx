@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { api } from '../../api/api';
 
+import { casinoAudio } from '../../utils/casinoAudio';
+
 const SUIT_RED = new Set(['♥', '♦']);
 
 function Card({ card, hidden }) {
+  const animClass = hidden ? 'card-deal' : 'card-deal card-revealed';
   if (hidden || !card) {
     return (
-      <div style={{
+      <div className={animClass} style={{
         width: 72, height: 102, borderRadius: 9,
         background: 'linear-gradient(145deg,#1e3a8a,#1e40af)',
         border: '2px solid rgba(255,255,255,0.12)',
@@ -21,7 +24,7 @@ function Card({ card, hidden }) {
   const red = SUIT_RED.has(card.suit);
   const color = red ? '#cc1122' : '#0f172a';
   return (
-    <div style={{
+    <div className={animClass} style={{
       width: 72, height: 102, borderRadius: 9,
       background: 'linear-gradient(145deg,#ffffff,#f4f4f4)',
       border: '1px solid #d1d5db',
@@ -51,7 +54,7 @@ function HandArea({ cards, total, label, dealerHidden }) {
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
         {(cards || []).map((c, i) => (
-          <Card key={i} card={c} hidden={dealerHidden && i === 1 && !c} />
+          <Card key={`${i}-${c ? c.value + c.suit : 'hidden'}`} card={c} hidden={dealerHidden && i === 1 && !c} />
         ))}
       </div>
       {total !== undefined && (
@@ -78,23 +81,77 @@ export default function Blackjack({ balance, onBalanceChange }) {
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr]   = useState('');
+  const [muted, setMuted] = useState(casinoAudio.muted);
+  const [coins, setCoins] = useState([]);
+
+  const spawnCoins = () => {
+    const list = [];
+    for (let i = 0; i < 35; i++) {
+      list.push({
+        id: Math.random(),
+        left: `${10 + Math.random() * 80}%`,
+        bottom: `${Math.random() * 15}%`,
+        delay: `${Math.random() * 0.4}s`,
+        symbol: ['🪙', '⚡', '✨', '🪙', '✨'][Math.floor(Math.random() * 5)],
+      });
+    }
+    setCoins(list);
+  };
 
   const act = async (action, extra = {}) => {
     setLoading(true); setErr('');
     try {
+      if (action === 'hit') {
+        casinoAudio.playCardSlide();
+      } else if (action === 'double') {
+        casinoAudio.playChip();
+        casinoAudio.playCardSlide();
+      } else if (action === 'stand') {
+        casinoAudio.playCardSlide();
+      }
+
       const res = await api.casinoBlackjack(action, { sessionId: game?.sessionId, ...extra });
       if (res.balance !== undefined) onBalanceChange(res.balance);
       setGame(g => ({ ...g, ...res }));
+
+      if (res.status === 'done') {
+        setTimeout(() => {
+          if (res.result === 'win' || res.result === 'blackjack') {
+            casinoAudio.playWin();
+            spawnCoins();
+          } else if (res.result === 'lose' || res.result === 'bust') {
+            casinoAudio.playLose();
+          } else {
+            casinoAudio.playChip();
+          }
+        }, 500);
+      }
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
   };
 
   const start = async () => {
     setLoading(true); setErr('');
+    setCoins([]);
     try {
+      casinoAudio.playChip();
       const res = await api.casinoBlackjack('start', { bet });
       if (res.balance !== undefined) onBalanceChange(res.balance);
       setGame(res);
+      casinoAudio.playCardSlide();
+
+      if (res.status === 'done') {
+        setTimeout(() => {
+          if (res.result === 'win' || res.result === 'blackjack') {
+            casinoAudio.playWin();
+            spawnCoins();
+          } else if (res.result === 'lose' || res.result === 'bust') {
+            casinoAudio.playLose();
+          } else {
+            casinoAudio.playChip();
+          }
+        }, 500);
+      }
     } catch (e) { setErr(e.message); }
     finally { setLoading(false); }
   };
@@ -116,10 +173,34 @@ export default function Blackjack({ balance, onBalanceChange }) {
         {/* Felt texture */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 6px)', pointerEvents: 'none' }} />
 
+        {/* Win coin particles */}
+        {coins.map(c => (
+          <div
+            key={c.id}
+            className="coin-particle"
+            style={{
+              left: c.left,
+              bottom: c.bottom,
+              animationDelay: c.delay,
+            }}
+          >
+            {c.symbol}
+          </div>
+        ))}
+
         <div style={{ position: 'relative', padding: '28px 24px' }}>
-          {/* Title */}
-          <div style={{ textAlign: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: 'rgba(255,255,255,0.15)', letterSpacing: '0.3em', marginBottom: 24, textTransform: 'uppercase' }}>
-            ✦ Blackjack ✦
+          {/* Title & Sound toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div style={{ width: 32 }} />
+            <div style={{ textAlign: 'center', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: 'rgba(255,255,255,0.15)', letterSpacing: '0.3em', textTransform: 'uppercase', margin: 0 }}>
+              ✦ Blackjack ✦
+            </div>
+            <button onClick={() => {
+              const nowMuted = casinoAudio.toggleMute();
+              setMuted(nowMuted);
+            }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'rgba(255,255,255,0.3)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
+              {muted ? '🔇' : '🔊'}
+            </button>
           </div>
 
           {err && (

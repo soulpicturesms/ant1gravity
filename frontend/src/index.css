@@ -555,3 +555,88 @@ tbody tr:last-child td { border-bottom: none; }
   .form-group label { font-size: 0.78rem; }
   .input, .select, .textarea { padding: 8px 10px; font-size: 0.88rem; }
 }
+
+/* 🎰 ANT1GRAVITY Casino - Zynga Animations */
+@keyframes card-deal-anim {
+  from {
+    transform: translate(180px, -220px) rotate(-25deg) scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+.card-deal {
+  animation: card-deal-anim 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.15) forwards;
+}
+
+@keyframes card-flip-anim {
+  from { transform: rotateY(90deg); filter: brightness(1.4); }
+  to { transform: rotateY(0deg); filter: brightness(1); }
+}
+.card-revealed {
+  animation: card-flip-anim 0.28s ease-out forwards;
+}
+
+@keyframes bounce-in-anim {
+  0% { transform: scale(0.4); opacity: 0; }
+  50% { transform: scale(1.08); opacity: 0.85; }
+  75% { transform: scale(0.95); opacity: 0.95; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bounce-in {
+  animation: bounce-in-anim 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes shake-anim {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12%, 37%, 62%, 87% { transform: translate3d(-5px, 0, 0); }
+  25%, 50%, 75% { transform: translate3d(5px, 0, 0); }
+}
+.shake {
+  animation: shake-anim 0.35s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes glow-pulse-anim {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.35), 0 0 20px rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 215, 0, 0.7), 0 0 45px rgba(255, 215, 0, 0.25);
+    border-color: rgba(255, 215, 0, 0.9);
+  }
+}
+.glow-pulse {
+  animation: glow-pulse-anim 1.6s ease-in-out infinite;
+}
+
+@keyframes chip-fly-anim {
+  from {
+    transform: translate(var(--start-x, 0px), var(--start-y, 0px)) scale(0.6);
+    opacity: 0.2;
+  }
+  to {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+}
+.chip-fly {
+  animation: chip-fly-anim 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes coin-float {
+  0% { transform: translateY(10px) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-80px) rotate(360deg); opacity: 0; }
+}
+.coin-particle {
+  position: absolute;
+  color: #ffd700;
+  font-size: 1.1rem;
+  pointer-events: none;
+  animation: coin-float 1.2s ease-out forwards;
+}
+

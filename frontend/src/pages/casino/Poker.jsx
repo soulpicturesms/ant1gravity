@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../api/api';
+import { casinoAudio } from '../../utils/casinoAudio';
 
 // ─── Playing Card ─────────────────────────────────────────────────────────────
 const SUIT_RED = new Set(['♥','♦']);
@@ -12,10 +13,11 @@ function Card({ card, faceDown = false, size = 'md', style = {} }) {
   }[size] || { w: 60, h: 86, fs: '0.9rem', ss: '1.3rem', r: 7 };
 
   const base = { width: S.w, height: S.h, borderRadius: S.r, flexShrink: 0, ...style };
+  const animClass = faceDown ? 'card-deal' : 'card-deal card-revealed';
 
   if (faceDown || !card) {
     return (
-      <div style={{ ...base, background: 'linear-gradient(145deg,#1e3a8a,#1e40af)', border: '2px solid rgba(255,255,255,0.12)', boxShadow: '2px 4px 10px rgba(0,0,0,0.6)', overflow: 'hidden', position: 'relative' }}>
+      <div className={animClass} style={{ ...base, background: 'linear-gradient(145deg,#1e3a8a,#1e40af)', border: '2px solid rgba(255,255,255,0.12)', boxShadow: '2px 4px 10px rgba(0,0,0,0.6)', overflow: 'hidden', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 4, border: '1px solid rgba(255,255,255,0.18)', borderRadius: S.r - 2, backgroundImage: 'repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(255,255,255,0.04) 5px,rgba(255,255,255,0.04) 10px)' }} />
       </div>
     );
@@ -23,7 +25,7 @@ function Card({ card, faceDown = false, size = 'md', style = {} }) {
 
   const color = SUIT_RED.has(card.suit) ? '#cc1122' : '#0f172a';
   return (
-    <div style={{ ...base, background: 'linear-gradient(145deg,#fff,#f4f4f4)', border: '1px solid #d1d5db', boxShadow: '2px 4px 12px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '3px 5px', position: 'relative' }}>
+    <div className={animClass} style={{ ...base, background: 'linear-gradient(145deg,#fff,#f4f4f4)', border: '1px solid #d1d5db', boxShadow: '2px 4px 12px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '3px 5px', position: 'relative' }}>
       <div style={{ color, lineHeight: 1 }}>
         <div style={{ fontWeight: 800, fontSize: S.fs, fontFamily: 'Georgia,serif' }}>{card.value}</div>
         <div style={{ fontSize: `calc(${S.fs} * 0.85)` }}>{card.suit}</div>
@@ -50,12 +52,12 @@ function PlayerSeat({ player, isMe, isCurrent, myCards }) {
     }}>
       {/* Cards above panel */}
       <div style={{ display: 'flex', gap: 3, justifyContent: 'center', marginBottom: 4 }}>
-        <Card card={isMe ? cards[0] : null} faceDown={!isMe || !cards[0]} size="sm" />
-        <Card card={isMe ? cards[1] : null} faceDown={!isMe || !cards[1]} size="sm" />
+        <Card key={`card0-${cards[0] ? cards[0].value + cards[0].suit : 'hidden'}`} card={isMe ? cards[0] : null} faceDown={!isMe || !cards[0]} size="sm" />
+        <Card key={`card1-${cards[1] ? cards[1].value + cards[1].suit : 'hidden'}`} card={isMe ? cards[1] : null} faceDown={!isMe || !cards[1]} size="sm" />
       </div>
 
       {/* Info panel */}
-      <div style={{
+      <div className={isCurrent ? 'glow-pulse' : ''} style={{
         background: isCurrent ? 'rgba(255,215,0,0.18)' : isMe ? 'rgba(0,212,255,0.12)' : 'rgba(0,0,0,0.55)',
         border: `2px solid ${isCurrent ? '#ffd700' : isMe ? 'rgba(0,212,255,0.5)' : 'rgba(255,255,255,0.08)'}`,
         borderRadius: 8, padding: '5px 7px',
@@ -133,7 +135,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
         {/* Community cards */}
         <div style={{ position: 'absolute', top: '36%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', gap: 6, justifyContent: 'center' }}>
           {Array.from({ length: 5 }, (_, i) => (
-            <Card key={i} card={community?.[i] || null} faceDown={!community?.[i]} size="md" />
+            <Card key={`comm-${i}-${community?.[i] ? community[i].value + community[i].suit : 'hidden'}`} card={community?.[i] || null} faceDown={!community?.[i]} size="md" />
           ))}
         </div>
 
@@ -309,7 +311,13 @@ export default function Poker({ user }) {
   const [raiseAmt, setRaiseAmt] = useState('');
   const [err, setErr]         = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [muted, setMuted]     = useState(casinoAudio.muted);
   const nextHandTimer = useRef(null);
+
+  const prevMyTurnRef = useRef(false);
+  const prevCommCountRef = useRef(0);
+  const prevPotRef = useRef(0);
+  const prevPhaseRef = useRef('');
 
   // ── Polling ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -325,6 +333,48 @@ export default function Poker({ user }) {
     const iv = setInterval(poll, 2000);
     return () => clearInterval(iv);
   }, [roomId, view]);
+
+  // ── Sound triggers on game updates ───────────────────────────────────────────
+  useEffect(() => {
+    if (!gameState) return;
+    const state = gameState;
+    const players = state.players || [];
+    const me = players.find(p => p.userId === user.id);
+    const currentPlayer = players[state.currentIdx];
+    const isMyTurn = currentPlayer?.userId === user.id && state.phase !== 'waiting' && state.phase !== 'showdown';
+
+    // 1. Alert when it becomes my turn
+    if (isMyTurn && !prevMyTurnRef.current) {
+      casinoAudio.playTurnAlert();
+    }
+    prevMyTurnRef.current = isMyTurn;
+
+    // 2. Play slide sound on new community cards
+    const commCount = state.community?.filter(Boolean).length || 0;
+    if (commCount > prevCommCountRef.current) {
+      casinoAudio.playCardSlide();
+    }
+    prevCommCountRef.current = commCount;
+
+    // 3. Play chip sound when pot changes
+    if (state.pot > prevPotRef.current) {
+      casinoAudio.playChip();
+    }
+    prevPotRef.current = state.pot;
+
+    // 4. Play win/lose on showdown
+    if (state.phase === 'showdown' && prevPhaseRef.current !== 'showdown') {
+      const winner = state.showdown?.winner;
+      if (winner) {
+        if (winner.userId === user.id) {
+          casinoAudio.playWin();
+        } else {
+          casinoAudio.playLose();
+        }
+      }
+    }
+    prevPhaseRef.current = state.phase;
+  }, [gameState, user.id]);
 
   // ── Auto next-hand after showdown ────────────────────────────────────────────
   useEffect(() => {
@@ -403,9 +453,17 @@ export default function Poker({ user }) {
             Buy-in: {(state.buyIn || 100).toLocaleString('es-AR')} · {players.length}/{state.maxPlayers || 6} jugadores
           </span>
         </div>
-        <button onClick={handleLeave} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6a6a8a', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani' }}>
-          ← Salir
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button onClick={() => {
+            const nowMuted = casinoAudio.toggleMute();
+            setMuted(nowMuted);
+          }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.15rem', color: 'rgba(255,255,255,0.3)', padding: 4 }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <button onClick={handleLeave} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6a6a8a', borderRadius: 6, padding: '5px 14px', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani' }}>
+            ← Salir
+          </button>
+        </div>
       </div>
 
       {err && <div className="alert alert-error" style={{ marginBottom: 10 }}>{err}</div>}

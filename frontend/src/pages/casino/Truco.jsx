@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../../api/api';
+import { casinoAudio } from '../../utils/casinoAudio';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TRUCO_LABEL = {
@@ -18,10 +19,12 @@ const reversoUrl = `${CDN}/reverso.png`;
 // ─── Card component ───────────────────────────────────────────────────────────
 function SpanishCard({ num, palo, hidden, size = 'md', selected, selectable, onClick }) {
   const [w, h] = { sm: [44, 66], md: [60, 90], lg: [76, 114] }[size] || [60, 90];
+  const animClass = hidden ? 'card-deal' : 'card-deal card-revealed';
 
   return (
     <div
       onClick={selectable ? onClick : undefined}
+      className={animClass}
       style={{
         width: w, height: h, flexShrink: 0,
         borderRadius: 5,
@@ -92,8 +95,11 @@ function OfferBanner({ offer, type, onAccept, onReject, myUserId }) {
     ? TRUCO_LABEL[offer.offeredPts] || 'TRUCO'
     : ENVIDO_LABEL[offer.type] || offer.type?.toUpperCase();
 
+  const isHighStakes = (type === 'truco' && offer.offeredPts >= 3) || (type === 'envido' && offer.type === 'falta_envido');
+  const animClass = `bounce-in ${isHighStakes ? 'shake' : ''}`;
+
   return (
-    <div style={{
+    <div className={animClass} style={{
       background: type === 'truco' ? 'rgba(251,191,36,0.12)' : 'rgba(96,165,250,0.12)',
       border: `1px solid ${type === 'truco' ? '#fbbf24' : '#60a5fa'}60`,
       borderRadius: 10, padding: '14px 16px', marginBottom: 12,
@@ -197,7 +203,7 @@ function HandEndBanner({ result, players, myUserId, countdown }) {
   const won = result.winnerTeam === myTeam;
 
   return (
-    <div style={{
+    <div className="bounce-in" style={{
       background: won ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)',
       border: `1px solid ${won ? '#22c55e' : '#ef4444'}50`,
       borderRadius: 12, padding: '16px 20px', marginBottom: 12, textAlign: 'center',
@@ -544,11 +550,19 @@ export default function Truco({ user }) {
   const [room, setRoom]     = useState(null);
   const [err, setErr]       = useState('');
   const [loading, setLoading] = useState(false);
+  const [muted, setMuted]     = useState(casinoAudio.muted);
 
   const pollRef      = useRef(null);
   const roomsRef     = useRef(null);
   const nextHandRef  = useRef(null);
   const countdown    = useRef(null);
+
+  const prevMyTurnRef = useRef(false);
+  const prevPlayedCardsRef = useRef(0);
+  const prevPhaseRef = useRef('');
+  const prevTrucoOfferRef = useRef(null);
+  const prevEnvidoOfferRef = useRef(null);
+  const prevGameOverRef = useRef(false);
 
   const myUserId = user?.id;
 
@@ -581,6 +595,63 @@ export default function Truco({ user }) {
     pollRef.current = setInterval(pollRoom, 2000);
     return () => { clearInterval(pollRef.current); clearTimeout(nextHandRef.current); };
   }, [roomId, pollRoom]);
+
+  // Sound triggers on room state updates
+  useEffect(() => {
+    if (!room) return;
+    const myPlayer = room.players?.find(p => p.userId === user?.id);
+    const myTeam = myPlayer?.team ?? 0;
+    
+    // 1. My turn alert
+    const isMyTurn = room.currentUserId === user?.id && room.phase === 'playing' && !room.trucoOffer && !room.envidoOffer;
+    if (isMyTurn && !prevMyTurnRef.current) {
+      casinoAudio.playTurnAlert();
+    }
+    prevMyTurnRef.current = isMyTurn;
+
+    // 2. Play slide sound when cards are played
+    const totalPlayed = room.players?.reduce((sum, p) => sum + (p.playedCards?.length || 0), 0) || 0;
+    if (totalPlayed > prevPlayedCardsRef.current) {
+      casinoAudio.playCardSlide();
+    }
+    prevPlayedCardsRef.current = totalPlayed;
+
+    // 3. Play chip/ding sound when offers are made
+    if (room.trucoOffer && !prevTrucoOfferRef.current) {
+      casinoAudio.playTurnAlert();
+    }
+    prevTrucoOfferRef.current = room.trucoOffer;
+
+    if (room.envidoOffer && !prevEnvidoOfferRef.current) {
+      casinoAudio.playTurnAlert();
+    }
+    prevEnvidoOfferRef.current = room.envidoOffer;
+
+    // 4. Play win/lose on hand end
+    if (room.phase === 'hand_end' && prevPhaseRef.current !== 'hand_end') {
+      const won = room.handEndResult?.winnerTeam === myTeam;
+      if (won) {
+        casinoAudio.playWin();
+      } else {
+        casinoAudio.playLose();
+      }
+    }
+    prevPhaseRef.current = room.phase;
+
+    // 5. Play win/lose on game over
+    if (room.gameOver && !prevGameOverRef.current) {
+      const won = room.gameOver.winnerTeam === myTeam;
+      if (won) {
+        casinoAudio.playWin();
+      } else {
+        casinoAudio.playLose();
+      }
+      prevGameOverRef.current = true;
+    }
+    if (!room.gameOver) {
+      prevGameOverRef.current = false;
+    }
+  }, [room, user?.id]);
 
   // Poll rooms list
   useEffect(() => {
@@ -643,11 +714,19 @@ export default function Truco({ user }) {
     </div>
   );
 
-  // Back button
-  const BackBtn = () => view === 'room' ? (
-    <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#9090b0', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', marginBottom: 20 }}>
-      ← Volver al lobby
-    </button>
+  // Top bar with audio toggle
+  const TopBar = () => view === 'room' ? (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <button onClick={leaveRoom} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#9090b0', borderRadius: 6, padding: '6px 16px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem' }}>
+        ← Volver al lobby
+      </button>
+      <button onClick={() => {
+        const nowMuted = casinoAudio.toggleMute();
+        setMuted(nowMuted);
+      }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'rgba(255,255,255,0.3)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={muted ? 'Activar Sonido' : 'Silenciar'}>
+        {muted ? '🔇' : '🔊'}
+      </button>
+    </div>
   ) : null;
 
   if (view === 'list') {
@@ -663,7 +742,7 @@ export default function Truco({ user }) {
   if (room.status === 'waiting' || (room.status === 'playing' && !room.myCards?.length && room.phase === 'waiting')) {
     return (
       <div>
-        <BackBtn />
+        <TopBar />
         <WaitingRoom room={room} myUserId={myUserId} onStart={startGame} onLeave={leaveRoom} err={err} />
       </div>
     );
@@ -671,7 +750,7 @@ export default function Truco({ user }) {
 
   return (
     <div>
-      <BackBtn />
+      <TopBar />
       <GameBoard
         room={room}
         myUserId={myUserId}
