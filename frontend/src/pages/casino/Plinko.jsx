@@ -3,9 +3,9 @@ import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
 const PLINKO_MULTIPLIERS = {
-  bajo:  [5.6, 1.6, 1.2, 1.0, 0.7, 0.5, 0.5, 0.5, 0.7, 1.0, 1.2, 1.6, 5.6],
-  medio: [13.0, 4.0, 1.5, 1.1, 0.7, 0.4, 0.2, 0.4, 0.7, 1.1, 1.5, 4.0, 13.0],
-  alto:  [33.0, 11.0, 3.0, 1.3, 0.5, 0.2, 0.0, 0.2, 0.5, 1.3, 3.0, 11.0, 33.0],
+  bajo:  [10.0, 2.0, 1.5, 1.1, 0.8, 0.5, 0.5, 0.5, 0.8, 1.1, 1.5, 2.0, 10.0],
+  medio: [40.0, 10.0, 3.0, 1.5, 0.8, 0.3, 0.2, 0.3, 0.8, 1.5, 3.0, 10.0, 40.0],
+  alto:  [260.0, 30.0, 6.0, 2.0, 0.7, 0.2, 0.0, 0.2, 0.7, 2.0, 6.0, 30.0, 260.0],
 };
 
 const getBucketColor = (mult) => {
@@ -27,7 +27,7 @@ const getBucketTextColor = (mult) => {
 const RISK_LABELS = { bajo: 'Bajo', medio: 'Medio', alto: 'Alto' };
 const RISK_COLORS = { bajo: '#6fff7d', medio: '#f5c542', alto: '#ff2d7a' };
 
-export default function Plinko({ balance, onBalanceChange }) {
+export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }) {
   const [bet, setBet] = useState(100);
   const [risk, setRisk] = useState('medio');
   const [loading, setLoading] = useState(false);
@@ -39,15 +39,19 @@ export default function Plinko({ balance, onBalanceChange }) {
   const bucketSplashesRef = useRef(new Map());
   const animRef = useRef(null);
 
+  // Scaled dimensions from design handoff
   const rows = 12;
   const startY = 44;
-  const rowSpacing = 30;
-  const pegSpacingX = 32;
-  const ballSize = 6;
-  const pegSize = 3;
+  const rowSpacing = 32;
+  const pegSpacingX = 38;
+  const ballSize = 8;
+  const pegSize = 3.5;
 
   const balanceRef = useRef(balance);
   useEffect(() => { balanceRef.current = balance; }, [balance]);
+
+  // Compute current bet scaling factor
+  const betFactor = 1 + Math.min(1.0, Math.log10(bet / 10) * 0.2);
 
   const dropBall = async () => {
     if (bet < 10) return setErr('Apuesta mínima: 10 tokens');
@@ -59,7 +63,7 @@ export default function Plinko({ balance, onBalanceChange }) {
       casinoAudio.playChip();
       const res = await api.casinoPlinko({ bet, risk });
       const canvas = canvasRef.current;
-      const cx = canvas ? canvas.width / 2 : 300;
+      const cx = canvas ? canvas.width / 2 / (window.devicePixelRatio || 1) : 320;
       const k0 = 1;
       const startPos = { x: cx, y: startY - 15 };
       const pathCoords = [startPos];
@@ -90,8 +94,8 @@ export default function Plinko({ balance, onBalanceChange }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const logicalW = 500;
-    const logicalH = 480;
+    const logicalW = 640;
+    const logicalH = 520;
     const cx = logicalW / 2;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = logicalW * dpr;
@@ -130,12 +134,17 @@ export default function Plinko({ balance, onBalanceChange }) {
       const bucketHeight = 24;
       const bucketY = startY + rows * rowSpacing + 12;
       const mults = PLINKO_MULTIPLIERS[risk];
+      
+      // Calculate active scaled multipliers for drawing
+      const curBetFactor = 1 + Math.min(1.0, Math.log10(betRef.current / 10) * 0.2);
+
       for (let b = 0; b < 13; b++) {
         const bx = cx + (b - 6) * pegSpacingX - bucketWidth / 2;
         const isSplashed = bucketSplashesRef.current.has(b) && bucketSplashesRef.current.get(b) > now;
-        const mult = mults[b];
-        const bgColor = getBucketColor(mult);
-        const txtColor = getBucketTextColor(mult);
+        const baseMult = mults[b];
+        const scaledMult = parseFloat((baseMult * curBetFactor).toFixed(1));
+        const bgColor = getBucketColor(baseMult);
+        const txtColor = getBucketTextColor(baseMult);
         ctx.save();
         ctx.fillStyle = bgColor;
         const currentY = isSplashed ? bucketY + 4 : bucketY;
@@ -150,7 +159,7 @@ export default function Plinko({ balance, onBalanceChange }) {
         ctx.font = 'bold 9px Inter, system-ui';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${mult}x`, bx + bucketWidth / 2, currentY + bucketHeight / 2);
+        ctx.fillText(`${scaledMult}x`, bx + bucketWidth / 2, currentY + bucketHeight / 2);
         ctx.restore();
       }
 
@@ -160,7 +169,12 @@ export default function Plinko({ balance, onBalanceChange }) {
         if (step + 1 >= coords.length) {
           onBalanceChange(prev => prev + ball.payout);
           bucketSplashesRef.current.set(ball.bucket, now + 250);
-          ball.multiplier >= 1 ? casinoAudio.playWin() : casinoAudio.playLose();
+          if (ball.multiplier >= 1) {
+            casinoAudio.playWin();
+            triggerWinAnimation(ball.payout);
+          } else {
+            casinoAudio.playLose();
+          }
           return false;
         }
         const p1 = coords[step];
@@ -197,6 +211,10 @@ export default function Plinko({ balance, onBalanceChange }) {
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
   }, [risk]);
+
+  // Keep a betRef synced for the canvas drawing context
+  const betRef = useRef(bet);
+  useEffect(() => { betRef.current = bet; }, [bet]);
 
   const half   = () => setBet(b => Math.max(10, Math.floor(b / 2)));
   const double = () => setBet(b => Math.min(balance, b * 2));
@@ -275,23 +293,26 @@ export default function Plinko({ balance, onBalanceChange }) {
         {/* Multiplier preview */}
         <div>
           <div style={{ fontSize: '0.6rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 7 }}>
-            Multiplicadores
+            Multiplicadores Escalonados
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {PLINKO_MULTIPLIERS[risk].filter((m, i, arr) => arr.indexOf(m) === i).sort((a, b) => b - a).slice(0, 6).map(mult => (
-              <span key={mult} style={{
-                fontSize: '0.72rem', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
-                color: getBucketTextColor(mult),
-                background: getBucketColor(mult),
-                border: `1px solid ${getBucketTextColor(mult)}30`,
-                borderRadius: 5, padding: '2px 7px',
-              }}>{mult}x</span>
-            ))}
+            {PLINKO_MULTIPLIERS[risk].filter((m, i, arr) => arr.indexOf(m) === i).sort((a, b) => b - a).slice(0, 6).map(mult => {
+              const scaledMult = parseFloat((mult * betFactor).toFixed(1));
+              return (
+                <span key={mult} style={{
+                  fontSize: '0.72rem', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                  color: getBucketTextColor(mult),
+                  background: getBucketColor(mult),
+                  border: `1px solid ${getBucketTextColor(mult)}30`,
+                  borderRadius: 5, padding: '2px 7px',
+                }}>{scaledMult}x</span>
+              );
+            })}
           </div>
         </div>
 
         <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6 }}>
-          12 filas · 13 canales<br />La bola rebota aleatoriamente
+          12 filas · 13 canales<br />Los multiplicadores aumentan según el tamaño de tu apuesta.
         </div>
       </div>
 
@@ -302,8 +323,8 @@ export default function Plinko({ balance, onBalanceChange }) {
           borderRadius: 14, padding: '14px 0 10px', overflow: 'hidden',
           position: 'relative', width: '100%',
         }}>
-          <canvas ref={canvasRef} width={500} height={480} style={{
-            display: 'block', margin: '0 auto', width: '100%', height: 'auto', maxWidth: 500,
+          <canvas ref={canvasRef} width={640} height={520} style={{
+            display: 'block', margin: '0 auto', width: '100%', height: 'auto', maxWidth: 640,
           }} />
         </div>
       </div>

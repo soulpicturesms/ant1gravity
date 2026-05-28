@@ -58,26 +58,60 @@ function RouletteWheelSVG() {
       })}
       <circle cx={cx} cy={cy} r={r*0.42} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
       <circle cx={cx} cy={cy} r={r*0.52} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="0.8"/>
+      
+      {/* Outer LED chasing lights */}
+      {WHEEL_NUMBERS.map((n, i) => {
+        const a = (i / N) * Math.PI * 2 - Math.PI / 2;
+        const lx = cx + Math.cos(a) * (r - 6);
+        const ly = cy + Math.sin(a) * (r - 6);
+        return (
+          <circle
+            key={`led-${i}`}
+            cx={lx}
+            cy={ly}
+            r="1.8"
+            className="roul-idle-light"
+            style={{
+              animationDelay: `${i * 0.05}s`
+            }}
+          />
+        );
+      })}
     </svg>
   );
 }
 
-// ── Wheel + ball (CSS-transition based) ────────────────────────────────
-function RouletteWheel({ wheelRot, ballRot, noTransition, result }) {
+// ── Wheel + ball (JS-physics animation loop) ──────────────────────────
+function RouletteWheel({ wheelRot, ballAngleRel, ballRadius }) {
   return (
     <div className="roul-wheel-wrap">
       <div className="roul-pointer"/>
       <div
-        className={`roul-wheel${noTransition ? ' notrans' : ''}`}
+        className="roul-wheel"
         style={{ transform: `rotate(${wheelRot}deg)` }}
       >
         <RouletteWheelSVG/>
         <div className="roul-wheel__center">ant1gravity</div>
+        {/* Ball is inside the wheel container */}
+        <div
+          className="roul-ball"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 30% 28%, #ffffff, #b0b0b0)',
+            boxShadow: '0 0 5px rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.6)',
+            transform: `translate(-50%, -50%) rotate(${ballAngleRel}deg) translateY(-${ballRadius}px)`,
+            transformOrigin: 'center center',
+            pointerEvents: 'none',
+            zIndex: 3,
+            transition: 'none', // Remove any CSS transition so it moves purely via JS loop
+          }}
+        />
       </div>
-      <div
-        className={`roul-ball${noTransition ? ' notrans' : ''}`}
-        style={{ transform: `translateX(-50%) rotate(${ballRot}deg) translateY(0)` }}
-      />
     </div>
   );
 }
@@ -395,7 +429,7 @@ function BettingGrid({ bets, onBet }) {
 }
 
 // ── Main Roulette component ────────────────────────────────────────────
-export default function CasinoRuleta({ balance, onBalanceChange }) {
+export default function CasinoRuleta({ balance, onBalanceChange, triggerWinAnimation }) {
   const [bets, setBets]         = useState([]);
   const [chip, setChip]         = useState(100);
   const [spinning, setSpinning] = useState(false);
@@ -404,17 +438,12 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
   const [err, setErr]           = useState('');
   const [history, setHistory]   = useState([]);
 
-  // CSS-transition wheel state
+  // JS physics animation loop states
   const [wheelRot, setWheelRot] = useState(0);
-  const [ballRot,  setBallRot]  = useState(0);
-  const [noTrans,  setNoTrans]  = useState(true);  // disable on first render
+  const [ballAngleRel, setBallAngleRel] = useState(0);
+  const [ballRadius, setBallRadius] = useState(145);
 
-  // Enable transitions after first render (so initial position doesn't animate)
-  useEffect(() => {
-    const id = setTimeout(() => setNoTrans(false), 50);
-    return () => clearTimeout(id);
-  }, []);
-
+  const animRef  = useRef(null);
   const rollRef  = useRef(null);
   const tickRef  = useRef(null);
 
@@ -457,45 +486,118 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
       const winningNum = String(res.number);
       const idx        = WHEEL_NUMBERS.indexOf(winningNum);
       const segAngle   = 360 / N;
+      // Center the ball on the winning pocket
+      const targetAngleRel = idx * segAngle + (segAngle / 2);
 
-      // Wheel: spin 5 full turns + land with pocket CENTER at top
-      // Use (idx + 0.5) so the center of the sector aligns with the pointer,
-      // not the leading edge (which would look like "between two numbers").
-      const newWheelRot = wheelRot + 360*5 + (360 - (idx + 0.5) * segAngle);
-      // Ball: spin 9 full counter-clockwise turns → ends at top (matching wheel)
-      const newBallRot  = ballRot - 360*9;
+      const animStart = performance.now();
+      const duration = 5200; // 5.2 seconds
 
-      setWheelRot(newWheelRot);
-      setBallRot(newBallRot);
+      const initialWheelRot = wheelRot % 360;
+      // Convert current relative angle back to screen angle
+      const initialBallAngleScreen = (wheelRot + ballAngleRel) % 360;
 
       rollRef.current = casinoAudio.playRouletteRoll();
       startTickSounds();
 
-      setTimeout(() => {
-        stopSounds();
-        casinoAudio.playRouletteSettle();
-        setSpinning(false);
-        setResult(res.number);
-        setHistory(h => [res.number, ...h].slice(0, 12));
-        setSummary(res);
-        onBalanceChange(res.balance);
-        setBets([]);
-        res.net >= 0 ? casinoAudio.playWin() : casinoAudio.playLose();
-      }, 5300);
+      const easeOutQuad = t => t * (2 - t);
+      const easeOutCubic = t => (--t) * t * t + 1;
+
+      const tick = (now) => {
+        const elapsed = now - animStart;
+        if (elapsed >= duration) {
+          stopSounds();
+          casinoAudio.playRouletteSettle();
+
+          const finalWheelRot = initialWheelRot + 360 * 3.5;
+          setWheelRot(finalWheelRot);
+          setBallAngleRel(targetAngleRel);
+          setBallRadius(110);
+
+          setSpinning(false);
+          setResult(res.number);
+          setHistory(h => [res.number, ...h].slice(0, 12));
+          setSummary(res);
+          onBalanceChange(res.balance);
+          setBets([]);
+
+          if (res.net > 0) {
+            casinoAudio.playWin();
+            triggerWinAnimation(res.net);
+          } else {
+            casinoAudio.playLose();
+          }
+          return;
+        }
+
+        // 1. Wheel rotation (clockwise, decelerating)
+        const wheelProgress = easeOutQuad(Math.min(elapsed / 4800, 1));
+        const currentWheelRot = initialWheelRot + wheelProgress * (360 * 3.5);
+        setWheelRot(currentWheelRot);
+
+        // 2. Ball rotation & physics (orbits counter-clockwise, spirals, bounces)
+        let currentBallAngleRel = 0;
+        let currentBallRadius = 145;
+
+        if (elapsed < 3200) {
+          // Orbit & spiral phase
+          const tRatio = elapsed / 3200;
+          const ballProgress = easeOutCubic(tRatio);
+          const currentBallAngleScreen = initialBallAngleScreen - ballProgress * (360 * 6.5);
+          currentBallAngleRel = ((currentBallAngleScreen - currentWheelRot) % 360 + 360) % 360;
+          currentBallRadius = 145 - 35 * Math.pow(tRatio, 3);
+        } else {
+          // Bounce & settle phase
+          const bounceT = (elapsed - 3200) / 2000; // 0 to 1
+          const tRatio = 3200 / 3200;
+          const ballProgress = easeOutCubic(tRatio);
+          const ballAngleScreenStart = initialBallAngleScreen - ballProgress * (360 * 6.5);
+          const wheelRotStart = initialWheelRot + easeOutQuad(3200 / 4800) * (360 * 3.5);
+          const ballAngleRelStart = ((ballAngleScreenStart - wheelRotStart) % 360 + 360) % 360;
+
+          // Shortest distance calculation
+          let diff = ballAngleRelStart - targetAngleRel;
+          diff = ((diff + 180) % 360 + 360) % 360 - 180;
+
+          const blend = Math.max(0, 1 - (elapsed - 3200) / 800); // Blend out diff in 800ms
+          const bounceOffset = 18 * Math.exp(-bounceT * 3.5) * Math.sin(bounceT * Math.PI * 7);
+
+          currentBallAngleRel = ((targetAngleRel + diff * blend + bounceOffset) % 360 + 360) % 360;
+          currentBallRadius = 110 + 35 * blend * blend + Math.abs(bounceOffset) * 0.45;
+        }
+
+        setBallAngleRel(currentBallAngleRel);
+        setBallRadius(currentBallRadius);
+
+        animRef.current = requestAnimationFrame(tick);
+      };
+
+      animRef.current = requestAnimationFrame(tick);
 
     } catch (e) {
       setErr(e.message);
       setSpinning(false);
       stopSounds();
     }
-  }, [spinning, bets, totalBet, balance, wheelRot, ballRot, startTickSounds, stopSounds, onBalanceChange]);
+  }, [spinning, bets, totalBet, balance, wheelRot, ballAngleRel, startTickSounds, stopSounds, onBalanceChange, triggerWinAnimation]);
 
-  useEffect(() => () => stopSounds(), [stopSounds]);
+  useEffect(() => () => {
+    stopSounds();
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+  }, [stopSounds]);
 
   const col  = result !== null ? colorOf(String(result)) : null;
 
   return (
     <div className="casino-roul-view">
+      <style>{`
+        @keyframes roulLightChaser {
+          0%, 100% { fill: #ff2d7a; filter: drop-shadow(0 0 1px #ff2d7a); opacity: 0.3; }
+          50% { fill: #ffce4d; filter: drop-shadow(0 0 3px #ffce4d); opacity: 1; }
+        }
+        .roul-idle-light {
+          animation: roulLightChaser 1.9s infinite linear;
+        }
+      `}</style>
 
       {/* ── LEFT: Bet Panel ────────────────────────────── */}
       <div className="casino-roul-panel">
@@ -585,9 +687,8 @@ export default function CasinoRuleta({ balance, onBalanceChange }) {
         {/* Wheel */}
         <RouletteWheel
           wheelRot={wheelRot}
-          ballRot={ballRot}
-          noTransition={noTrans}
-          result={result}
+          ballAngleRel={ballAngleRel}
+          ballRadius={ballRadius}
         />
 
         {/* Result banner */}

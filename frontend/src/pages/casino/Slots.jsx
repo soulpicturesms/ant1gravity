@@ -49,7 +49,7 @@ class CoinParticle {
   }
 }
 
-export default function Slots({ balance, onBalanceChange }) {
+export default function Slots({ balance, onBalanceChange, triggerWinAnimation, gameName }) {
   const [bet, setBet] = useState(45);
   const [jackpot, setJackpot] = useState(50000);
   const [spinning, setSpinning] = useState(false);
@@ -234,9 +234,11 @@ export default function Slots({ balance, onBalanceChange }) {
       setLastWin(res.payout); onBalanceChange(res.balance); setWinningLines(res.winningLines);
       if (res.jackpotWon) {
         setShowJackpotWon(true); casinoAudio.playJackpotSiren();
+        triggerWinAnimation(res.payout);
         for (let i = 0; i < 150; i++) particlesRef.current.push(new CoinParticle(colWidth * colCount, rowHeight * rowCount));
       } else {
         casinoAudio.playSlotWinLine();
+        triggerWinAnimation(res.payout);
         if (res.payout >= bet * 2) {
           setShowBigWin(true);
           for (let i = 0; i < 60; i++) particlesRef.current.push(new CoinParticle(colWidth * colCount, rowHeight * rowCount));
@@ -295,7 +297,7 @@ export default function Slots({ balance, onBalanceChange }) {
 
       {/* ── LEFT PANEL ───────────────────────────────── */}
       <div className="casino-roul-panel">
-        <div className="casino-roul-panel__title">Slots Pro</div>
+        <div className="casino-roul-panel__title">{gameName || 'Slots Pro'}</div>
 
         {/* Jackpot */}
         <div style={{
@@ -403,15 +405,16 @@ export default function Slots({ balance, onBalanceChange }) {
       </div>
 
       {/* ── RIGHT STAGE ─────────────────────────────── */}
-      <div className="casino-roul-stage" style={{ flexDirection: 'column', gap: 10 }}>
+      <div className="casino-roul-stage" style={{ flexDirection: 'column', gap: 10, alignItems: 'center' }}>
 
         {/* Reels cabinet */}
         <div style={{
           border: '5px solid var(--c-surface2)', borderRadius: 14, overflow: 'hidden',
           boxShadow: 'inset 0 0 30px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,45,122,0.12), 0 0 20px rgba(0,0,0,0.5)',
-          background: '#07070c', touchAction: 'none', position: 'relative', width: '100%',
+          background: '#07070c', touchAction: 'none', position: 'relative',
+          width: '100%', maxWidth: '580px', aspectRatio: '580/270', margin: '0 auto',
         }}>
-          <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: 'auto', maxHeight: 270 }} />
+          <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none',
             boxShadow: 'inset 0 18px 28px rgba(0,0,0,0.9), inset 0 -18px 28px rgba(0,0,0,0.9)',

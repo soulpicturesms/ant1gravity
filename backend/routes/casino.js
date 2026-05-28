@@ -221,9 +221,9 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
 
 // ── PLINKO ────────────────────────────────────────────────────────────────────
 const PLINKO_MULTIPLIERS = {
-  bajo:  [5.6, 1.6, 1.2, 1.0, 0.7, 0.5, 0.5, 0.5, 0.7, 1.0, 1.2, 1.6, 5.6],
-  medio: [13.0, 4.0, 1.5, 1.1, 0.7, 0.4, 0.2, 0.4, 0.7, 1.1, 1.5, 4.0, 13.0],
-  alto:  [33.0, 11.0, 3.0, 1.3, 0.5, 0.2, 0.0, 0.2, 0.5, 1.3, 3.0, 11.0, 33.0],
+  bajo:  [10.0, 2.0, 1.5, 1.1, 0.8, 0.5, 0.5, 0.5, 0.8, 1.1, 1.5, 2.0, 10.0],
+  medio: [40.0, 10.0, 3.0, 1.5, 0.8, 0.3, 0.2, 0.3, 0.8, 1.5, 3.0, 10.0, 40.0],
+  alto:  [260.0, 30.0, 6.0, 2.0, 0.7, 0.2, 0.0, 0.2, 0.7, 2.0, 6.0, 30.0, 260.0],
 };
 
 router.post('/plinko/drop', requireAuth, async (req, res) => {
@@ -247,7 +247,9 @@ router.post('/plinko/drop', requireAuth, async (req, res) => {
   }
 
   const multipliers = PLINKO_MULTIPLIERS[risk];
-  const multiplier = multipliers[bucket];
+  const baseMultiplier = multipliers[bucket];
+  const betFactor = 1 + Math.min(1.0, Math.log10(bet / 10) * 0.2);
+  const multiplier = parseFloat((baseMultiplier * betFactor).toFixed(1));
   const payout = Math.floor(bet * multiplier);
   const net = payout - bet;
 

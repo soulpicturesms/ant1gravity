@@ -116,18 +116,37 @@ class CasinoAudio {
   playRouletteTick() {
     if (this.muted) return;
     this.init();
-    if (this._play('chipsCollide', 0.45, 1.2 + Math.random() * 0.3)) return;
-    // Synthesis fallback
+    // Pure synthesis: metallic ball-on-fret click. No chip buffers — they sound wrong.
     try {
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const g = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, now);
-      osc.frequency.exponentialRampToValueAtTime(280, now + 0.025);
-      g.gain.setValueAtTime(0.1, now);
-      g.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-      osc.connect(g); g.connect(this.ctx.destination);
+      const ac    = this.ctx;
+      const now   = ac.currentTime;
+      const pitch = 0.8 + Math.random() * 0.4;
+
+      // Noise transient — the sharp "clack" of the ball hitting a metal pocket divider
+      const nLen  = Math.floor(ac.sampleRate * 0.03);
+      const nBuf  = ac.createBuffer(1, nLen, ac.sampleRate);
+      const nd    = nBuf.getChannelData(0);
+      for (let i = 0; i < nLen; i++) nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (nLen * 0.07));
+      const nSrc  = ac.createBufferSource();
+      nSrc.buffer = nBuf;
+      const hpf   = ac.createBiquadFilter();
+      hpf.type    = 'highpass';
+      hpf.frequency.value = 3500 * pitch;
+      const nGain = ac.createGain();
+      nGain.gain.setValueAtTime(0.18, now);
+      nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.028);
+      nSrc.connect(hpf); hpf.connect(nGain); nGain.connect(ac.destination);
+      nSrc.start(now); nSrc.stop(now + 0.032);
+
+      // Metallic ring — brief tone of the metal fret
+      const osc   = ac.createOscillator();
+      const oGain = ac.createGain();
+      osc.type    = 'sine';
+      osc.frequency.setValueAtTime(1600 * pitch, now);
+      osc.frequency.exponentialRampToValueAtTime(800 * pitch, now + 0.04);
+      oGain.gain.setValueAtTime(0.06, now);
+      oGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+      osc.connect(oGain); oGain.connect(ac.destination);
       osc.start(now); osc.stop(now + 0.05);
     } catch (e) {}
   }
@@ -199,32 +218,31 @@ class CasinoAudio {
   playRouletteSettle() {
     if (this.muted) return;
     this.init();
-    // 3 decaying collide sounds for realistic pocket landing
-    if (this._buffers.chipsCollide?.length) {
-      [0, 0.1, 0.2].forEach((delay, i) => {
-        const vol = 0.55 - i * 0.15;
-        setTimeout(() => this._play('chipsCollide', vol, 0.8 - i * 0.1), delay * 1000);
-      });
-      return;
-    }
-    // Synthesis fallback
+    // Pure synthesis: ball dropping and settling into pocket — 3 decaying impacts.
     try {
-      const now = this.ctx.currentTime;
+      const ac  = this.ctx;
+      const now = ac.currentTime;
       [
-        { d: 0, f0: 900, f1: 300, v: 0.14, dur: 0.05 },
-        { d: 0.09, f0: 750, f1: 280, v: 0.09, dur: 0.04 },
-        { d: 0.16, f0: 600, f1: 250, v: 0.05, dur: 0.035 },
-      ].forEach(b => {
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sine';
-        const t = now + b.d;
-        osc.frequency.setValueAtTime(b.f0, t);
-        osc.frequency.exponentialRampToValueAtTime(b.f1, t + b.dur);
-        g.gain.setValueAtTime(0, now); g.gain.setValueAtTime(b.v, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + b.dur + 0.02);
-        osc.connect(g); g.connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + b.dur + 0.03);
+        { t: 0,    vol: 0.38, freq: 720 },
+        { t: 0.09, vol: 0.20, freq: 560 },
+        { t: 0.16, vol: 0.10, freq: 420 },
+      ].forEach(({ t, vol, freq }) => {
+        const at  = now + t;
+        const len = Math.floor(ac.sampleRate * 0.06);
+        const buf = ac.createBuffer(1, len, ac.sampleRate);
+        const d   = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.09));
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+        const bpf = ac.createBiquadFilter();
+        bpf.type  = 'bandpass';
+        bpf.frequency.value = freq;
+        bpf.Q.value = 1.4;
+        const g   = ac.createGain();
+        g.gain.setValueAtTime(vol, at);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.07);
+        src.connect(bpf); bpf.connect(g); g.connect(ac.destination);
+        src.start(at); src.stop(at + 0.08);
       });
     } catch (e) {}
   }
