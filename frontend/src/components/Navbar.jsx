@@ -152,7 +152,7 @@ export default function Navbar() {
                   <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', color: 'white', lineHeight: 1 }}>{user.username}</span>
                   <span style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</span>
                 </div>
-                {renderUserAvatar(38)}
+                {renderUserAvatar(50)}
               </Link>
               <button onClick={handleLogout} className="btn btn-secondary btn-sm desktop-nav">Salir</button>
             </>
@@ -189,7 +189,7 @@ export default function Navbar() {
         {user ? (
           <>
             <NavLink to="/profile" style={{ color: '#9090b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
-              {renderUserAvatar(32)}
+              {renderUserAvatar(44)}
               <div>
                 <div style={{ color: 'white', lineHeight: 1 }}>{user.username}</div>
                 <div style={{ fontSize: '0.72rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')} coins</div>

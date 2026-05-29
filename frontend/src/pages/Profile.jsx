@@ -164,7 +164,7 @@ export default function Profile() {
         {/* Avatar card */}
         <div className="card" style={{ textAlign: 'center' }}>
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
-            {renderUserAvatar(120)}
+            {renderUserAvatar(160)}
             {!user.albion_avatar && (
               <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#00d4ff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.8rem', zIndex: 10 }} onClick={() => fileRef.current.click()}>
                 📷

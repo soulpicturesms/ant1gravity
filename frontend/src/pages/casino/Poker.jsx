@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
+import AlbionAvatar from '../../components/AlbionAvatar';
 
 // ─── Playing Card ─────────────────────────────────────────────────────────────
 const SUIT_RED = new Set(['♥','♦']);
@@ -106,19 +107,35 @@ function PlayerSeat({ player, isMe, isCurrent, myCards, phase, showdown }) {
         <Card card={cards[1] ? cards[1] : null} faceDown={cards.length < 2} size="sm" />
       </div>
 
-      {/* Initial Badge Circle (overlapping the top border) */}
-      <div style={{
-        width: 24, height: 24, borderRadius: '50%',
-        background: isCurrent ? 'linear-gradient(135deg, #ff2d7a, #99003d)' : 'var(--c-surface3)',
-        border: `1.5px solid ${isCurrent ? '#ff2d7a' : 'rgba(255,255,255,0.15)'}`,
-        display: 'grid', placeItems: 'center',
-        fontSize: 10, fontWeight: 800, color: '#fff',
-        position: 'absolute', top: 48, left: '50%', transform: 'translateX(-50%)',
-        boxShadow: isCurrent ? '0 0 8px rgba(255,45,122,0.5)' : 'none',
-        zIndex: 3,
-      }}>
-        {initial}
-      </div>
+      {/* Avatar or Initial Badge Circle (overlapping the top border) */}
+      {player.albion_avatar ? (
+        <div style={{
+          position: 'absolute', top: 39, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 3,
+          boxShadow: isCurrent ? '0 0 12px rgba(255,45,122,0.6)' : 'none',
+          borderRadius: '50%'
+        }}>
+          <AlbionAvatar 
+            avatarId={player.albion_avatar} 
+            ringId={player.albion_ring} 
+            size={42} 
+            characterName={player.username} 
+          />
+        </div>
+      ) : (
+        <div style={{
+          width: 24, height: 24, borderRadius: '50%',
+          background: isCurrent ? 'linear-gradient(135deg, #ff2d7a, #99003d)' : 'var(--c-surface3)',
+          border: `1.5px solid ${isCurrent ? '#ff2d7a' : 'rgba(255,255,255,0.15)'}`,
+          display: 'grid', placeItems: 'center',
+          fontSize: 10, fontWeight: 800, color: '#fff',
+          position: 'absolute', top: 48, left: '50%', transform: 'translateX(-50%)',
+          boxShadow: isCurrent ? '0 0 8px rgba(255,45,122,0.5)' : 'none',
+          zIndex: 3,
+        }}>
+          {initial}
+        </div>
+      )}
 
       {/* Main Seat Info Box */}
       <div className={isCurrent ? 'poker-seat-box active' : 'poker-seat-box'} style={{

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
+import AlbionAvatar from '../../components/AlbionAvatar';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TRUCO_LABEL = {
@@ -144,6 +145,14 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
       borderRadius: 10, padding: '6px 10px',
       display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
     }}>
+      {player.albion_avatar && (
+        <AlbionAvatar 
+          avatarId={player.albion_avatar} 
+          ringId={player.albion_ring} 
+          size={36} 
+          characterName={player.username} 
+        />
+      )}
       <div style={{ minWidth: 90 }}>
         <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.78rem', color: isCurrent ? '#fbbf24' : '#a5a6b8' }}>
           {isCurrent ? '⏳ ' : ''}{player.username}
@@ -334,9 +343,18 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
                 borderRadius: 8, padding: '10px 16px',
                 display: 'flex', alignItems: 'center', gap: 10,
               }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1a1a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem' }}>
-                  {p ? (i % 2 === 0 ? '🔵' : '🔴') : '⏳'}
-                </div>
+                {p && p.albion_avatar ? (
+                  <AlbionAvatar 
+                    avatarId={p.albion_avatar} 
+                    ringId={p.albion_ring} 
+                    size={36} 
+                    characterName={p.username} 
+                  />
+                ) : (
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1a1a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0 }}>
+                    {p ? (i % 2 === 0 ? '🔵' : '🔴') : '⏳'}
+                  </div>
+                )}
                 <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: p ? '#e0e0f0' : '#4a4b60' }}>
                   {p ? p.username : 'Esperando...'}
                 </div>

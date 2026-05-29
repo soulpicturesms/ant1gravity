@@ -186,12 +186,13 @@ router.post('/rooms', requireAuth, async (req, res) => {
     const { name, mode = '1v1' } = req.body;
     const maxPlayers = mode === '2v2' ? 4 : 2;
     const { id: userId, username } = req.user;
+    const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', userId).maybeSingle();
 
     const state = {
       name: name || `Sala de ${username}`,
       mode, maxPlayers,
       status: 'waiting', phase: 'waiting',
-      players: [{ userId, username, team: 0, remainingCards: 0, playedCards: [] }],
+      players: [{ userId, username, albion_avatar: user?.albion_avatar || null, albion_ring: user?.albion_ring || null, team: 0, remainingCards: 0, playedCards: [] }],
       teams: [[userId], []],
       scores: [0, 0], trickWins: [0, 0], tricksCompleted: 0,
       trick: [], trickHistory: [],
@@ -244,8 +245,9 @@ router.post('/rooms/:id/join', requireAuth, async (req, res) => {
     if (state.status !== 'waiting')
       return res.status(400).json({ error: 'La partida ya empezó' });
 
+    const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', userId).maybeSingle();
     const team = state.players.length % 2;
-    state.players.push({ userId, username, team, remainingCards: 0, playedCards: [] });
+    state.players.push({ userId, username, albion_avatar: user?.albion_avatar || null, albion_ring: user?.albion_ring || null, team, remainingCards: 0, playedCards: [] });
     state.teams[team].push(userId);
 
     await saveRoom(room.id, state, fullState);

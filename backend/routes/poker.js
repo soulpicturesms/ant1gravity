@@ -166,7 +166,33 @@ router.get('/rooms', async (req,res) => {
 router.post('/rooms', requireAuth, async (req,res) => {
   try {
     const {name='Mesa ANT1',buyIn=100,maxPlayers=6}=req.body;
-    const init={status:'waiting',phase:'waiting',players:[],community:[],pot:0,currentBet:0,currentIdx:0,dealerIdx:-1,buyIn,maxPlayers,minRaise:buyIn,showdown:null,name};
+    const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', req.user.id).maybeSingle();
+    const init={
+      status:'waiting',
+      phase:'waiting',
+      players:[{
+        userId: req.user.id,
+        username: req.user.username,
+        albion_avatar: user?.albion_avatar || null,
+        albion_ring: user?.albion_ring || null,
+        chips: buyIn * 10,
+        status: 'waiting',
+        holeCards: [],
+        roundBet: 0,
+        acted: false,
+        bestHand: null
+      }],
+      community:[],
+      pot:0,
+      currentBet:0,
+      currentIdx:0,
+      dealerIdx:-1,
+      buyIn,
+      maxPlayers,
+      minRaise:buyIn,
+      showdown:null,
+      name
+    };
     const {data,error}=await supabase.from('poker_rooms').insert({name,buy_in:buyIn,max_players:maxPlayers,state:init,full_state:init}).select().single();
     if(error) throw error;
     res.json(data);
@@ -189,7 +215,19 @@ router.post('/rooms/:id/join', requireAuth, async (req,res) => {
     if(state.players.length>=state.maxPlayers) return res.status(400).json({error:'Sala llena'});
     if(state.status==='playing') return res.status(400).json({error:'Partida en curso'});
     if(!state.players.find(p=>p.userId===req.user.id)) {
-      state.players.push({userId:req.user.id,username:req.user.username,chips:state.buyIn*10,status:'waiting',holeCards:[],roundBet:0,acted:false,bestHand:null});
+      const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', req.user.id).maybeSingle();
+      state.players.push({
+        userId:req.user.id,
+        username:req.user.username,
+        albion_avatar: user?.albion_avatar || null,
+        albion_ring: user?.albion_ring || null,
+        chips:state.buyIn*10,
+        status:'waiting',
+        holeCards:[],
+        roundBet:0,
+        acted:false,
+        bestHand:null
+      });
     }
     await saveRoom(req.params.id,state);
     const me=state.players.find(p=>p.userId===req.user.id);

@@ -138,9 +138,11 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
   }
   const uniqueRingUrls = [...new Set(ringCandidates.filter(Boolean))];
 
+  const hasActiveRing = ringId && !ringError;
   const ringColor = getRingColor(ringId);
-  const ringWidth = Math.max(3, Math.round(size * 0.04));
+  const ringWidth = hasActiveRing ? 0 : Math.max(3, Math.round(size * 0.04));
   const ringGlow = ringId ? `0 0 ${Math.round(size * 0.15)}px ${ringColor}40` : 'none';
+  const ringBorder = hasActiveRing ? '1.5px solid rgba(255, 255, 255, 0.15)' : `${ringWidth}px solid ${ringColor}`;
 
   const handleAvatarError = () => {
     if (avatarIndex < uniqueAvatarUrls.length - 1) {
@@ -170,7 +172,7 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
           background: '#0f0f18', 
           overflow: 'hidden',
           position: 'relative',
-          border: `${ringWidth}px solid ${ringColor}`,
+          border: ringBorder,
           boxShadow: ringGlow,
           boxSizing: 'border-box',
         }}>
