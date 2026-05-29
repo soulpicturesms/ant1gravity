@@ -773,30 +773,61 @@ router.get('/history', requireAuth, async (req, res) => {
   res.json(data || []);
 });
 
+// Helper to enrich transactions with users' Albion avatars and rings
+async function attachUserAvatars(transactions) {
+  if (!transactions || !transactions.length) return transactions;
+  const userIds = [...new Set(transactions.map(t => t.user_id).filter(Boolean))];
+  if (!userIds.length) return transactions.map(t => ({ ...t, albion_avatar: null, albion_ring: null }));
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('id, albion_avatar, albion_ring')
+      .in('id', userIds);
+    if (error || !users) {
+      console.warn('Error fetching users for avatars:', error?.message);
+      return transactions.map(t => ({ ...t, albion_avatar: null, albion_ring: null }));
+    }
+    const userMap = new Map(users.map(u => [u.id, u]));
+    return transactions.map(t => {
+      const userDetails = userMap.get(t.user_id);
+      return {
+        ...t,
+        albion_avatar: userDetails?.albion_avatar || null,
+        albion_ring: userDetails?.albion_ring || null,
+      };
+    });
+  } catch (err) {
+    console.error('Error in attachUserAvatars:', err.message);
+    return transactions.map(t => ({ ...t, albion_avatar: null, albion_ring: null }));
+  }
+}
+
 // ── BIGGEST LOSSES (public, room-wide) ────────────────────────────────────────
 router.get('/biggest-losses', async (req, res) => {
   const { data, error } = await supabase
     .from('coin_transactions')
-    .select('username, amount, reason, created_at')
+    .select('username, amount, reason, created_at, user_id')
     .eq('type', 'casino')
     .lt('amount', 0)
     .order('amount', { ascending: true })
     .limit(50);
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  const enriched = await attachUserAvatars(data || []);
+  res.json(enriched);
 });
 
 // ── RECENT WINS (public) ──────────────────────────────────────────────────────
 router.get('/recent-wins', async (req, res) => {
   const { data, error } = await supabase
     .from('coin_transactions')
-    .select('username, amount, reason, created_at')
+    .select('username, amount, reason, created_at, user_id')
     .eq('type', 'casino')
     .gt('amount', 0)
     .order('created_at', { ascending: false })
     .limit(20);
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data || []);
+  const enriched = await attachUserAvatars(data || []);
+  res.json(enriched);
 });
 
 module.exports = router;

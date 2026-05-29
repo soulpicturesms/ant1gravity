@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import AlbionAvatar from '../components/AlbionAvatar';
 import { casinoAudio } from '../utils/casinoAudio';
 import Blackjack from './casino/Blackjack';
 import CasinoRuleta from './casino/CasinoRuleta';
@@ -176,7 +177,7 @@ function parseGameName(reason) {
 }
 
 function parseWin(row) {
-  const { username, amount, reason } = row;
+  const { username, amount, reason, albion_avatar, albion_ring } = row;
   let game = parseGameName(reason), bet = null, mult = null;
 
   if (reason) {
@@ -198,7 +199,15 @@ function parseWin(row) {
       if (mb && mg) mult = bet > 0 ? `${(parseInt(mg[1]) / bet).toFixed(1)}x` : null;
     }
   }
-  return { user: username || 'anónimo', game, bet, win: amount, mult };
+  return { 
+    user: username || 'anónimo', 
+    game, 
+    bet, 
+    win: amount, 
+    mult,
+    avatarId: albion_avatar || null,
+    ringId: albion_ring || null
+  };
 }
 
 const GAME_FILTERS = [
@@ -228,13 +237,40 @@ const TH_STYLE = {
 };
 const TD_MONO = { fontFamily: 'JetBrains Mono, monospace' };
 
-function UserAvatar({ name }) {
+function UserAvatar({ name, avatarId, ringId }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--c-surface3)', display: 'grid', placeItems: 'center', fontSize: 10, color: 'var(--c-text3)', flexShrink: 0 }}>
-        {name[0].toUpperCase()}
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+      <span style={{ 
+        width: 24, 
+        height: 24, 
+        borderRadius: '50%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flexShrink: 0,
+        position: 'relative'
+      }}>
+        {avatarId ? (
+          <div style={{ transform: 'scale(1.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlbionAvatar avatarId={avatarId} ringId={ringId} size={24} />
+          </div>
+        ) : (
+          <span style={{ 
+            width: '100%', 
+            height: '100%', 
+            borderRadius: '50%', 
+            background: 'var(--c-surface3)', 
+            display: 'grid', 
+            placeItems: 'center', 
+            fontSize: 10, 
+            color: 'var(--c-text3)',
+            fontWeight: 700
+          }}>
+            {name[0].toUpperCase()}
+          </span>
+        )}
       </span>
-      {name}
+      <span>{name}</span>
     </span>
   );
 }
@@ -274,7 +310,7 @@ function WinnersTab({ gameFilter }) {
       <tbody>
         {rows.map((w, i) => (
           <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
-            <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={w.user} /></td>
+            <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={w.user} avatarId={w.avatarId} ringId={w.ringId} /></td>
             <td style={{ padding: '11px 14px', color: 'var(--c-text2)' }}>{w.game}</td>
             <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, color: 'var(--c-text3)' }}>{w.bet != null ? w.bet.toLocaleString() : '—'}</td>
             <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: 'var(--c-accent)' }}>{w.mult || '—'}</td>
@@ -382,7 +418,7 @@ function LossesTab({ gameFilter, minLoss }) {
           const stamp = `${date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
           return (
             <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--c-line)' : 'none' }}>
-              <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={r.username || 'anónimo'} /></td>
+              <td style={{ padding: '11px 14px', fontWeight: 600 }}><UserAvatar name={r.username || 'anónimo'} avatarId={r.albion_avatar} ringId={r.albion_ring} /></td>
               <td style={{ padding: '11px 14px', color: 'var(--c-text2)', whiteSpace: 'nowrap' }}>{parseGameName(r.reason)}</td>
               <td style={{ padding: '11px 14px', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--c-text3)', fontSize: 12 }}>{r.reason || '—'}</td>
               <td style={{ padding: '11px 14px', textAlign: 'right', ...TD_MONO, fontWeight: 700, color: '#ff6b6b' }}>{r.amount.toLocaleString('es-AR')}</td>
