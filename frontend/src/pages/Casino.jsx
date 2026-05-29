@@ -104,14 +104,32 @@ class WinCoinParticle {
   }
 }
 
-function GameCard({ game, onClick }) {
+function fmtTokens(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
+  return n.toLocaleString('es-AR');
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'ahora mismo';
+  if (mins < 60) return `hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs}h`;
+  return `hace ${Math.floor(hrs / 24)}d`;
+}
+
+function GameCard({ game, liveCount, onClick }) {
   return (
     <div className="casino-gcard" onClick={onClick}>
       <div className="casino-gcard__bg" style={{ background: game.bg }} />
       <div className="casino-gcard__art">{game.art}</div>
       {/* Live count — top left */}
-      {game.live > 0 && (
-        <div className="casino-gcard__live">{game.live.toLocaleString()}</div>
+      {liveCount > 0 && (
+        <div className="casino-gcard__live">{liveCount.toLocaleString()}</div>
       )}
       {/* Tag — top right */}
       {game.tag === 'hot'  && <span className="casino-gcard__tag casino-gcard__tag--hot">HOT</span>}
@@ -439,6 +457,7 @@ export default function Casino() {
   const [balance, setBalance] = useState(user?.coins || 0);
   const [muted, setMuted] = useState(casinoAudio.muted);
   const [winBanner, setWinBanner] = useState(null);
+  const [stats, setStats] = useState(null);
 
   const celebrationCanvasRef = useRef(null);
   const celebrationParticlesRef = useRef([]);
@@ -446,6 +465,13 @@ export default function Casino() {
   const coinFramesRef = useRef([]);
 
   useEffect(() => { setBalance(user?.coins || 0); }, [user]);
+
+  useEffect(() => {
+    const fetch = () => api.casinoStats().then(setStats).catch(() => {});
+    fetch();
+    const id = setInterval(fetch, 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const refreshBalance = useCallback(() => {
     api.me && api.me().then(u => setBalance(u.coins)).catch(() => {});
@@ -714,23 +740,27 @@ export default function Casino() {
           <div className="casino-stat-strip">
             <div className="casino-stat-cell">
               <span className="casino-stat-label">Jugando ahora</span>
-              <span className="casino-stat-val">14,082</span>
-              <span className="casino-stat-delta">+8.2% hoy</span>
+              <span className="casino-stat-val">{stats ? stats.activePlayers.toLocaleString('es-AR') : '—'}</span>
+              <span className="casino-stat-delta">últimos 15 min</span>
             </div>
             <div className="casino-stat-cell">
               <span className="casino-stat-label">Pagado 24h</span>
-              <span className="casino-stat-val" style={{ color: 'var(--c-accent2)' }}>2.4M</span>
-              <span className="casino-stat-delta">+12.4%</span>
+              <span className="casino-stat-val" style={{ color: 'var(--c-accent2)' }}>{stats ? fmtTokens(stats.paid24h) : '—'}</span>
+              <span className="casino-stat-delta">
+                {stats?.paidDelta != null ? `${stats.paidDelta > 0 ? '+' : ''}${stats.paidDelta}% vs ayer` : 'tokens'}
+              </span>
             </div>
             <div className="casino-stat-cell">
               <span className="casino-stat-label">RTP promedio</span>
-              <span className="casino-stat-val">96.8%</span>
-              <span className="casino-stat-delta">verificado</span>
+              <span className="casino-stat-val">{stats?.rtp != null ? `${stats.rtp}%` : '—'}</span>
+              <span className="casino-stat-delta">últimas 500 rondas</span>
             </div>
             <div className="casino-stat-cell">
               <span className="casino-stat-label">Big win</span>
-              <span className="casino-stat-val" style={{ color: 'var(--c-accent)' }}>184,200</span>
-              <span className="casino-stat-delta">hace 12 min</span>
+              <span className="casino-stat-val" style={{ color: 'var(--c-accent)' }}>
+                {stats?.bigWin ? fmtTokens(stats.bigWin.amount) : '—'}
+              </span>
+              <span className="casino-stat-delta">{stats?.bigWin ? timeAgo(stats.bigWin.createdAt) : ''}</span>
             </div>
           </div>
 
@@ -745,7 +775,12 @@ export default function Casino() {
           </div>
           <div className="casino-gcards">
             {GAMES.map(g => (
-              <GameCard key={g.id} game={g} onClick={() => setActiveGame(g.id)} />
+              <GameCard
+                key={g.id}
+                game={g}
+                liveCount={stats?.liveByGame?.[g.id] ?? 0}
+                onClick={() => setActiveGame(g.id)}
+              />
             ))}
           </div>
 

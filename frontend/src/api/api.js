@@ -138,6 +138,7 @@ export const api = {
   // Casino - Slots
   casinoSlotsSpin: (body) => req('/api/casino/slots/spin', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   casinoSlotsJackpot: () => req('/api/casino/slots/jackpot', { headers: headers() }),
+  casinoStats: () => req('/api/casino/stats'),
   casinoRecentWins: () => req('/api/casino/recent-wins'),
   casinoHistory: () => req('/api/casino/history', { headers: headers() }),
   casinoBiggestLosses: () => req('/api/casino/biggest-losses'),

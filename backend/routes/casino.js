@@ -698,6 +698,68 @@ router.post('/slots/spin', requireAuth, async (req, res) => {
   });
 });
 
+// ── LOBBY STATS ───────────────────────────────────────────────────────────────
+router.get('/stats', async (req, res) => {
+  const now = Date.now();
+  const ago15  = new Date(now - 15 * 60 * 1000).toISOString();
+  const ago24h = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+  const ago48h = new Date(now - 48 * 60 * 60 * 1000).toISOString();
+
+  const [recentQ, wins24Q, prevWinsQ, bigWinQ, rtpQ] = await Promise.all([
+    supabase.from('coin_transactions').select('user_id, reason').eq('type','casino').gte('created_at', ago15),
+    supabase.from('coin_transactions').select('amount').eq('type','casino').gt('amount',0).gte('created_at', ago24h),
+    supabase.from('coin_transactions').select('amount').eq('type','casino').gt('amount',0).gte('created_at', ago48h).lt('created_at', ago24h),
+    supabase.from('coin_transactions').select('username,amount,reason,created_at').eq('type','casino').gt('amount',0).order('amount',{ascending:false}).limit(1).maybeSingle(),
+    supabase.from('coin_transactions').select('amount,reason').eq('type','casino').order('created_at',{ascending:false}).limit(500),
+  ]);
+
+  // Active players + live by game
+  const recentRows = recentQ.data || [];
+  const gameMap = { blackjack: new Set(), ruleta: new Set(), slots: new Set(), plinko: new Set() };
+  for (const { user_id, reason } of recentRows) {
+    if (!reason || !user_id) continue;
+    if (reason.startsWith('Blackjack'))   gameMap.blackjack.add(user_id);
+    else if (reason.startsWith('Ruleta')) gameMap.ruleta.add(user_id);
+    else if (reason.startsWith('Tragaperras')) gameMap.slots.add(user_id);
+    else if (reason.startsWith('Plinko')) gameMap.plinko.add(user_id);
+  }
+  const activePlayers = new Set(recentRows.map(r => r.user_id)).size + sessions.size;
+  const liveByGame = Object.fromEntries(Object.entries(gameMap).map(([k, s]) => [k, s.size]));
+
+  // Paid 24h + delta
+  const paid24h = (wins24Q.data || []).reduce((s, r) => s + r.amount, 0);
+  const paidPrev = (prevWinsQ.data || []).reduce((s, r) => s + r.amount, 0);
+  const paidDelta = paidPrev > 0 ? +((paid24h - paidPrev) / paidPrev * 100).toFixed(1) : null;
+
+  // Big win all-time
+  const bw = bigWinQ.data;
+  const bigWin = bw ? { amount: bw.amount, username: bw.username, createdAt: bw.created_at } : null;
+
+  // RTP from last 500 rounds (parse bet from reason)
+  let totalBet = 0, totalPayout = 0;
+  for (const { amount, reason } of rtpQ.data || []) {
+    let bet = null;
+    if (reason) {
+      const mBJ = reason.match(/apuesta(?:\stotal)?:\s*(\d+)/i);
+      if (mBJ) bet = parseInt(mBJ[1]);
+      const mSL = reason.match(/Apuesta:\s*(\d+)/);
+      if (mSL) bet = parseInt(mSL[1]);
+      if (!bet) {
+        const mPL = reason.match(/\(x([\d.]+)\)/);
+        if (mPL && amount > 0) {
+          const m = parseFloat(mPL[1]);
+          if (m > 1) bet = Math.round(amount / (m - 1));
+        }
+      }
+    }
+    if (!bet && amount < 0) bet = Math.abs(amount);
+    if (bet && bet > 0) { totalBet += bet; totalPayout += Math.max(0, bet + amount); }
+  }
+  const rtp = totalBet > 0 ? +( totalPayout / totalBet * 100).toFixed(1) : null;
+
+  res.json({ activePlayers, liveByGame, paid24h, paidDelta, bigWin, rtp });
+});
+
 // ── GAME HISTORY (per user, auth required) ────────────────────────────────────
 router.get('/history', requireAuth, async (req, res) => {
   const { data, error } = await supabase
