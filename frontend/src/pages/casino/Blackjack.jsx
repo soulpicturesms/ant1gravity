@@ -206,9 +206,10 @@ export default function Blackjack({ balance, onBalanceChange }) {
   const isInitialDeal = isPlaying && game?.playerCards?.length === 2 && game?.dealerCards?.length === 2;
   const result    = isDone ? (RESULTS[game.result] || RESULTS.lose) : null;
 
+  const MAX_BET = 10000;
   const half   = () => setBet(b => Math.max(10, Math.floor(b / 2)));
-  const double = () => setBet(b => Math.min(balance, b * 2));
-  const max    = () => setBet(balance);
+  const double = () => setBet(b => Math.min(Math.min(balance, MAX_BET), b * 2));
+  const max    = () => setBet(Math.min(balance, MAX_BET));
 
   return (
     <div className="casino-roul-view">
@@ -274,8 +275,8 @@ export default function Blackjack({ balance, onBalanceChange }) {
             <div style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', borderRadius: 8, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', height: 46 }}>
                 <input
-                  type="number" min="10" value={bet} disabled={loading}
-                  onChange={e => setBet(Math.max(10, parseInt(e.target.value) || 10))}
+                  type="number" min="10" max={MAX_BET} value={bet} disabled={loading}
+                  onChange={e => setBet(Math.max(10, Math.min(MAX_BET, parseInt(e.target.value) || 10)))}
                   style={{
                     flex: 1, background: 'none', border: 'none', outline: 'none',
                     color: 'var(--c-text)', fontFamily: "'JetBrains Mono', monospace",
@@ -304,6 +305,11 @@ export default function Blackjack({ balance, onBalanceChange }) {
             {bet > balance && (
               <div style={{ fontSize: '0.72rem', color: 'var(--c-accent)', marginTop: 5, textAlign: 'center' }}>
                 Tokens insuficientes
+              </div>
+            )}
+            {bet > MAX_BET && (
+              <div style={{ fontSize: '0.72rem', color: 'var(--c-accent)', marginTop: 5, textAlign: 'center' }}>
+                Máximo: 10.000 TK por mano
               </div>
             )}
           </div>
@@ -366,7 +372,7 @@ export default function Blackjack({ balance, onBalanceChange }) {
             })()}
           </div>
         ) : (
-          <button onClick={handleStartClick} disabled={loading || bet < 10 || bet > balance} className="roul-spin-btn">
+          <button onClick={handleStartClick} disabled={loading || bet < 10 || bet > balance || bet > MAX_BET} className="roul-spin-btn">
             {loading ? 'CARGANDO...' : isDone ? 'NUEVA PARTIDA' : 'REPARTIR'}
           </button>
         )}

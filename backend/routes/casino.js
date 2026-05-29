@@ -41,6 +41,7 @@ setInterval(() => {
 router.post('/blackjack/start', requireAuth, async (req, res) => {
   const bet = parseInt(req.body.bet);
   if (!bet || bet < 10) return res.status(400).json({ error: 'Apuesta mínima: 10 tokens' });
+  if (bet > 10000) return res.status(400).json({ error: 'Apuesta máxima: 10.000 tokens' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
   if (!user || user.coins < bet) return res.status(400).json({ error: 'Tokens insuficientes' });
