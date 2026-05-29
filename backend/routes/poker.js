@@ -98,9 +98,10 @@ function startHand(state) {
 }
 
 function doShowdown(state) {
-  const acts=activePlayers(state.players);
-  let winner=null,bestResult=null;
-  for (const p of acts) {
+  // Include BOTH active and all-in players — all-in players compete for the pot
+  const contenders = state.players.filter(p => p.status==='active'||p.status==='allIn');
+  let winner=null, bestResult=null;
+  for (const p of contenders) {
     const h=bestHand(p.holeCards,state.community);
     p.bestHand=h;
     if (!bestResult||h.rank>bestResult.rank||(h.rank===bestResult.rank&&compareTb(h.tiebreakers,bestResult.tiebreakers)>0)) { bestResult=h; winner=p; }
@@ -108,34 +109,62 @@ function doShowdown(state) {
   if (winner) winner.chips+=state.pot;
   state.phase='showdown'; state.status='showdown';
   state.showdown={
-    players:acts.map(p=>({userId:p.userId,username:p.username,holeCards:p.holeCards,bestHand:p.bestHand})),
+    players:contenders.map(p=>({userId:p.userId,username:p.username,holeCards:p.holeCards,bestHand:p.bestHand})),
     winner:{userId:winner?.userId,username:winner?.username,handName:bestResult?.name},
     pot:state.pot,
   };
 }
 
+function runOutBoard(state) {
+  const phases=['preflop','flop','turn','river'];
+  const deck=state._deck||[];
+  let idx=phases.indexOf(state.phase);
+  while(idx<phases.length-1) {
+    idx++;
+    const p=phases[idx]; state.phase=p;
+    if(p==='flop')  state.community.push(deck.pop(),deck.pop(),deck.pop());
+    if(p==='turn')  state.community.push(deck.pop());
+    if(p==='river') state.community.push(deck.pop());
+  }
+  state._deck=deck;
+}
+
 function checkAndAdvance(state) {
-  const acts=activePlayers(state.players);
-  if (acts.length<=1) {
-    const last=acts[0]||state.players.find(p=>p.status==='allIn');
+  const acts   = activePlayers(state.players);
+  // Players still in the hand (active + all-in, not folded)
+  const nonFolded = state.players.filter(p=>p.status==='active'||p.status==='allIn');
+
+  // Only 1 non-folded player → everyone else folded, award pot without showdown
+  if (nonFolded.length<=1) {
+    const last=nonFolded[0];
     if(last) last.chips+=state.pot;
     state.phase='showdown'; state.status='showdown';
     state.showdown={players:[],winner:{userId:last?.userId,username:last?.username,handName:'Última en pie'},pot:state.pot};
     return;
   }
-  const allActed=acts.every(p=>(p.acted&&p.roundBet===state.currentBet)||p.status==='allIn');
+
+  // All active players have matched the bet (all-in players are implicitly done)
+  const allActed=acts.length===0||acts.every(p=>p.acted&&p.roundBet>=state.currentBet);
   if (!allActed) return;
+
+  // No active players left — all non-folded are all-in → run out the board automatically
+  if (acts.length===0) { runOutBoard(state); doShowdown(state); return; }
+
   const phases=['preflop','flop','turn','river'];
   const next=phases[phases.indexOf(state.phase)+1];
   if (!next) { doShowdown(state); return; }
+
   state.phase=next; state.currentBet=0;
   for (const p of state.players) { p.roundBet=0; if(p.status==='active') p.acted=false; }
   const deck=state._deck||[];
-  if(next==='flop') state.community.push(deck.pop(),deck.pop(),deck.pop());
-  if(next==='turn') state.community.push(deck.pop());
+  if(next==='flop')  state.community.push(deck.pop(),deck.pop(),deck.pop());
+  if(next==='turn')  state.community.push(deck.pop());
   if(next==='river') state.community.push(deck.pop());
   state._deck=deck;
   state.currentIdx=nextActive(state.players,state.dealerIdx);
+
+  // After advancing phase, if remaining active players all went all-in → run out board now
+  if (activePlayers(state.players).length===0) { runOutBoard(state); doShowdown(state); }
 }
 
 // ─── DB helpers ────────────────────────────────────────────────────────────────

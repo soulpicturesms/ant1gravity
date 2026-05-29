@@ -193,7 +193,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
   const currentPlayer = players[currentIdx];
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 740, margin: '0 auto', height: 480 }}>
+    <div style={{ position: 'relative', width: '100%', maxWidth: 960, margin: '0 auto', height: 520 }}>
 
       {/* Oval Felt & Wood Rim Board */}
       <div style={{
@@ -475,12 +475,14 @@ export default function Poker({ user }) {
     { id: '#PK-4889', desc: 'Dos pares', time: 'hace 9 min', bet: 640, net: 320 },
   ]);
 
-  const nextHandTimer = useRef(null);
+  const [turnSecsLeft, setTurnSecsLeft] = useState(null);
 
-  const prevMyTurnRef = useRef(false);
+  const nextHandTimer  = useRef(null);
+  const turnTimerRef   = useRef(null);
+  const prevMyTurnRef  = useRef(false);
   const prevCommCountRef = useRef(0);
-  const prevPotRef = useRef(0);
-  const prevPhaseRef = useRef('');
+  const prevPotRef     = useRef(0);
+  const prevPhaseRef   = useRef('');
 
   useEffect(() => {
     if (!roomId || view !== 'game') return;
@@ -522,6 +524,40 @@ export default function Poker({ user }) {
     }
     prevPhaseRef.current = state.phase;
   }, [gameState, user.id]);
+
+  // 15-second turn timer — starts when it becomes my turn, auto-folds on expiry
+  useEffect(() => {
+    const state = gameState;
+    if (!state) return;
+    const currentPlayer = (state.players||[])[state.currentIdx];
+    const isMyTurn = currentPlayer?.userId === user.id
+      && state.phase !== 'waiting' && state.phase !== 'showdown';
+
+    if (isMyTurn) {
+      if (prevMyTurnRef.current) return; // already running
+      setTurnSecsLeft(15);
+      clearInterval(turnTimerRef.current);
+      let secs = 15;
+      turnTimerRef.current = setInterval(() => {
+        secs--;
+        setTurnSecsLeft(secs);
+        if (secs <= 0) {
+          clearInterval(turnTimerRef.current);
+          turnTimerRef.current = null;
+          setTurnSecsLeft(null);
+          doAction('fold');
+        }
+      }, 1000);
+    } else {
+      clearInterval(turnTimerRef.current);
+      turnTimerRef.current = null;
+      setTurnSecsLeft(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState?.currentIdx, gameState?.phase]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { clearInterval(turnTimerRef.current); }, []);
 
   // Next Hand Transition loop
   useEffect(() => {
@@ -927,6 +963,33 @@ export default function Poker({ user }) {
             </div>
           )}
 
+          {/* Turn timer — only shown when it's my turn */}
+          {isMyTurn && turnSecsLeft !== null && (
+            <div style={{
+              borderRadius: 8, padding: '8px 12px', textAlign: 'center',
+              background: turnSecsLeft <= 5 ? 'rgba(255,45,122,0.10)' : 'rgba(255,215,0,0.05)',
+              border: `1px solid ${turnSecsLeft <= 5 ? 'rgba(255,45,122,0.4)' : 'rgba(255,215,0,0.18)'}`,
+              transition: 'all 0.3s',
+            }}>
+              <div style={{ fontSize: '0.58rem', color: 'var(--c-text4)', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>Tu turno — tiempo restante</div>
+              <div style={{
+                fontSize: '1.5rem', fontWeight: 800, fontFamily: "'JetBrains Mono', monospace",
+                color: turnSecsLeft <= 5 ? '#ff2d7a' : '#ffd700',
+                transition: 'color 0.3s',
+              }}>
+                {turnSecsLeft}s
+              </div>
+              <div style={{ height: 3, background: 'var(--c-line2)', borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%', borderRadius: 2,
+                  width: `${(turnSecsLeft / 15) * 100}%`,
+                  background: turnSecsLeft <= 5 ? '#ff2d7a' : '#ffd700',
+                  transition: 'width 1s linear, background 0.3s',
+                }} />
+              </div>
+            </div>
+          )}
+
           {!isMyTurn && !isWaiting && !isShowdown && currentPlayer && (
             <div style={{
               background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.18)',
@@ -967,7 +1030,7 @@ export default function Poker({ user }) {
       </div>
 
       {/* ── RIGHT COLUMN: POKER STAGE ────────────────── */}
-      <div className="casino-roul-stage" style={{ flexDirection: 'column', minHeight: 520 }}>
+      <div className="casino-roul-stage" style={{ flexDirection: 'column', minHeight: 580 }}>
         
         {/* Stage Header Info bar */}
         <div style={{
