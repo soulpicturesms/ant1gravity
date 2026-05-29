@@ -63,44 +63,37 @@ const GAMES = [
 
 class WinCoinParticle {
   constructor(w, h) {
-    this.w = w;
-    this.h = h;
-    // 60% geyser (shoots up from bottom center), 40% rain (falls from top)
+    this.w = w; this.h = h;
     if (Math.random() > 0.4) {
-      this.x = w / 2 + (Math.random() - 0.5) * 120;
+      this.x = w / 2 + (Math.random() - 0.5) * 110;
       this.y = h + 10;
-      this.vx = (Math.random() - 0.5) * 14;
-      this.vy = -16 - Math.random() * 14;
+      this.vx = (Math.random() - 0.5) * 11;
+      this.vy = -13 - Math.random() * 10;
     } else {
       this.x = Math.random() * w;
-      this.y = -20 - Math.random() * 60;
-      this.vx = (Math.random() - 0.5) * 4;
-      this.vy = 2 + Math.random() * 5;
+      this.y = -20;
+      this.vx = (Math.random() - 0.5) * 3;
+      this.vy = 2 + Math.random() * 4;
     }
-    this.gravity = 0.5;
+    this.gravity = 0.45;
     this.frame = Math.floor(Math.random() * 8);
-    this.frameSpeed = 0.16 + Math.random() * 0.14;
-    this.scale = 2.5 + Math.random() * 2.0; // Scaled up pixel art
-    this.opacity = 1;
+    this.frameSpeed = 0.14 + Math.random() * 0.1;
+    this.size = (1.8 + Math.random() * 1.4) * 16; // pre-computed px size
+    this.ttl = 100 + Math.floor(Math.random() * 50);
+    this.age = 0;
     this.active = true;
   }
   update() {
-    this.x += this.vx;
-    this.vy += this.gravity;
-    this.y += this.vy;
+    this.x += this.vx; this.vy += this.gravity; this.y += this.vy;
     this.frame = (this.frame + this.frameSpeed) % 8;
-    if (this.y > this.h + 20) {
-      this.active = false;
-    }
+    this.age++;
+    if (this.age >= this.ttl || this.y > this.h + 20) this.active = false;
   }
-  draw(ctx, frames) {
-    if (!this.active || frames.length === 0) return;
-    const img = frames[Math.floor(this.frame)];
-    const size = 16 * this.scale;
-    ctx.save();
-    ctx.globalAlpha = this.opacity;
-    ctx.drawImage(img, this.x - size / 2, this.y - size / 2, size, size);
-    ctx.restore();
+  get opacity() {
+    if (this.age < 5) return this.age / 5;
+    const fadeStart = this.ttl * 0.75;
+    if (this.age > fadeStart) return 1 - (this.age - fadeStart) / (this.ttl - fadeStart);
+    return 1;
   }
 }
 
@@ -463,6 +456,7 @@ export default function Casino() {
   const celebrationParticlesRef = useRef([]);
   const celebrationAnimRef = useRef(null);
   const coinFramesRef = useRef([]);
+  const renderLoopRef = useRef(null);
 
   useEffect(() => { setBalance(user?.coins || 0); }, [user]);
 
@@ -481,119 +475,98 @@ export default function Casino() {
   const toggleMute = () => setMuted(casinoAudio.toggleMute());
 
   // Initialize rotating coin frames in pixel art
+  // Pre-render coin sprite frames once (8 rotation angles, 16×16 px each)
   useEffect(() => {
     if (coinFramesRef.current.length > 0) return;
-
-    const drawBlockyEllipse = (ctx, cx, cy, rx, ry, color) => {
+    const drawEllipse = (ctx, cx, cy, rx, ry, color) => {
       ctx.fillStyle = color;
       for (let y = -ry; y <= ry; y++) {
         for (let x = -rx; x <= rx; x++) {
-          if ((rx === 0 ? x === 0 : (x * x) / (rx * rx)) + (ry === 0 ? y === 0 : (y * y) / (ry * ry)) <= 1.05) {
-            ctx.fillRect(cx + x, cy + y, 1, 1);
-          }
+          const inX = rx === 0 ? x === 0 : (x * x) / (rx * rx);
+          const inY = ry === 0 ? y === 0 : (y * y) / (ry * ry);
+          if (inX + inY <= 1.05) ctx.fillRect(cx + x, cy + y, 1, 1);
         }
       }
     };
-
-    const tempFrames = [];
-    for (let f = 0; f < 8; f++) {
+    coinFramesRef.current = Array.from({ length: 8 }, (_, f) => {
       const angle = (f / 8) * Math.PI * 2;
-      const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 16;
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, 16, 16);
-
-      const cos = Math.cos(angle);
-      const absCos = Math.abs(cos);
-      const w = Math.max(1, Math.round(12 * absCos));
-
-      // Outer rim
-      const rxEdge = Math.round(6 * absCos);
-      drawBlockyEllipse(ctx, 8, 8, rxEdge, 6, '#8a640f');
-      // Coin face
-      const rxFace = Math.round(4.5 * absCos);
-      drawBlockyEllipse(ctx, 8, 8, rxFace, 4.5, '#e5a91a');
-      // Highlight shine
-      const rxShine = Math.round(2.5 * absCos);
-      drawBlockyEllipse(ctx, 8, 8, rxShine, 2.5, '#f3d15c');
-
-      // Center symbol/embossing detail
-      if (w > 3) {
-        ctx.fillStyle = '#8a640f';
-        ctx.fillRect(8, 6, 1, 4);
-      }
-
-      tempFrames.push(canvas);
-    }
-    coinFramesRef.current = tempFrames;
+      const c = document.createElement('canvas');
+      c.width = c.height = 16;
+      const ctx = c.getContext('2d');
+      const cos = Math.abs(Math.cos(angle));
+      drawEllipse(ctx, 8, 8, Math.round(6 * cos), 6, '#8a640f');
+      drawEllipse(ctx, 8, 8, Math.round(4.5 * cos), 4.5, '#e5a91a');
+      drawEllipse(ctx, 8, 8, Math.round(2.5 * cos), 2.5, '#f3d15c');
+      if (cos > 0.25) { ctx.fillStyle = '#8a640f'; ctx.fillRect(8, 6, 1, 4); }
+      return c;
+    });
   }, []);
 
-  // Celebration particle canvas renderer
+  // Canvas resize — runs once, no RAF loop started here
   useEffect(() => {
     const canvas = celebrationCanvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    let isDestroyed = false;
-
-    const renderLoop = () => {
-      if (isDestroyed) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // CRITICAL: Disable smoothing for crisp retro pixel-art rendering!
-      ctx.imageSmoothingEnabled = false;
-      ctx.imageSmoothingEnabled = false;
-
-      const particles = celebrationParticlesRef.current;
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.update();
-        p.draw(ctx, coinFramesRef.current);
-        if (!p.active) {
-          particles.splice(i, 1);
-        }
-      }
-
-      celebrationAnimRef.current = requestAnimationFrame(renderLoop);
-    };
-
-    celebrationAnimRef.current = requestAnimationFrame(renderLoop);
-
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', resize);
+    resize();
     return () => {
-      isDestroyed = true;
+      window.removeEventListener('resize', resize);
       cancelAnimationFrame(celebrationAnimRef.current);
-      window.removeEventListener('resize', handleResize);
+      celebrationAnimRef.current = null;
     };
   }, []);
 
-  // Global win animation function passed down to games
+  // Render loop stored in a ref so triggerWinAnimation can start it on demand
+  renderLoopRef.current = () => {
+    const canvas = celebrationCanvasRef.current;
+    if (!canvas) { celebrationAnimRef.current = null; return; }
+    const particles = celebrationParticlesRef.current;
+
+    // Self-terminate when all particles are gone
+    if (particles.length === 0) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      celebrationAnimRef.current = null;
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    const frames = coinFramesRef.current;
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      if (!p.active) { particles.splice(i, 1); continue; }
+      const img = frames[Math.floor(p.frame)];
+      if (!img) continue;
+      ctx.globalAlpha = p.opacity;
+      ctx.drawImage(img, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+    }
+    ctx.globalAlpha = 1;
+
+    celebrationAnimRef.current = requestAnimationFrame(renderLoopRef.current);
+  };
+
   const triggerWinAnimation = useCallback((amount) => {
     if (amount <= 0) return;
     setWinBanner({ amount });
-
-    // Clear after 3.2 seconds
-    setTimeout(() => {
-      setWinBanner(cur => cur && cur.amount === amount ? null : cur);
-    }, 3200);
+    setTimeout(() => setWinBanner(cur => cur?.amount === amount ? null : cur), 3200);
 
     const canvas = celebrationCanvasRef.current;
     if (!canvas) return;
-    const w = canvas.width;
-    const h = canvas.height;
 
-    // Spawn 50 - 150 coins depending on payout size
-    const count = Math.min(150, Math.max(50, Math.floor(amount / 4)));
+    // 20–45 particles — enough for the visual, light on the GPU
+    const count = Math.min(45, Math.max(20, Math.floor(amount / 800)));
+    const { width: w, height: h } = canvas;
     for (let i = 0; i < count; i++) {
       celebrationParticlesRef.current.push(new WinCoinParticle(w, h));
+    }
+
+    // Start the RAF loop only if it isn't already running
+    if (!celebrationAnimRef.current) {
+      celebrationAnimRef.current = requestAnimationFrame(renderLoopRef.current);
     }
   }, []);
 
