@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/api';
 import AlbionAvatar from '../components/AlbionAvatar';
+import albionAssets from '../data/albionAssets.json';
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -26,6 +27,24 @@ export default function Profile() {
   const [charNameInput, setCharNameInput] = useState('');
   const [savingChar, setSavingChar] = useState(false);
   const [charErr, setCharErr] = useState('');
+
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState('');
+  const [selectedRing, setSelectedRing] = useState('');
+  const [avatarSearch, setAvatarSearch] = useState('');
+  const [ringSearch, setRingSearch] = useState('');
+  const [customizerTab, setCustomizerTab] = useState('avatars');
+  const [savingCustomizer, setSavingCustomizer] = useState(false);
+  const [customizerErr, setCustomizerErr] = useState('');
+  const [avatarLimit, setAvatarLimit] = useState(48);
+  const [ringLimit, setRingLimit] = useState(48);
+
+  useEffect(() => {
+    if (user && showCustomizer) {
+      setSelectedAvatar(user.albion_avatar || '');
+      setSelectedRing(user.albion_ring || '');
+    }
+  }, [user, showCustomizer]);
 
   useEffect(() => {
     if (user) {
@@ -59,6 +78,41 @@ export default function Profile() {
       setSavingChar(false);
     }
   };
+
+  const saveCustomization = async () => {
+    setSavingCustomizer(true);
+    setCustomizerErr('');
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ 
+          albion_avatar: selectedAvatar || null, 
+          albion_ring: selectedRing || null 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al guardar la personalización');
+      
+      await refreshUser();
+      setShowCustomizer(false);
+    } catch (err) {
+      setCustomizerErr(err.message);
+    } finally {
+      setSavingCustomizer(false);
+    }
+  };
+
+  const filteredAvatars = (albionAssets?.avatars || []).filter(avatar => 
+    avatar.toLowerCase().includes(avatarSearch.toLowerCase())
+  );
+
+  const filteredRings = (albionAssets?.rings || []).filter(ring => 
+    ring.toLowerCase().includes(ringSearch.toLowerCase())
+  );
 
   const renderUserAvatar = (size) => {
     if (user.albion_avatar) {
@@ -177,6 +231,14 @@ export default function Profile() {
           <div style={{ color: ROLE_COLORS[user.role], fontSize: '0.85rem', fontFamily: 'Rajdhani', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: 4 }}>{ROLE_LABELS[user.role]}</div>
           {uploading && <div style={{ marginTop: 8, color: '#6a6a8a', fontSize: '0.8rem' }}>Subiendo foto...</div>}
           {msg && <div style={{ marginTop: 8, color: '#00cc66', fontSize: '0.8rem' }}>{msg}</div>}
+          
+          <button 
+            className="btn btn-secondary btn-sm" 
+            style={{ marginTop: 12, width: '100%', justifyContent: 'center' }}
+            onClick={() => setShowCustomizer(true)}
+          >
+            🎨 Personalizar Avatar
+          </button>
 
           <div style={{ marginTop: 20, padding: '16px 0', borderTop: '1px solid #1e1e30' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')}</div>
@@ -360,6 +422,350 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {showCustomizer && (
+        <div className="modal-overlay" onClick={() => setShowCustomizer(false)}>
+          <div className="modal" style={{ maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '20px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 className="modal-title" style={{ margin: 0 }}>Personalizar Avatar y Marco</h3>
+              <button className="btn-icon" onClick={() => setShowCustomizer(false)}>✕</button>
+            </div>
+
+            {/* Live Preview Area */}
+            <div style={{
+              background: 'linear-gradient(180deg, rgba(19, 19, 31, 0.8) 0%, rgba(11, 11, 20, 0.95) 100%)',
+              border: '1px solid var(--border)',
+              borderRadius: '12px',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              position: 'relative',
+              boxShadow: 'inset 0 0 20px rgba(0, 212, 255, 0.05)'
+            }}>
+              <div style={{ position: 'relative', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {selectedAvatar ? (
+                  <AlbionAvatar 
+                    avatarId={selectedAvatar} 
+                    ringId={selectedRing} 
+                    size={120} 
+                    characterName={user.albion_character}
+                  />
+                ) : (
+                  <div style={{ 
+                    width: 120, 
+                    height: 120, 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontFamily: 'Rajdhani', 
+                    fontWeight: 700, 
+                    fontSize: '2.5rem', 
+                    color: 'white', 
+                    overflow: 'hidden', 
+                    border: '3px solid rgba(0,212,255,0.3)', 
+                    boxShadow: '0 0 25px rgba(0,212,255,0.2)', 
+                  }}>
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      user.username[0].toUpperCase()
+                    )}
+                  </div>
+                )}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vista Previa en Vivo</span>
+                {selectedRing && (
+                  <div style={{ fontSize: '0.75rem', color: '#ffaa00', marginTop: 4 }}>
+                    ✨ Marco animado activo: {selectedRing.replace('AVATARRING_', '').replace('RING_', '')}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {customizerErr && <div className="alert alert-error">{customizerErr}</div>}
+
+            {/* Tab Selector */}
+            <div className="tabs" style={{ marginBottom: 15, display: 'flex', gap: '4px', borderBottom: '1px solid var(--border)' }}>
+              <button 
+                type="button"
+                className={`tab ${customizerTab === 'avatars' ? 'active' : ''}`}
+                onClick={() => setCustomizerTab('avatars')}
+              >
+                🛡️ Avatares ({filteredAvatars.length})
+              </button>
+              <button 
+                type="button"
+                className={`tab ${customizerTab === 'rings' ? 'active' : ''}`}
+                onClick={() => setCustomizerTab('rings')}
+              >
+                ⭕ Marcos ({filteredRings.length})
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ position: 'relative' }}>
+              <input 
+                type="text" 
+                className="input" 
+                placeholder={customizerTab === 'avatars' ? "Buscar avatar..." : "Buscar marco..."}
+                value={customizerTab === 'avatars' ? avatarSearch : ringSearch}
+                onChange={e => {
+                  if (customizerTab === 'avatars') {
+                    setAvatarSearch(e.target.value);
+                    setAvatarLimit(48);
+                  } else {
+                    setRingSearch(e.target.value);
+                    setRingLimit(48);
+                  }
+                }}
+                style={{ paddingRight: '35px' }}
+              />
+              <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+            </div>
+
+            {/* Content Lists */}
+            <div style={{ 
+              maxHeight: '300px', 
+              overflowY: 'auto', 
+              padding: '4px',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              background: '#07070b'
+            }}>
+              {customizerTab === 'avatars' ? (
+                <div>
+                  {filteredAvatars.length === 0 ? (
+                    <div className="empty">No se encontraron avatares</div>
+                  ) : (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+                        gap: '12px',
+                        padding: '10px'
+                      }}>
+                        {filteredAvatars.slice(0, avatarLimit).map(avatar => {
+                          const isSelected = selectedAvatar === avatar;
+                          return (
+                            <div 
+                              key={avatar}
+                              onClick={() => setSelectedAvatar(avatar)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '6px',
+                                background: isSelected ? 'var(--accent-glow)' : 'var(--bg-secondary)',
+                                border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                boxShadow: isSelected ? '0 0 10px var(--accent-glow)' : 'none',
+                                position: 'relative'
+                              }}
+                              title={avatar}
+                            >
+                              <div style={{ pointerEvents: 'none' }}>
+                                <AlbionAvatar avatarId={avatar} size={50} />
+                              </div>
+                              {isSelected && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: -4,
+                                  right: -4,
+                                  background: 'var(--accent)',
+                                  color: 'black',
+                                  borderRadius: '50%',
+                                  width: 16,
+                                  height: 16,
+                                  fontSize: '0.65rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 'bold'
+                                }}>
+                                  ✓
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {avatarLimit < filteredAvatars.length && (
+                        <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                          <button 
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setAvatarLimit(prev => prev + 48)}
+                          >
+                            Ver más avatares...
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {filteredRings.length === 0 ? (
+                    <div className="empty">No se encontraron marcos</div>
+                  ) : (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+                        gap: '12px',
+                        padding: '10px'
+                      }}>
+                        {/* Option to clear ring */}
+                        <div 
+                          onClick={() => setSelectedRing('')}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '6px',
+                            background: !selectedRing ? 'var(--accent-glow)' : 'var(--bg-secondary)',
+                            border: !selectedRing ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            height: '66px',
+                            position: 'relative'
+                          }}
+                        >
+                          <span style={{ fontSize: '1.2rem' }}>❌</span>
+                          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: 4 }}>Sin Marco</span>
+                          {!selectedRing && (
+                            <div style={{
+                              position: 'absolute',
+                              top: -4,
+                              right: -4,
+                              background: 'var(--accent)',
+                              color: 'black',
+                              borderRadius: '50%',
+                              width: 16,
+                              height: 16,
+                              fontSize: '0.65rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 'bold'
+                            }}>
+                              ✓
+                            </div>
+                          )}
+                        </div>
+
+                        {filteredRings.slice(0, ringLimit).map(ring => {
+                          const isSelected = selectedRing === ring;
+                          return (
+                            <div 
+                              key={ring}
+                              onClick={() => setSelectedRing(ring)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '6px',
+                                background: isSelected ? 'var(--accent-glow)' : 'var(--bg-secondary)',
+                                border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                boxShadow: isSelected ? '0 0 10px var(--accent-glow)' : 'none',
+                                position: 'relative',
+                                height: '66px'
+                              }}
+                              title={ring}
+                            >
+                              <div style={{ pointerEvents: 'none' }}>
+                                <AlbionAvatar avatarId="HUMAN_MALE_AVATAR_01" ringId={ring} size={48} />
+                              </div>
+                              {isSelected && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: -4,
+                                  right: -4,
+                                  background: 'var(--accent)',
+                                  color: 'black',
+                                  borderRadius: '50%',
+                                  width: 16,
+                                  height: 16,
+                                  fontSize: '0.65rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 'bold'
+                                }}>
+                                  ✓
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {ringLimit < filteredRings.length && (
+                        <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                          <button 
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => setRingLimit(prev => prev + 48)}
+                          >
+                            Ver más marcos...
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', marginTop: '10px' }}>
+              <button 
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setSelectedAvatar('');
+                  setSelectedRing('');
+                }}
+                disabled={savingCustomizer}
+                style={{ borderColor: 'var(--danger-dim)', color: 'var(--danger)' }}
+              >
+                🗑️ Restablecer a Original
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowCustomizer(false)}
+                  disabled={savingCustomizer}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={saveCustomization}
+                  disabled={savingCustomizer}
+                >
+                  {savingCustomizer ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -46,6 +46,28 @@ function getRingColor(ringId) {
   return RING_BORDER_COLORS[key] || RING_BORDER_COLORS[ringId] || RING_BORDER_COLORS.DEFAULT;
 }
 
+function getRingAnimation(ringId) {
+  if (!ringId) return 'none';
+  const r = ringId.toUpperCase();
+  
+  if (r.includes('MIST') || r.includes('VANITY_BARBARIAN') || r.includes('HUNT_TARGET')) {
+    return 'albion-rainbow-glow 8s infinite linear';
+  }
+  if (r.includes('GVGSEASONREWARD') || r.includes('FOUNDER_')) {
+    if (r.includes('CRYSTAL') || r.includes('1ST') || r.includes('AVALON_INVASION')) {
+      return 'albion-spin-slow 20s infinite linear, albion-crystal-glow 4s infinite ease-in-out';
+    }
+    if (r.includes('GOLD') || r.includes('LEGENDARY') || r.includes('2ND')) {
+      return 'albion-spin-slow 25s infinite linear, albion-glow-pulse 4s infinite ease-in-out';
+    }
+    return 'albion-spin-slow 30s infinite linear';
+  }
+  if (r.includes('PREMIUM') || r.includes('STARTER_LEGENDARY') || r.includes('STARTER_ELITE')) {
+    return 'albion-glow-pulse 3s infinite ease-in-out';
+  }
+  return 'none';
+}
+
 // Genera un ícono SVG basado en el ID del avatar
 function generateAvatarSvg(avatarId, size) {
   const colors = getAvatarColors(avatarId);
@@ -164,6 +186,28 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
   if (avatarId) {
     return (
       <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+        {/* Inject animated ring CSS keyframes */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes albion-spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes albion-glow-pulse {
+            0% { filter: drop-shadow(0 0 2px rgba(255,215,0,0.4)) brightness(1); }
+            50% { filter: drop-shadow(0 0 8px rgba(255,215,0,0.85)) brightness(1.22); }
+            100% { filter: drop-shadow(0 0 2px rgba(255,215,0,0.4)) brightness(1); }
+          }
+          @keyframes albion-crystal-glow {
+            0% { filter: drop-shadow(0 0 2px rgba(0,212,255,0.4)) brightness(1); }
+            50% { filter: drop-shadow(0 0 10px rgba(0,212,255,0.9)) brightness(1.3); }
+            100% { filter: drop-shadow(0 0 2px rgba(0,212,255,0.4)) brightness(1); }
+          }
+          @keyframes albion-rainbow-glow {
+            0% { filter: hue-rotate(0deg) drop-shadow(0 0 6px rgba(0,212,255,0.7)); }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(0,212,255,0.7)); }
+          }
+        `}} />
+        
         {/* Contenedor del avatar */}
         <div style={{ 
           width: '100%', 
@@ -201,7 +245,8 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
               width: `calc(100% + ${Math.round(size * 0.16)}px)`, 
               height: `calc(100% + ${Math.round(size * 0.16)}px)`, 
               zIndex: 2,
-              pointerEvents: 'none'
+              pointerEvents: 'none',
+              animation: getRingAnimation(ringId)
             }} 
             onError={handleRingError}
           />

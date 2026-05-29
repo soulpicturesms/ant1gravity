@@ -112,27 +112,36 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 router.put('/profile', requireAuth, async (req, res) => {
-  const { albion_character } = req.body;
-  const value = albion_character?.trim() || null;
+  const { albion_character, albion_avatar, albion_ring } = req.body;
   
-  let updateData = { albion_character: value };
+  let updateData = {};
   
-  if (value) {
-    const details = await fetchAlbionPlayerDetails(value);
-    if (details) {
-      updateData.albion_avatar = details.avatar;
-      updateData.albion_ring = details.avatarRing;
-    }
+  if (albion_avatar !== undefined || albion_ring !== undefined) {
+    if (albion_avatar !== undefined) updateData.albion_avatar = albion_avatar;
+    if (albion_ring !== undefined) updateData.albion_ring = albion_ring;
+    if (albion_character !== undefined) updateData.albion_character = albion_character?.trim() || null;
   } else {
-    updateData.albion_avatar = null;
-    updateData.albion_ring = null;
+    const value = albion_character?.trim() || null;
+    updateData.albion_character = value;
+    if (value) {
+      const details = await fetchAlbionPlayerDetails(value);
+      if (details) {
+        updateData.albion_avatar = details.avatar;
+        updateData.albion_ring = details.avatarRing;
+      }
+    } else {
+      updateData.albion_avatar = null;
+      updateData.albion_ring = null;
+    }
   }
   
   try {
     const { error } = await supabase.from('users').update(updateData).eq('id', req.user.id);
     if (error) {
       console.warn('No se pudo guardar avatar/ring (probablemente faltan las columnas), reintentando solo con personaje:', error.message);
-      await supabase.from('users').update({ albion_character: value }).eq('id', req.user.id);
+      if (updateData.albion_character !== undefined) {
+        await supabase.from('users').update({ albion_character: updateData.albion_character }).eq('id', req.user.id);
+      }
     }
   } catch (dbErr) {
     console.error('Error en base de datos al actualizar perfil:', dbErr.message);
@@ -141,7 +150,7 @@ router.put('/profile', requireAuth, async (req, res) => {
 
   res.json({ 
     ok: true, 
-    albion_character: value,
+    albion_character: updateData.albion_character !== undefined ? updateData.albion_character : null,
     albion_avatar: updateData.albion_avatar,
     albion_ring: updateData.albion_ring
   });
