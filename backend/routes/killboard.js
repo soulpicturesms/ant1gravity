@@ -97,7 +97,8 @@ const CACHE_TTL_MY = 2 * 60 * 1000;
 
 router.get('/my-deaths', requireAuth, async (req, res) => {
   try {
-    const charName = req.user.username;
+    const { data: dbUser } = await supabase.from('users').select('albion_character').eq('id', req.user.id).maybeSingle();
+    const charName = dbUser?.albion_character || req.user.username;
     const cached = myDeathsCache[charName];
     if (cached && Date.now() - cached.ts < CACHE_TTL_MY) {
       return res.json({ deaths: cached.data, character: charName });

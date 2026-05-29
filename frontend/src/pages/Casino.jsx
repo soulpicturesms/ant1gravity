@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { casinoAudio } from '../utils/casinoAudio';
@@ -61,40 +61,68 @@ const GAMES = [
   },
 ];
 
-class WinCoinParticle {
-  constructor(w, h) {
-    this.w = w; this.h = h;
-    if (Math.random() > 0.4) {
-      this.x = w / 2 + (Math.random() - 0.5) * 110;
-      this.y = h + 10;
-      this.vx = (Math.random() - 0.5) * 11;
-      this.vy = -13 - Math.random() * 10;
+// Spawn coin DOM particles using the Web Animations API.
+// transform+opacity on compositor thread = zero JS per frame, no canvas needed.
+function spawnCoins(amount) {
+  const count = Math.min(38, Math.max(16, Math.floor(amount / 600)));
+  const W = window.innerWidth, H = window.innerHeight;
+
+  const wrap = document.createElement('div');
+  Object.assign(wrap.style, {
+    position: 'fixed', inset: '0',
+    pointerEvents: 'none', zIndex: '99999', overflow: 'hidden',
+  });
+  document.body.appendChild(wrap);
+
+  let done = 0;
+  const onDone = () => { if (++done >= count) wrap.remove(); };
+
+  for (let i = 0; i < count; i++) {
+    const isGeyser = Math.random() > 0.38;
+    const size     = 16 + Math.random() * 16;
+    const delay    = Math.random() * 320;
+    const dur      = 850 + Math.random() * 650;
+    const rot      = (Math.random() > 0.5 ? 1 : -1) * (220 + Math.random() * 440);
+
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position: 'absolute', left: '0', top: '0',
+      width: size + 'px', height: size + 'px', borderRadius: '50%',
+      background: 'radial-gradient(circle at 38% 32%, #faee90, #e8aa18 52%, #a86808)',
+      boxShadow: 'inset -1px -2px 4px rgba(0,0,0,0.28), 0 0 7px rgba(232,170,24,0.55)',
+    });
+    wrap.appendChild(el);
+
+    let frames;
+    if (isGeyser) {
+      const sx = W * 0.46 + (Math.random() - 0.5) * W * 0.22;
+      const ex = sx + (Math.random() - 0.5) * 210;
+      const py = H * 0.06 + Math.random() * H * 0.44;
+      frames = [
+        { transform: `translate3d(${sx}px,${H + 24}px,0) rotate(0deg) scale(.35)`, opacity: 0 },
+        { transform: `translate3d(${(sx + ex) / 2}px,${py * .55}px,0) rotate(${rot * .4}deg) scale(1)`, opacity: 1, offset: .22 },
+        { transform: `translate3d(${ex}px,${py}px,0) rotate(${rot * .72}deg) scale(.92)`, opacity: .9, offset: .62 },
+        { transform: `translate3d(${ex + (Math.random() - .5) * 70}px,${H + 24}px,0) rotate(${rot}deg) scale(.55)`, opacity: 0 },
+      ];
     } else {
-      this.x = Math.random() * w;
-      this.y = -20;
-      this.vx = (Math.random() - 0.5) * 3;
-      this.vy = 2 + Math.random() * 4;
+      const sx = Math.random() * W;
+      const ex = sx + (Math.random() - 0.5) * 90;
+      frames = [
+        { transform: `translate3d(${sx}px,-32px,0) rotate(0deg) scale(.45)`, opacity: 0 },
+        { transform: `translate3d(${(sx + ex) / 2}px,${H * .3}px,0) rotate(${rot * .5}deg) scale(1)`, opacity: 1, offset: .18 },
+        { transform: `translate3d(${ex}px,${H + 32}px,0) rotate(${rot}deg) scale(.65)`, opacity: 0 },
+      ];
     }
-    this.gravity = 0.45;
-    this.frame = Math.floor(Math.random() * 8);
-    this.frameSpeed = 0.14 + Math.random() * 0.1;
-    this.size = (1.8 + Math.random() * 1.4) * 16; // pre-computed px size
-    this.ttl = 100 + Math.floor(Math.random() * 50);
-    this.age = 0;
-    this.active = true;
+
+    const anim = el.animate(frames, {
+      duration: dur, delay, fill: 'forwards',
+      easing: isGeyser ? 'ease-in' : 'ease-in-out',
+    });
+    anim.onfinish = () => { el.remove(); onDone(); };
   }
-  update() {
-    this.x += this.vx; this.vy += this.gravity; this.y += this.vy;
-    this.frame = (this.frame + this.frameSpeed) % 8;
-    this.age++;
-    if (this.age >= this.ttl || this.y > this.h + 20) this.active = false;
-  }
-  get opacity() {
-    if (this.age < 5) return this.age / 5;
-    const fadeStart = this.ttl * 0.75;
-    if (this.age > fadeStart) return 1 - (this.age - fadeStart) / (this.ttl - fadeStart);
-    return 1;
-  }
+
+  // Safety net: remove container even if onfinish never fires
+  setTimeout(() => { try { wrap.remove(); } catch {} }, 3200);
 }
 
 function fmtTokens(n) {
@@ -452,11 +480,6 @@ export default function Casino() {
   const [winBanner, setWinBanner] = useState(null);
   const [stats, setStats] = useState(null);
 
-  const celebrationCanvasRef = useRef(null);
-  const celebrationParticlesRef = useRef([]);
-  const celebrationAnimRef = useRef(null);
-  const coinFramesRef = useRef([]);
-  const renderLoopRef = useRef(null);
 
   useEffect(() => { setBalance(user?.coins || 0); }, [user]);
 
@@ -474,100 +497,11 @@ export default function Casino() {
   const activeGameDef = GAMES.find(g => g.id === activeGame);
   const toggleMute = () => setMuted(casinoAudio.toggleMute());
 
-  // Initialize rotating coin frames in pixel art
-  // Pre-render coin sprite frames once (8 rotation angles, 16×16 px each)
-  useEffect(() => {
-    if (coinFramesRef.current.length > 0) return;
-    const drawEllipse = (ctx, cx, cy, rx, ry, color) => {
-      ctx.fillStyle = color;
-      for (let y = -ry; y <= ry; y++) {
-        for (let x = -rx; x <= rx; x++) {
-          const inX = rx === 0 ? x === 0 : (x * x) / (rx * rx);
-          const inY = ry === 0 ? y === 0 : (y * y) / (ry * ry);
-          if (inX + inY <= 1.05) ctx.fillRect(cx + x, cy + y, 1, 1);
-        }
-      }
-    };
-    coinFramesRef.current = Array.from({ length: 8 }, (_, f) => {
-      const angle = (f / 8) * Math.PI * 2;
-      const c = document.createElement('canvas');
-      c.width = c.height = 16;
-      const ctx = c.getContext('2d');
-      const cos = Math.abs(Math.cos(angle));
-      drawEllipse(ctx, 8, 8, Math.round(6 * cos), 6, '#8a640f');
-      drawEllipse(ctx, 8, 8, Math.round(4.5 * cos), 4.5, '#e5a91a');
-      drawEllipse(ctx, 8, 8, Math.round(2.5 * cos), 2.5, '#f3d15c');
-      if (cos > 0.25) { ctx.fillStyle = '#8a640f'; ctx.fillRect(8, 6, 1, 4); }
-      return c;
-    });
-  }, []);
-
-  // Canvas resize — runs once, no RAF loop started here
-  useEffect(() => {
-    const canvas = celebrationCanvasRef.current;
-    if (!canvas) return;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.addEventListener('resize', resize);
-    resize();
-    return () => {
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(celebrationAnimRef.current);
-      celebrationAnimRef.current = null;
-    };
-  }, []);
-
-  // Render loop stored in a ref so triggerWinAnimation can start it on demand
-  renderLoopRef.current = () => {
-    const canvas = celebrationCanvasRef.current;
-    if (!canvas) { celebrationAnimRef.current = null; return; }
-    const particles = celebrationParticlesRef.current;
-
-    // Self-terminate when all particles are gone
-    if (particles.length === 0) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      celebrationAnimRef.current = null;
-      return;
-    }
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false;
-    const frames = coinFramesRef.current;
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.update();
-      if (!p.active) { particles.splice(i, 1); continue; }
-      const img = frames[Math.floor(p.frame)];
-      if (!img) continue;
-      ctx.globalAlpha = p.opacity;
-      ctx.drawImage(img, p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-    }
-    ctx.globalAlpha = 1;
-
-    celebrationAnimRef.current = requestAnimationFrame(renderLoopRef.current);
-  };
-
   const triggerWinAnimation = useCallback((amount) => {
     if (amount <= 0) return;
     setWinBanner({ amount });
     setTimeout(() => setWinBanner(cur => cur?.amount === amount ? null : cur), 3200);
-
-    const canvas = celebrationCanvasRef.current;
-    if (!canvas) return;
-
-    // 20–45 particles — enough for the visual, light on the GPU
-    const count = Math.min(45, Math.max(20, Math.floor(amount / 800)));
-    const { width: w, height: h } = canvas;
-    for (let i = 0; i < count; i++) {
-      celebrationParticlesRef.current.push(new WinCoinParticle(w, h));
-    }
-
-    // Start the RAF loop only if it isn't already running
-    if (!celebrationAnimRef.current) {
-      celebrationAnimRef.current = requestAnimationFrame(renderLoopRef.current);
-    }
+    spawnCoins(amount);
   }, []);
 
   if (!user) return (
@@ -581,9 +515,6 @@ export default function Casino() {
 
   return (
     <div className="casino-shell" style={{ minHeight: 'calc(100vh - 70px)', position: 'relative' }}>
-      {/* Celebration canvas */}
-      <canvas ref={celebrationCanvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 99999 }} />
-
       {/* Win Banner Overlay */}
       {winBanner && (
         <div className="casino-win-banner-overlay" style={{

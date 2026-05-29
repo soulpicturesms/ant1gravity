@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/api';
+import AlbionAvatar from './AlbionAvatar';
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
@@ -38,39 +39,12 @@ export default function Navbar() {
   const renderUserAvatar = (size) => {
     if (user?.albion_avatar) {
       return (
-        <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-          <div style={{ 
-            width: '100%', 
-            height: '100%', 
-            borderRadius: '50%', 
-            background: '#0f0f18', 
-            overflow: 'hidden',
-            position: 'relative',
-            border: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <img 
-              src={`https://albiononline.com/assets/images/killboard/avatar/${user.albion_avatar}.png`} 
-              alt="" 
-              referrerPolicy="no-referrer"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-            />
-          </div>
-          {user.albion_ring && (
-            <img 
-              src={`https://albiononline.com/assets/images/killboard/ring/${user.albion_ring}.png`} 
-              alt="" 
-              referrerPolicy="no-referrer"
-              style={{ 
-                position: 'absolute', 
-                inset: -Math.round(size * 0.05), 
-                width: `calc(100% + ${Math.round(size * 0.1)}px)`, 
-                height: `calc(100% + ${Math.round(size * 0.1)}px)`, 
-                zIndex: 2,
-                pointerEvents: 'none'
-              }} 
-            />
-          )}
-        </div>
+        <AlbionAvatar 
+          avatarId={user.albion_avatar} 
+          ringId={user.albion_ring} 
+          size={size} 
+          characterName={user.albion_character}
+        />
       );
     }
     

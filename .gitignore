@@ -18,3 +18,8 @@ backend/uploads/
 Thumbs.db
 .vercel
 backend/temp_items_check.json
+
+# Exclude large tool exports and temporary scripts
+tools/
+*.zip
+test_prod.js

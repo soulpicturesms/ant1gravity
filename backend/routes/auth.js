@@ -8,11 +8,58 @@ const { requireAuth, JWT_SECRET } = require('../middleware/auth');
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
+
 const safe = u => {
   if (!u) return null;
   const { password, avatar_url, ...r } = u;
   return { ...r, avatar: avatar_url || null };
 };
+
+/**
+ * Busca un jugador en la API de Albion Online y obtiene su Avatar y AvatarRing.
+ * Requiere dos llamadas: /search (para obtener el Id) y /players/{id} (para obtener Avatar/AvatarRing).
+ * El endpoint /search NO retorna Avatar/AvatarRing, solo el endpoint /players/{id}.
+ */
+async function fetchAlbionPlayerDetails(characterName) {
+  try {
+    // Paso 1: Buscar el jugador por nombre para obtener su ID
+    const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(characterName)}`);
+    if (!searchRes.ok) return null;
+    
+    const searchData = await searchRes.json();
+    const found = (searchData.players || []).find(
+      p => p.Name.toLowerCase() === characterName.toLowerCase()
+    );
+    if (!found) return null;
+
+    // Guardar lo que ya obtuvimos del buscador por si falla la segunda llamada
+    const result = {
+      id: found.Id,
+      avatar: found.Avatar || null,
+      avatarRing: found.AvatarRing || null,
+    };
+
+    // Paso 2: Intentar obtener el perfil completo del jugador (incluye Avatar y AvatarRing)
+    try {
+      const playerRes = await fetch(`${ALBION_API}/players/${found.Id}`);
+      if (playerRes.ok) {
+        const playerData = await playerRes.json();
+        if (playerData) {
+          result.avatar = playerData.Avatar || result.avatar;
+          result.avatarRing = playerData.AvatarRing || result.avatarRing;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('Fallo la llamada a /players pero se usará la info de /search:', apiErr.message);
+    }
+
+    return result;
+  } catch (err) {
+    console.error('Error al consultar API de Albion:', err.message);
+    return null;
+  }
+}
 
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
@@ -47,26 +94,17 @@ router.get('/me', requireAuth, async (req, res) => {
   const { data: user } = await supabase.from('users').select('*').eq('id', req.user.id).maybeSingle();
   if (!user) return res.status(404).json({ error: 'No encontrado' });
   
-  // Si tiene personaje vinculado pero no tiene avatar guardado, buscarlo de forma síncrona
+  // Si tiene personaje vinculado pero no tiene avatar guardado, buscarlo
   if (user.albion_character && !user.albion_avatar) {
-    try {
-      const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
-      const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(user.albion_character)}`);
-      if (searchRes.ok) {
-        const searchData = await searchRes.json();
-        const player = (searchData.players || []).find(p => p.Name.toLowerCase() === user.albion_character.toLowerCase());
-        if (player && (player.Avatar || player.AvatarRing)) {
-          user.albion_avatar = player.Avatar || null;
-          user.albion_ring = player.AvatarRing || null;
-          
-          await supabase.from('users').update({
-            albion_avatar: user.albion_avatar,
-            albion_ring: user.albion_ring
-          }).eq('id', user.id);
-        }
-      }
-    } catch (err) {
-      console.error('Error al sincronizar avatar de Albion:', err.message);
+    const details = await fetchAlbionPlayerDetails(user.albion_character);
+    if (details && (details.avatar || details.avatarRing)) {
+      user.albion_avatar = details.avatar;
+      user.albion_ring = details.avatarRing;
+      
+      await supabase.from('users').update({
+        albion_avatar: user.albion_avatar,
+        albion_ring: user.albion_ring
+      }).eq('id', user.id);
     }
   }
 
@@ -80,19 +118,10 @@ router.put('/profile', requireAuth, async (req, res) => {
   let updateData = { albion_character: value };
   
   if (value) {
-    try {
-      const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
-      const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(value)}`);
-      if (searchRes.ok) {
-        const searchData = await searchRes.json();
-        const player = (searchData.players || []).find(p => p.Name.toLowerCase() === value.toLowerCase());
-        if (player) {
-          updateData.albion_avatar = player.Avatar || null;
-          updateData.albion_ring = player.AvatarRing || null;
-        }
-      }
-    } catch (err) {
-      console.error('Error al obtener detalles del jugador en Albion:', err.message);
+    const details = await fetchAlbionPlayerDetails(value);
+    if (details) {
+      updateData.albion_avatar = details.avatar;
+      updateData.albion_ring = details.avatarRing;
     }
   } else {
     updateData.albion_avatar = null;
