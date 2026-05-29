@@ -73,15 +73,17 @@ export default function Profile() {
             border: '1px solid rgba(255,255,255,0.1)'
           }}>
             <img 
-              src={`https://assets.albiononline.com/assets/images/killboard/avatar/${user.albion_avatar}.png`} 
+              src={`https://albiononline.com/assets/images/killboard/avatar/${user.albion_avatar}.png`} 
               alt="" 
+              referrerPolicy="no-referrer"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
           </div>
           {user.albion_ring && (
             <img 
-              src={`https://assets.albiononline.com/assets/images/killboard/ring/${user.albion_ring}.png`} 
+              src={`https://albiononline.com/assets/images/killboard/ring/${user.albion_ring}.png`} 
               alt="" 
+              referrerPolicy="no-referrer"
               style={{ 
                 position: 'absolute', 
                 inset: -Math.round(size * 0.05), 
