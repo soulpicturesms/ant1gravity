@@ -529,12 +529,13 @@ export default function Billiards({ user }) {
   // Solo mode pocketed tracking for display
   const [soloPocketed,setSoloPocketed] = useState([]);
 
-  const canvasRef   = useRef(null);
-  const rafRef      = useRef(null);
-  const chargeRaf   = useRef(null);
-  const chargeStart = useRef(null);
-  const pocketedRef = useRef([]);
-  const foulRef     = useRef(false);
+  const canvasRef    = useRef(null);
+  const renderRafRef = useRef(null); // render loop — never shared with physics
+  const physicsRafRef= useRef(null); // physics loop — never shared with render
+  const chargeRaf    = useRef(null);
+  const chargeStart  = useRef(null);
+  const pocketedRef  = useRef([]);
+  const foulRef      = useRef(false);
   // ── Refs that hold live values so callbacks never have stale closures ──
   const angleRef    = useRef(0);
   const powerRef    = useRef(0);
@@ -584,19 +585,20 @@ export default function Billiards({ user }) {
 
   const cueBall = balls?.find(b=>b.id===0);
 
-  // ── Render loop (reads live refs so it never has stale values) ──
+  // ── Render loop — starts once per view, reads only from refs, never cancelled by physics ──
   useEffect(()=>{
+    if(view==='lobby') return;
     const canvas=canvasRef.current;
-    if(!canvas||!balls) return;
+    if(!canvas) return;
     const ctx=canvas.getContext('2d');
     const render=()=>{
-      const ph=gamePhaseRef.current;
-      const imt=isTurnRef.current;
-      const cb=ballsRef.current?.find(b=>b.id===0);
-      const ang=angleRef.current;
-      const pwr=powerRef.current;
-      const hp=hitPosRef.current;
-      const curBalls=ballsRef.current||[];
+      const ph   = gamePhaseRef.current;
+      const imt  = isTurnRef.current;
+      const curBalls = ballsRef.current||[];
+      const cb   = curBalls.find(b=>b.id===0);
+      const ang  = angleRef.current;
+      const pwr  = powerRef.current;
+      const hp   = hitPosRef.current;
 
       ctx.clearRect(0,0,CW,CH);
       drawTable(ctx);
@@ -608,38 +610,37 @@ export default function Billiards({ user }) {
       curBalls.forEach(b=>draw3DBall(ctx,b,b.id===0&&imt&&ph==='aiming'?hp:null));
       if(imt&&(ph==='aiming'||ph==='charging')&&cb) drawCue(ctx,cb,ang,pwr);
       if(imt&&ph!=='placing') drawPowerBar(ctx,pwr);
-      rafRef.current=requestAnimationFrame(render);
+      renderRafRef.current=requestAnimationFrame(render);
     };
-    rafRef.current=requestAnimationFrame(render);
-    return()=>cancelAnimationFrame(rafRef.current);
-  // Only re-subscribe when balls object identity changes (new rack / new game)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[balls]);
+    renderRafRef.current=requestAnimationFrame(render);
+    return()=>{ cancelAnimationFrame(renderRafRef.current); renderRafRef.current=null; };
+  },[view]); // restarts only when switching views, never on ball updates
 
-  // ── Physics runner (shared by solo + multiplayer) ──
+  // ── Physics runner — uses physicsRafRef, never touches renderRafRef ──
   const runPhysics = useCallback((snapshot, onDone)=>{
     const lb=snapshot.map(b=>({...b}));
-    ballsRef.current=lb;
+    ballsRef.current=lb; // render loop reads this ref every frame automatically
     pocketedRef.current=[]; foulRef.current=false;
     const shotAngle=angleRef.current;
     const spinState={hx:hitPosRef.current.x,hy:hitPosRef.current.y,sdx:Math.cos(shotAngle),sdy:Math.sin(shotAngle),applied:false};
     let steps=0;
-    cancelAnimationFrame(rafRef.current);
+    cancelAnimationFrame(physicsRafRef.current);
     const tick=()=>{
       for(let s=0;s<4;s++){
         const p=stepPhysics(lb,spinState);
         pocketedRef.current.push(...p);
         if(p.includes(0)) foulRef.current=true;
       }
-      ballsRef.current=[...lb];
-      setBalls([...lb]);
+      ballsRef.current=lb; // render loop sees latest positions every frame
       if(!allStopped(lb)&&++steps<2200){
-        rafRef.current=requestAnimationFrame(tick);
+        physicsRafRef.current=requestAnimationFrame(tick);
       } else {
+        // Physics done — update React state once for UI panels, then hand off
+        setBalls([...lb]);
         onDone(lb,[...new Set(pocketedRef.current)],foulRef.current);
       }
     };
-    rafRef.current=requestAnimationFrame(tick);
+    physicsRafRef.current=requestAnimationFrame(tick);
   },[]);
 
   // ── toFelt: canvas px → felt coords ──
@@ -755,7 +756,7 @@ export default function Billiards({ user }) {
   const handleJoin=(id,s)=>{setRoomId(id);setServerState(s);setView('game');setErr('');};
 
   const handleLeave=()=>{
-    cancelAnimationFrame(rafRef.current); cancelAnimationFrame(chargeRaf.current);
+    cancelAnimationFrame(renderRafRef.current); cancelAnimationFrame(physicsRafRef.current); cancelAnimationFrame(chargeRaf.current);
     if(!isSolo) api.billiardsLeaveRoom(roomId).catch(()=>{});
     setView('lobby');setRoomId(null);setServerState(null);
     setBalls(null);ballsRef.current=null;
@@ -770,7 +771,7 @@ export default function Billiards({ user }) {
     setBalls(b); setSoloPocketed([]); setView('solo'); setGamePhase('aiming');
   };
   const resetSolo=()=>{
-    cancelAnimationFrame(rafRef.current);
+    cancelAnimationFrame(renderRafRef.current); cancelAnimationFrame(physicsRafRef.current);
     const b=makeRack(); ballsRef.current=b;
     setBalls(b); setSoloPocketed([]); setGamePhase('aiming');
   };
