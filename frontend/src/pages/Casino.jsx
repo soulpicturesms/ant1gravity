@@ -10,6 +10,7 @@ import Truco from './casino/Truco';
 import Plinko from './casino/Plinko';
 import Slots from './casino/Slots';
 import Domino from './casino/Domino';
+import Billiards from './casino/Billiards';
 import './casino/casino.css';
 
 const GAMES = [
@@ -60,6 +61,14 @@ const GAMES = [
     bg: 'linear-gradient(135deg, #1a2210, #0a1208)',
     art: '◆',
     tag: 'live', live: 280,
+  },
+  {
+    id: 'billiards',
+    name: 'Billar 8-Ball',
+    desc: '1v1 o 2v2 · física real · EN VIVO',
+    bg: 'linear-gradient(135deg, #0d2a1c, #061510)',
+    art: '🎱',
+    tag: 'new', live: 0,
   },
   {
     id: 'domino',
@@ -751,6 +760,7 @@ export default function Casino() {
 
           {activeGame === 'poker'     && <Poker user={user} balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'truco'     && <Truco user={user} balance={balance} />}
+          {activeGame === 'billiards' && <Billiards user={user} />}
           {activeGame === 'domino'    && <Domino user={user} />}
         </div>
       )}

@@ -29,5 +29,6 @@ app.use('/api/casino',  require('./routes/casino'));
 app.use('/api/poker',   require('./routes/poker'));
 app.use('/api/truco',   require('./routes/truco'));
 app.use('/api/domino',  require('./routes/domino'));
+app.use('/api/billiards', require('./routes/billiards'));
 
 module.exports = app;

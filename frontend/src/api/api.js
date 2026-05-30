@@ -154,6 +154,17 @@ export const api = {
   pokerNextHand: (id) => req(`/api/poker/rooms/${id}/next-hand`, { method: 'POST', headers: headers() }),
   pokerReload:   (id) => req(`/api/poker/rooms/${id}/reload`,    { method: 'POST', headers: headers() }),
 
+  // Billiards
+  billiardsGetRooms:   ()       => req('/api/billiards/rooms', { headers: headers() }),
+  billiardsGetRoom:    (id)     => req(`/api/billiards/rooms/${id}`, { headers: headers() }),
+  billiardsCreateRoom: (body)   => req('/api/billiards/rooms', { method:'POST', headers:headers(), body:JSON.stringify(body) }),
+  billiardsJoinRoom:   (id)     => req(`/api/billiards/rooms/${id}/join`,   { method:'POST', headers:headers() }),
+  billiardsLeaveRoom:  (id)     => req(`/api/billiards/rooms/${id}/leave`,  { method:'POST', headers:headers() }),
+  billiardsStartGame:  (id)     => req(`/api/billiards/rooms/${id}/start`,  { method:'POST', headers:headers() }),
+  billiardsShot:       (id, b)  => req(`/api/billiards/rooms/${id}/shot`,   { method:'POST', headers:headers(), body:JSON.stringify(b) }),
+  billiardsPlaceCue:   (id, b)  => req(`/api/billiards/rooms/${id}/place-cue`, { method:'POST', headers:headers(), body:JSON.stringify(b) }),
+  billiardsRematch:    (id)     => req(`/api/billiards/rooms/${id}/rematch`, { method:'POST', headers:headers() }),
+
   // Domino
   dominoGetRooms:   ()       => req('/api/domino/rooms', { headers: headers() }),
   dominoGetRoom:    (id)     => req(`/api/domino/rooms/${id}`, { headers: headers() }),
