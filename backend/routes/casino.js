@@ -425,10 +425,15 @@ router.post('/roulette/spin', requireAuth, async (req, res) => {
 });
 
 // ── PLINKO ────────────────────────────────────────────────────────────────────
+// Theoretical RTP (12-row binomial distribution, prob = C(12,k)/4096):
+//   bajo:  93.3% — gentle spread, center pays 0.7x
+//   medio: 93.5% — bigger edges, center pays 0.3x
+//   alto:  95.2% — extreme edges (300x), center pays 0.1x
+// No betFactor — RTP must be deterministic regardless of bet size.
 const PLINKO_MULTIPLIERS = {
-  bajo:  [10.0, 2.0, 1.5, 1.1, 0.8, 0.5, 0.5, 0.5, 0.8, 1.1, 1.5, 2.0, 10.0],
-  medio: [40.0, 10.0, 3.0, 1.5, 0.8, 0.3, 0.2, 0.3, 0.8, 1.5, 3.0, 10.0, 40.0],
-  alto:  [260.0, 30.0, 6.0, 2.0, 0.7, 0.2, 0.0, 0.2, 0.7, 2.0, 6.0, 30.0, 260.0],
+  bajo:  [  6.0, 3.0,  1.7, 1.2, 1.0, 0.85, 0.7, 0.85, 1.0, 1.2,  1.7, 3.0,   6.0],
+  medio: [100.0, 20.0, 4.0, 1.5, 0.9, 0.5,  0.3, 0.5,  0.9, 1.5,  4.0, 20.0, 100.0],
+  alto:  [300.0, 40.0, 4.0, 1.5, 0.6, 0.3,  0.1, 0.3,  0.6, 1.5,  4.0, 40.0, 300.0],
 };
 
 router.post('/plinko/drop', requireAuth, async (req, res) => {
@@ -452,10 +457,7 @@ router.post('/plinko/drop', requireAuth, async (req, res) => {
     bucket += choice;
   }
 
-  const multipliers = PLINKO_MULTIPLIERS[risk];
-  const baseMultiplier = multipliers[bucket];
-  const betFactor = 1 + Math.min(1.0, Math.log10(bet / 10) * 0.2);
-  const multiplier = parseFloat((baseMultiplier * betFactor).toFixed(1));
+  const multiplier = PLINKO_MULTIPLIERS[risk][bucket];
   const payout = Math.floor(bet * multiplier);
   const net = payout - bet;
 

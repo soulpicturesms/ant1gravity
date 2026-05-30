@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../api/api';
 import { casinoAudio } from '../../utils/casinoAudio';
 
+// Must match backend backend/routes/casino.js PLINKO_MULTIPLIERS exactly
 const PLINKO_MULTIPLIERS = {
-  bajo:  [10.0, 2.0, 1.5, 1.1, 0.8, 0.5, 0.5, 0.5, 0.8, 1.1, 1.5, 2.0, 10.0],
-  medio: [40.0, 10.0, 3.0, 1.5, 0.8, 0.3, 0.2, 0.3, 0.8, 1.5, 3.0, 10.0, 40.0],
-  alto:  [260.0, 30.0, 6.0, 2.0, 0.7, 0.2, 0.0, 0.2, 0.7, 2.0, 6.0, 30.0, 260.0],
+  bajo:  [  6.0, 3.0,  1.7, 1.2, 1.0, 0.85, 0.7, 0.85, 1.0, 1.2,  1.7, 3.0,   6.0],
+  medio: [100.0, 20.0, 4.0, 1.5, 0.9, 0.5,  0.3, 0.5,  0.9, 1.5,  4.0, 20.0, 100.0],
+  alto:  [300.0, 40.0, 4.0, 1.5, 0.6, 0.3,  0.1, 0.3,  0.6, 1.5,  4.0, 40.0, 300.0],
 };
 
 const getBucketColor = (mult) => {
