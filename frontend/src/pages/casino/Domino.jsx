@@ -172,75 +172,177 @@ function RoomList({ onJoin }) {
   );
 }
 
-// ── Board renderer ─────────────────────────────────────────────────────────────
-function DominoBoard({ pieces, boardLeft, boardRight }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (ref.current) ref.current.scrollLeft = ref.current.scrollWidth;
-  }, [pieces?.length]);
-
-  if (!pieces || pieces.length === 0) {
-    return (
-      <div style={{
-        flex:1, display:'flex', alignItems:'center', justifyContent:'center',
-        border:'2px dashed var(--c-line2)', borderRadius:16, minHeight:120,
-        color:'var(--c-text4)', fontFamily:'Inter,system-ui', fontSize:13,
-      }}>
-        El jugador con la ficha más alta empieza la partida
-      </div>
-    );
-  }
-
+// ── Face-down tile indicators ────────────────────────────────────────────────
+function TileBack({ rotate = false }) {
   return (
-    <div ref={ref} style={{
-      flex:1, overflowX:'auto', display:'flex', alignItems:'center',
-      gap:4, padding:'16px 12px', background:'rgba(0,0,0,0.15)',
-      borderRadius:16, minHeight:120,
+    <div style={{
+      width: rotate ? 14 : 10, height: rotate ? 10 : 18,
+      borderRadius: 2, flexShrink: 0,
+      background: 'linear-gradient(135deg, #2a2a5a 0%, #16163a 100%)',
+      border: '1px solid rgba(120,120,220,0.35)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      <div style={{
-        fontSize:'0.65rem', color:'var(--c-text4)', fontFamily:'Unbounded,system-ui',
-        letterSpacing:'0.1em', textTransform:'uppercase', marginRight:8, flexShrink:0,
-      }}>{boardLeft}◄</div>
-      {pieces.map((p, i) => (
-        <DominoTile key={i} a={p.a} b={p.b} small horizontal />
-      ))}
-      <div style={{
-        fontSize:'0.65rem', color:'var(--c-text4)', fontFamily:'Unbounded,system-ui',
-        letterSpacing:'0.1em', textTransform:'uppercase', marginLeft:8, flexShrink:0,
-      }}>►{boardRight}</div>
+      <div style={{ width:'60%', height:'60%', border:'1px solid rgba(120,120,220,0.2)', borderRadius:1 }} />
     </div>
   );
 }
 
-// ── Player seat around the board ──────────────────────────────────────────────
-function PlayerSeat({ player, isCurrentTurn, myUserId, position }) {
+function FaceDownTiles({ count, rotate = false }) {
+  return (
+    <div style={{ display:'flex', gap:2, justifyContent:'center', flexWrap:'wrap', marginTop:4 }}>
+      {Array.from({ length: Math.min(count,7) }, (_,i) => <TileBack key={i} rotate={rotate} />)}
+      {count > 7 && <span style={{ fontSize:9, color:'rgba(255,255,255,0.4)', alignSelf:'center' }}>+{count-7}</span>}
+    </div>
+  );
+}
+
+// ── Player card (positioned around the table) ─────────────────────────────────
+function PlayerCard({ player, isCurrent, isMe, isTeammate, tileRotate }) {
+  const TEAM_COLOR = ['#6fff7d', '#ff9f4a'];
   if (!player) return (
     <div style={{
-      padding:'8px 14px', borderRadius:8, border:'1px dashed var(--c-line2)',
-      color:'var(--c-text4)', fontSize:12, fontFamily:'Inter,system-ui',
-      textAlign:'center', minWidth:100,
-    }}>Esperando...</div>
+      padding:'10px 14px', borderRadius:12, minWidth:110, textAlign:'center',
+      background:'rgba(255,255,255,0.02)', border:'1px dashed rgba(255,255,255,0.1)',
+      color:'rgba(255,255,255,0.3)', fontSize:11, fontFamily:'Inter,system-ui',
+    }}>Esperando…</div>
   );
-  const isMe = player.userId === myUserId;
-  const teamColor = player.team === 0 ? '#6fff7d' : '#ff9f4a';
+  const tc = TEAM_COLOR[player.team] || '#fff';
   return (
     <div style={{
-      padding:'8px 14px', borderRadius:8, minWidth:100, textAlign:'center',
-      background: isCurrentTurn ? 'rgba(255,215,0,0.08)' : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${isCurrentTurn ? 'rgba(255,215,0,0.35)' : 'var(--c-line2)'}`,
-      boxShadow: isCurrentTurn ? '0 0 12px rgba(255,215,0,0.15)' : 'none',
-      transition:'all 0.2s',
+      padding:'10px 14px', borderRadius:12, minWidth:115, textAlign:'center',
+      background: isCurrent ? 'rgba(255,215,0,0.1)' : 'rgba(6,6,18,0.88)',
+      border: `2px solid ${isCurrent ? '#ffd700' : isTeammate ? 'rgba(111,255,125,0.35)' : 'rgba(255,255,255,0.1)'}`,
+      boxShadow: isCurrent
+        ? '0 0 24px rgba(255,215,0,0.4), 0 6px 20px rgba(0,0,0,0.55)'
+        : '0 4px 16px rgba(0,0,0,0.5)',
+      backdropFilter:'blur(10px)',
+      transition:'all 0.3s',
+      position:'relative',
     }}>
-      <div style={{ fontSize:11, fontWeight:700, color: isMe ? 'var(--c-accent)' : '#fff', marginBottom:3 }}>
-        {player.username}{isMe ? ' (vos)' : ''}
+      {isCurrent && (
+        <div style={{
+          position:'absolute', top:-10, left:'50%', transform:'translateX(-50%)',
+          background:'#ffd700', color:'#000', fontSize:8, fontWeight:800,
+          fontFamily:'Unbounded,system-ui', padding:'2px 8px', borderRadius:20,
+          letterSpacing:'0.08em', whiteSpace:'nowrap',
+        }}>● TURNO</div>
+      )}
+      <div style={{ fontWeight:700, fontSize:13, color: isMe ? '#ff2d7a' : '#fff', marginBottom:2 }}>
+        {player.username}{isMe ? ' ♟' : ''}
       </div>
-      <div style={{ display:'flex', justifyContent:'center', gap:6, alignItems:'center' }}>
-        <span style={{ fontSize:10, color:teamColor, fontFamily:'Unbounded,system-ui', fontWeight:700 }}>
-          Equipo {player.team + 1}
-        </span>
-        <span style={{ fontSize:10, color:'var(--c-text3)' }}>· {player.tileCount} fichas</span>
+      <div style={{ fontSize:9, color:tc, fontWeight:700, fontFamily:'Unbounded,system-ui', letterSpacing:'0.06em' }}>
+        EQ.{player.team+1}{isTeammate ? ' · COMPAÑERO' : ''}
       </div>
-      {isCurrentTurn && <div style={{ fontSize:9, color:'#ffd700', marginTop:4, fontFamily:'Unbounded,system-ui' }}>● SU TURNO</div>}
+      <FaceDownTiles count={player.tileCount||0} rotate={tileRotate} />
+    </div>
+  );
+}
+
+// ── Professional domino table ────────────────────────────────────────────────
+function DominoTable({ players, myUserId, boardPieces, boardLeft, boardRight, currentIdx }) {
+  const boardRef = useRef(null);
+  useEffect(() => {
+    if (boardRef.current) boardRef.current.scrollLeft = boardRef.current.scrollWidth;
+  }, [boardPieces?.length]);
+
+  const myIdx  = Math.max(0, players.findIndex(p => p.userId === myUserId));
+  const seat   = (off) => players[(myIdx + off) % players.length] || null;
+  const me     = players[myIdx] || null;
+  const pLeft  = seat(1);
+  const pTop   = seat(2);
+  const pRight = seat(3);
+  const myTeam = me?.team ?? 0;
+  const isCur  = (p) => p && players[currentIdx]?.userId === p.userId;
+
+  return (
+    <div style={{
+      position:'relative', flex:1, minHeight:460,
+      display:'grid',
+      gridTemplateAreas:`". top ." "left felt right" ". me ."`,
+      gridTemplateColumns:'140px 1fr 140px',
+      gridTemplateRows:'96px 1fr 96px',
+      gap:0, padding:'12px 8px',
+    }}>
+
+      {/* Top */}
+      <div style={{ gridArea:'top', display:'flex', justifyContent:'center', alignItems:'flex-end', paddingBottom:8 }}>
+        <PlayerCard player={pTop} isCurrent={isCur(pTop)} isTeammate={pTop?.team===myTeam} />
+      </div>
+
+      {/* Left */}
+      <div style={{ gridArea:'left', display:'flex', justifyContent:'flex-end', alignItems:'center', paddingRight:8 }}>
+        <PlayerCard player={pLeft} isCurrent={isCur(pLeft)} isTeammate={pLeft?.team===myTeam} tileRotate />
+      </div>
+
+      {/* Felt table */}
+      <div style={{ gridArea:'felt' }}>
+        {/* Wood frame */}
+        <div style={{
+          width:'100%', height:'100%', borderRadius:28,
+          background:'linear-gradient(160deg, #7c5028 0%, #4e2e10 45%, #2c1808 100%)',
+          padding:'18px 22px',
+          boxShadow:'0 18px 50px rgba(0,0,0,0.75), inset 0 2px 6px rgba(230,170,60,0.28), 0 0 0 3px #1a0c04',
+        }}>
+          {/* Felt */}
+          <div style={{
+            width:'100%', height:'100%', borderRadius:16,
+            background:'radial-gradient(ellipse at 50% 40%, #1e6040 0%, #124030 55%, #0a2a1e 100%)',
+            border:'1px solid rgba(255,255,255,0.05)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            overflow:'hidden', position:'relative',
+          }}>
+            {/* Subtle fabric lines */}
+            <div style={{
+              position:'absolute', inset:0, pointerEvents:'none',
+              backgroundImage:'repeating-linear-gradient(90deg,transparent,transparent 5px,rgba(0,0,0,0.03) 5px,rgba(0,0,0,0.03) 6px)',
+            }} />
+            {/* Inner border glow */}
+            <div style={{
+              position:'absolute', inset:8, borderRadius:10,
+              border:'1px solid rgba(255,255,255,0.04)', pointerEvents:'none',
+            }} />
+
+            {/* Board tiles */}
+            {(!boardPieces || boardPieces.length === 0) ? (
+              <div style={{
+                textAlign:'center', color:'rgba(255,255,255,0.2)',
+                fontSize:12, fontFamily:'Inter,system-ui', padding:'0 24px', lineHeight:1.6,
+              }}>
+                Empieza la partida…
+              </div>
+            ) : (
+              <div ref={boardRef} style={{
+                position:'relative', zIndex:1,
+                overflowX:'auto', overflowY:'hidden',
+                width:'100%', padding:'12px 16px',
+                display:'flex', alignItems:'center', gap:4,
+                scrollbarWidth:'none',
+              }}>
+                <span style={{ fontSize:9, color:'rgba(255,255,255,0.35)', fontFamily:'JetBrains Mono,monospace', flexShrink:0 }}>
+                  {boardLeft}◄
+                </span>
+                {boardPieces.map((p,i) => (
+                  <DominoTile key={i} a={p.a} b={p.b} small horizontal />
+                ))}
+                <span style={{ fontSize:9, color:'rgba(255,255,255,0.35)', fontFamily:'JetBrains Mono,monospace', flexShrink:0 }}>
+                  ►{boardRight}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right */}
+      <div style={{ gridArea:'right', display:'flex', justifyContent:'flex-start', alignItems:'center', paddingLeft:8 }}>
+        <PlayerCard player={pRight} isCurrent={isCur(pRight)} isTeammate={pRight?.team===myTeam} tileRotate />
+      </div>
+
+      {/* Me */}
+      <div style={{ gridArea:'me', display:'flex', justifyContent:'center', alignItems:'flex-start', paddingTop:8 }}>
+        <PlayerCard player={me} isCurrent={isCur(me)} isMe />
+      </div>
     </div>
   );
 }
@@ -450,13 +552,6 @@ export default function Domino({ user }) {
   }
   const hasPlayable = myTiles.some(t => canPlayAnywhere(t));
 
-  // Seat arrangement (3 opponents shown on stage, me in panel)
-  // p[0]=me(implied in panel), p[1]=left opp, p[2]=top opp/teammate, p[3]=right opp
-  const myIdx   = players.findIndex(p=>p.userId===user.id);
-  const seatOf  = (offset) => players[(myIdx + offset) % players.length] || null;
-  const leftP   = seatOf(1);
-  const topP    = seatOf(2);
-  const rightP  = seatOf(3);
 
   return (
     <div className="casino-roul-view">
@@ -633,38 +728,29 @@ export default function Domino({ user }) {
       </div>
 
       {/* ── RIGHT STAGE ──────────────────────────────── */}
-      <div className="casino-roul-stage" style={{ flexDirection:'column', gap:16, minHeight:520 }}>
+      <div className="casino-roul-stage" style={{ flexDirection:'column', gap:0, minHeight:560, padding:0 }}>
 
-        {/* Opponent seats */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:12, alignItems:'center' }}>
-          <PlayerSeat player={leftP}  isCurrentTurn={leftP&&curPlayer?.userId===leftP.userId}  myUserId={user.id} position="left" />
-          <PlayerSeat player={topP}   isCurrentTurn={topP&&curPlayer?.userId===topP.userId}   myUserId={user.id} position="top" />
-          <PlayerSeat player={rightP} isCurrentTurn={rightP&&curPlayer?.userId===rightP.userId} myUserId={user.id} position="right" />
-        </div>
-
-        {/* Board */}
-        <DominoBoard
-          pieces={state.boardPieces}
+        {/* Professional domino table */}
+        <DominoTable
+          players={players}
+          myUserId={user.id}
+          boardPieces={state.boardPieces}
           boardLeft={state.boardLeft}
           boardRight={state.boardRight}
+          currentIdx={state.currentIdx}
         />
 
-        {/* My seat info */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <PlayerSeat player={me} isCurrentTurn={isMyTurn} myUserId={user.id} position="bottom" />
-        </div>
-
-        {/* Room info bar */}
+        {/* Info bar */}
         <div style={{
           display:'flex', justifyContent:'space-between', alignItems:'center',
-          padding:'10px 16px', background:'rgba(255,255,255,0.02)',
-          border:'1px solid var(--c-line2)', borderRadius:10,
+          padding:'10px 18px', margin:'0 8px 8px',
+          background:'rgba(255,255,255,0.02)', border:'1px solid var(--c-line2)', borderRadius:10,
         }}>
-          <span style={{ fontFamily:'Unbounded,system-ui', fontWeight:700, fontSize:'0.75rem', color:'#fff' }}>
+          <span style={{ fontFamily:'Unbounded,system-ui', fontWeight:700, fontSize:'0.72rem', color:'#fff' }}>
             Mesa {roomId ? `#${roomId.slice(0,6).toUpperCase()}` : ''} · Dominó 2×2
           </span>
           <span style={{ fontSize:10, color:'var(--c-text4)' }}>
-            {players.length}/4 jugadores · meta {state.maxPoints ?? 100} pts
+            {players.length}/4 jugadores · meta {state.maxPoints??100} pts
           </span>
         </div>
       </div>
