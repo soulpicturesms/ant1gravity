@@ -295,14 +295,23 @@ function WaitingRoom({ room, user, onLeave, onPlay }) {
 function PoolGame({ room, user, onLeave, onResult }) {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
-  // Build the iframe URL with all params the fork needs
+  // Build the iframe URL with the params tailuge needs for network multiplayer.
+  // - websocketserver:  tells the fork to use online sync (else it's single-player local)
+  // - tableId:          shared by all players in this room (state syncs across clients)
+  // - userId:           unique per player so the server distinguishes them
+  // - userName:         display name in the HUD
+  // - first=true:       ONLY the room creator (players[0]) gets this — they break first
+  // - ruletype:         locked to eightball in our fork
   const url = (() => {
+    const isFirst = room.players[0]?.userId === user.id;
     const params = new URLSearchParams({
       ruletype: 'eightball',
-      tableId:  `ant1g_${room.id}`,
-      playername: user.username,
-      pn: user.username,
+      websocketserver: 'wss://billiards-network.onrender.com',
+      tableId: `ant1g_${room.id}`,
+      userId: String(user.id),
+      userName: user.username,
     });
+    if (isFirst) params.set('first', 'true');
     return `${POOL_URL}?${params.toString()}`;
   })();
 
