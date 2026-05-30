@@ -422,7 +422,7 @@ function CueBallControl({ hitPos, onChange, disabled }) {
 }
 
 // ── Lobby ─────────────────────────────────────────────────────────────────────
-function RoomList({ onJoin }) {
+function RoomList({ onJoin, onSolo }) {
   const [rooms,setRooms]=useState([]);
   const [creating,setCreating]=useState(false);
   const [name,setName]=useState('');
@@ -457,9 +457,14 @@ function RoomList({ onJoin }) {
       <div style={{fontFamily:'Unbounded,system-ui',fontSize:'1.3rem',fontWeight:800,color:'#fff',marginBottom:24}}>
         🎱 Billar <span style={{color:'var(--c-accent)'}}>8-Ball</span>
       </div>
+      {/* Solo practice button */}
+      <button onClick={onSolo} style={{width:'100%',padding:12,marginBottom:10,borderRadius:10,background:'rgba(111,255,125,0.1)',border:'1px solid rgba(111,255,125,0.35)',color:'var(--c-accent2)',fontFamily:'Unbounded,system-ui',fontSize:'0.72rem',fontWeight:700,cursor:'pointer',letterSpacing:'0.06em'}}>
+        🎱 PRÁCTICA SOLO — sin servidor
+      </button>
+
       {!creating?(
-        <button onClick={()=>setCreating(true)} style={{width:'100%',padding:14,marginBottom:20,borderRadius:10,background:'linear-gradient(135deg,#ff2d7a,#ff5f4b)',border:'none',color:'#fff',fontFamily:'Unbounded,system-ui',fontSize:'0.75rem',fontWeight:700,cursor:'pointer'}}>
-          + CREAR MESA
+        <button onClick={()=>setCreating(true)} style={{width:'100%',padding:12,marginBottom:20,borderRadius:10,background:'linear-gradient(135deg,#ff2d7a,#ff5f4b)',border:'none',color:'#fff',fontFamily:'Unbounded,system-ui',fontSize:'0.75rem',fontWeight:700,cursor:'pointer'}}>
+          + CREAR MESA MULTIJUGADOR
         </button>
       ):(
         <div style={{background:'var(--c-surface)',border:'1px solid rgba(255,45,122,0.2)',borderRadius:12,padding:'16px 20px',marginBottom:20}}>
@@ -512,186 +517,268 @@ function RoomList({ onJoin }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function Billiards({ user }) {
-  const [view,setView]             = useState('lobby');
-  const [roomId,setRoomId]         = useState(null);
-  const [serverState,setServerState]=useState(null);
-  const [balls,setBalls]           = useState(null);
-  const [gamePhase,setGamePhase]   = useState('waiting');
-  const [angle,setAngle]           = useState(0);
-  const [power,setPower]           = useState(0);
-  const [charging,setCharging]     = useState(false);
-  const [hitPos,setHitPos]         = useState({x:0,y:0});
-  const [err,setErr]               = useState('');
-  const [muted,setMuted]           = useState(casinoAudio.muted);
+  const [view,setView]              = useState('lobby');
+  const [roomId,setRoomId]          = useState(null);
+  const [serverState,setServerState]= useState(null);
+  const [balls,setBalls]            = useState(null);
+  const [angle,setAngle]            = useState(0);
+  const [power,setPowerState]       = useState(0);
+  const [hitPos,setHitPos]          = useState({x:0,y:0});
+  const [err,setErr]                = useState('');
+  const [muted,setMuted]            = useState(casinoAudio.muted);
+  // Solo mode pocketed tracking for display
+  const [soloPocketed,setSoloPocketed] = useState([]);
 
-  const canvasRef    = useRef(null);
-  const rafRef       = useRef(null);
-  const chargeRaf    = useRef(null);
-  const chargeStart  = useRef(null);
-  const pocketedRef  = useRef([]);
-  const foulRef      = useRef(false);
-  const angleRef     = useRef(0);
-  const hitPosRef    = useRef({x:0,y:0});
+  const canvasRef   = useRef(null);
+  const rafRef      = useRef(null);
+  const chargeRaf   = useRef(null);
+  const chargeStart = useRef(null);
+  const pocketedRef = useRef([]);
+  const foulRef     = useRef(false);
+  // ── Refs that hold live values so callbacks never have stale closures ──
+  const angleRef    = useRef(0);
+  const powerRef    = useRef(0);
+  const hitPosRef   = useRef({x:0,y:0});
+  const gamePhaseRef= useRef('waiting');   // source of truth for callbacks
+  const ballsRef    = useRef(null);        // always current balls
+  const isTurnRef   = useRef(false);       // always current turn flag
+  const [gamePhaseUI, setGamePhaseUI] = useState('waiting'); // for rendering only
 
-  // Keep refs in sync
+  // Wrapped setters that keep refs in sync
+  const setGamePhase = useCallback((p)=>{ gamePhaseRef.current=p; setGamePhaseUI(p); },[]);
+  const setPower     = useCallback((v)=>{ const n=typeof v==='function'?v(powerRef.current):v; powerRef.current=n; setPowerState(n); },[]);
+
   useEffect(()=>{ angleRef.current=angle; },[angle]);
   useEffect(()=>{ hitPosRef.current=hitPos; },[hitPos]);
 
+  // Sync server balls → local on new server state (only when idle)
   useEffect(()=>{
     if(!serverState?.balls) return;
-    setBalls(serverState.balls.map(b=>({...b,vx:0,vy:0})));
+    const lb=serverState.balls.map(b=>({...b,vx:0,vy:0}));
+    setBalls(lb); ballsRef.current=lb;
   },[serverState?.balls]);
 
+  // Polling (multiplayer only)
   useEffect(()=>{
     if(!roomId||view!=='game') return;
     const poll=async()=>{try{const r=await api.billiardsGetRoom(roomId);setServerState(r.state);}catch{}};
     poll(); const iv=setInterval(poll,2000); return()=>clearInterval(iv);
   },[roomId,view]);
 
-  const state=serverState||{};
-  const players=state.players||[], teams=state.teams||[];
-  const myTeamIdx=players.find(p=>p.userId===user.id)?.team??-1;
-  const myTeam=teams[myTeamIdx]||{playerIds:[],group:null,pocketed:[]};
-  const oppTeam=teams[1-myTeamIdx]||{playerIds:[],group:null,pocketed:[]};
-  const curTeam=teams[state.currentTeam]||{playerIds:[]};
-  const curPlayerId=curTeam.playerIds[state.currentPlayerInTeam%Math.max(1,curTeam.playerIds.length)];
-  const isMyTurn=curPlayerId===user.id&&state.phase==='playing'&&gamePhase!=='animating';
-  const cueBall=balls?.find(b=>b.id===0);
+  // Derived multiplayer values
+  const state      = serverState||{};
+  const players    = state.players||[], teams=state.teams||[];
+  const myTeamIdx  = players.find(p=>p.userId===user.id)?.team??-1;
+  const myTeam     = teams[myTeamIdx]||{playerIds:[],group:null,pocketed:[]};
+  const oppTeam    = teams[1-myTeamIdx]||{playerIds:[],group:null,pocketed:[]};
+  const curTeam    = teams[state.currentTeam]||{playerIds:[]};
+  const curPlayerId= curTeam.playerIds[state.currentPlayerInTeam%Math.max(1,curTeam.playerIds.length)];
 
-  // ── Render loop ──
+  const isSolo  = view==='solo';
+  const gamePhase = gamePhaseUI;
+  // isMyTurn: always true in solo, otherwise check player
+  const isMyTurn = isSolo
+    ? gamePhase!=='animating'
+    : (curPlayerId===user.id&&state.phase==='playing'&&gamePhase!=='animating');
+  isTurnRef.current = isMyTurn;
+
+  const cueBall = balls?.find(b=>b.id===0);
+
+  // ── Render loop (reads live refs so it never has stale values) ──
   useEffect(()=>{
     const canvas=canvasRef.current;
     if(!canvas||!balls) return;
     const ctx=canvas.getContext('2d');
     const render=()=>{
+      const ph=gamePhaseRef.current;
+      const imt=isTurnRef.current;
+      const cb=ballsRef.current?.find(b=>b.id===0);
+      const ang=angleRef.current;
+      const pwr=powerRef.current;
+      const hp=hitPosRef.current;
+      const curBalls=ballsRef.current||[];
+
       ctx.clearRect(0,0,CW,CH);
       drawTable(ctx);
-      if(isMyTurn&&gamePhase==='aiming'&&cueBall) drawAimLine(ctx,cueBall,balls,angle);
-      if(isMyTurn&&gamePhase==='placing'&&cueBall){
-        ctx.beginPath();ctx.arc(FX+cueBall.x,FY+cueBall.y,BALL_R+5,0,Math.PI*2);
+      if(imt&&ph==='aiming'&&cb)    drawAimLine(ctx,cb,curBalls,ang);
+      if(imt&&ph==='placing'&&cb){
+        ctx.beginPath();ctx.arc(FX+cb.x,FY+cb.y,BALL_R+5,0,Math.PI*2);
         ctx.strokeStyle='rgba(111,255,125,0.6)';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
       }
-      balls.forEach(b=>draw3DBall(ctx,b,b.id===0&&(isMyTurn&&gamePhase==='aiming')?hitPos:null));
-      if(isMyTurn&&(gamePhase==='aiming'||gamePhase==='charging')&&cueBall) drawCue(ctx,cueBall,angle,power);
-      if(isMyTurn&&gamePhase!=='placing') drawPowerBar(ctx,power);
+      curBalls.forEach(b=>draw3DBall(ctx,b,b.id===0&&imt&&ph==='aiming'?hp:null));
+      if(imt&&(ph==='aiming'||ph==='charging')&&cb) drawCue(ctx,cb,ang,pwr);
+      if(imt&&ph!=='placing') drawPowerBar(ctx,pwr);
       rafRef.current=requestAnimationFrame(render);
     };
     rafRef.current=requestAnimationFrame(render);
     return()=>cancelAnimationFrame(rafRef.current);
-  },[balls,angle,power,gamePhase,isMyTurn,cueBall,hitPos]);
+  // Only re-subscribe when balls object identity changes (new rack / new game)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[balls]);
 
-  // ── Physics runner ──
-  const runPhysics=useCallback((snapshot)=>{
+  // ── Physics runner (shared by solo + multiplayer) ──
+  const runPhysics = useCallback((snapshot, onDone)=>{
     const lb=snapshot.map(b=>({...b}));
+    ballsRef.current=lb;
     pocketedRef.current=[]; foulRef.current=false;
     const shotAngle=angleRef.current;
-    const spinState={
-      hx:hitPosRef.current.x, hy:hitPosRef.current.y,
-      sdx:Math.cos(shotAngle),  sdy:Math.sin(shotAngle),
-      applied:false,
-    };
+    const spinState={hx:hitPosRef.current.x,hy:hitPosRef.current.y,sdx:Math.cos(shotAngle),sdy:Math.sin(shotAngle),applied:false};
     let steps=0;
+    cancelAnimationFrame(rafRef.current);
     const tick=()=>{
       for(let s=0;s<4;s++){
         const p=stepPhysics(lb,spinState);
         pocketedRef.current.push(...p);
         if(p.includes(0)) foulRef.current=true;
       }
-      setBalls(lb.map(b=>({...b})));
+      ballsRef.current=[...lb];
+      setBalls([...lb]);
       if(!allStopped(lb)&&++steps<2200){
         rafRef.current=requestAnimationFrame(tick);
       } else {
-        setGamePhase('waiting');
-        const finalBalls=lb.map(({id,x,y,pocketed})=>({id,x,y,pocketed}));
-        api.billiardsShot(roomId,{
-          balls:finalBalls,
-          pocketedThisShot:[...new Set(pocketedRef.current)],
-          foulCueBall:foulRef.current,
-        }).then(r=>{
-          setServerState(r.state);
-          if(foulRef.current) setGamePhase('placing');
-        }).catch(e=>setErr(e.message));
+        onDone(lb,[...new Set(pocketedRef.current)],foulRef.current);
       }
     };
-    cancelAnimationFrame(rafRef.current);
     rafRef.current=requestAnimationFrame(tick);
-  },[roomId]);
+  },[]);
 
+  // ── toFelt: canvas px → felt coords ──
   const toFelt=useCallback((e)=>{
     const c=canvasRef.current; if(!c) return{x:0,y:0};
     const rect=c.getBoundingClientRect();
     return{x:(e.clientX-rect.left)*CW/rect.width-FX, y:(e.clientY-rect.top)*CH/rect.height-FY};
   },[]);
 
+  // ── Mouse handlers — use refs only, no state in closures ──
   const handleMouseMove=useCallback((e)=>{
-    if(!isMyTurn||!cueBall) return;
-    if(gamePhase==='placing'){
+    if(!isTurnRef.current) return;
+    const ph=gamePhaseRef.current;
+    const cb=ballsRef.current?.find(b=>b.id===0); if(!cb) return;
+    if(ph==='placing'){
       const{x,y}=toFelt(e);
-      setBalls(prev=>prev.map(b=>b.id===0?{...b,x,y}:b));
+      setBalls(prev=>{const n=prev.map(b=>b.id===0?{...b,x,y}:b);ballsRef.current=n;return n;});
       return;
     }
-    if(gamePhase==='aiming'||gamePhase==='charging'){
+    if(ph==='aiming'){  // ← only update angle when AIMING, not when charging
       const{x,y}=toFelt(e);
-      setAngle(Math.atan2(y-cueBall.y,x-cueBall.x));
+      const a=Math.atan2(y-cb.y,x-cb.x);
+      angleRef.current=a; setAngle(a);
     }
-  },[isMyTurn,cueBall,gamePhase,toFelt]);
+  },[toFelt]);
 
   const handleMouseDown=useCallback((e)=>{
-    if(e.button!==0) return;
-    if(!isMyTurn||!cueBall) return;
-    if(gamePhase==='placing'){
+    if(e.button!==0||!isTurnRef.current) return;
+    const ph=gamePhaseRef.current;
+    const cb=ballsRef.current?.find(b=>b.id===0); if(!cb) return;
+
+    if(ph==='placing'){
       const{x,y}=toFelt(e);
-      api.billiardsPlaceCue(roomId,{x,y}).then(r=>{setServerState(r.state);setGamePhase('aiming');}).catch(e=>setErr(e.message));
+      if(isSolo){
+        // In solo mode, just place locally
+        setBalls(prev=>{const n=prev.map(b=>b.id===0?{...b,x,y,pocketed:false}:b);ballsRef.current=n;return n;});
+        setGamePhase('aiming');
+      } else {
+        api.billiardsPlaceCue(roomId,{x,y}).then(r=>{setServerState(r.state);setGamePhase('aiming');}).catch(er=>setErr(er.message));
+      }
       return;
     }
-    if(gamePhase==='aiming'){
+
+    if(ph==='aiming'){
       setGamePhase('charging');
+      powerRef.current=0; setPowerState(0);
       chargeStart.current=Date.now();
-      const chargeTick=()=>{setPower(Math.min(1,(Date.now()-chargeStart.current)/1600));chargeRaf.current=requestAnimationFrame(chargeTick);};
+      const chargeTick=()=>{
+        const p=Math.min(1,(Date.now()-chargeStart.current)/1600);
+        powerRef.current=p; setPowerState(p);
+        chargeRaf.current=requestAnimationFrame(chargeTick);
+      };
       chargeRaf.current=requestAnimationFrame(chargeTick);
     }
-  },[isMyTurn,cueBall,gamePhase,roomId,toFelt]);
+  },[toFelt,isSolo,roomId,setGamePhase]);
 
   const handleMouseUp=useCallback((e)=>{
-    if(e.button!==0||!isMyTurn||!balls||!cueBall||gamePhase!=='charging') return;
+    if(e.button!==0||!isTurnRef.current) return;
+    if(gamePhaseRef.current!=='charging') return;  // ← read ref, not state
     cancelAnimationFrame(chargeRaf.current);
-    const p=power; setPower(0); setGamePhase('animating');
-    const speed=p*28;
-    const a=angleRef.current;
-    const shot=balls.map(b=>b.id===0?{...b,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed}:{...b});
-    casinoAudio.playChip();
-    runPhysics(shot);
-  },[isMyTurn,balls,cueBall,gamePhase,power,runPhysics]);
+    const p=powerRef.current;
+    powerRef.current=0; setPowerState(0);
+    setGamePhase('animating');
 
+    const a=angleRef.current;
+    const speed=p*28;
+    const snapshot=(ballsRef.current||[]).map(b=>b.id===0?{...b,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed}:{...b});
+    casinoAudio.playChip();
+
+    runPhysics(snapshot,(finalBalls,pocketed,foulCue)=>{
+      if(isSolo){
+        // Solo mode: just re-rack cue if pocketed, update display
+        if(foulCue){
+          setBalls(prev=>{
+            const n=prev.map(b=>b.id===0?{...b,x:FW*0.25,y:FH/2,pocketed:false,vx:0,vy:0}:b);
+            ballsRef.current=n; return n;
+          });
+          setGamePhase('aiming');
+        } else {
+          setSoloPocketed(p=>[...new Set([...p,...pocketed.filter(id=>id!==0)])]);
+          setGamePhase('aiming');
+        }
+      } else {
+        setGamePhase('waiting');
+        const fb=finalBalls.map(({id,x,y,pocketed})=>({id,x,y,pocketed}));
+        api.billiardsShot(roomId,{balls:fb,pocketedThisShot:pocketed,foulCueBall:foulCue})
+          .then(r=>{setServerState(r.state);if(foulCue)setGamePhase('placing');})
+          .catch(er=>setErr(er.message));
+      }
+    });
+  },[isSolo,roomId,setGamePhase,runPhysics]);
+
+  // ── Phase transitions (multiplayer) ──
   useEffect(()=>{
+    if(isSolo) return;
     if(!serverState) return;
     if(serverState.phase==='game_end'){setGamePhase('ended');return;}
     if(serverState.phase==='playing'){
       if(serverState.cueBallInHand&&isMyTurn){setGamePhase('placing');return;}
-      if(gamePhase==='waiting'||gamePhase==='ended') setGamePhase('aiming');
+      const ph=gamePhaseRef.current;
+      if(ph==='waiting'||ph==='ended') setGamePhase('aiming');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[serverState?.phase,serverState?.currentTeam,serverState?.cueBallInHand]);
+  },[serverState?.phase,serverState?.currentTeam,serverState?.cueBallInHand,isSolo]);
 
   useEffect(()=>{
-    if(isMyTurn&&gamePhase==='waiting') setGamePhase('aiming');
-    if(!isMyTurn&&gamePhase==='aiming') setGamePhase('waiting');
-  },[isMyTurn,gamePhase]);
+    if(isSolo) return;
+    if(isMyTurn&&gamePhaseRef.current==='waiting') setGamePhase('aiming');
+    if(!isMyTurn&&gamePhaseRef.current==='aiming')  setGamePhase('waiting');
+  },[isMyTurn,isSolo,setGamePhase]);
 
+  // ── Handlers ──
   const handleJoin=(id,s)=>{setRoomId(id);setServerState(s);setView('game');setErr('');};
 
-  const handleLeave=async()=>{
+  const handleLeave=()=>{
     cancelAnimationFrame(rafRef.current); cancelAnimationFrame(chargeRaf.current);
-    try{await api.billiardsLeaveRoom(roomId);}catch{}
-    setView('lobby');setRoomId(null);setServerState(null);setBalls(null);
+    if(!isSolo) api.billiardsLeaveRoom(roomId).catch(()=>{});
+    setView('lobby');setRoomId(null);setServerState(null);
+    setBalls(null);ballsRef.current=null;
+    setGamePhase('waiting'); powerRef.current=0; setPowerState(0);
   };
 
   const doStart=async()=>{try{const r=await api.billiardsStartGame(roomId);setServerState(r.state);}catch(e){setErr(e.message);}};
   const doRematch=async()=>{try{const r=await api.billiardsRematch(roomId);setServerState(r.state);setGamePhase('waiting');}catch(e){setErr(e.message);}};
 
-  if(view==='lobby') return <RoomList onJoin={handleJoin}/>;
+  const startSolo=()=>{
+    const b=makeRack(); ballsRef.current=b;
+    setBalls(b); setSoloPocketed([]); setView('solo'); setGamePhase('aiming');
+  };
+  const resetSolo=()=>{
+    cancelAnimationFrame(rafRef.current);
+    const b=makeRack(); ballsRef.current=b;
+    setBalls(b); setSoloPocketed([]); setGamePhase('aiming');
+  };
 
-  const isWaiting=state.phase==='waiting', isGameEnd=state.phase==='game_end';
+  if(view==='lobby') return <RoomList onJoin={handleJoin} onSolo={startSolo}/>;
+
+  const isWaiting=!isSolo&&state.phase==='waiting';
+  const isGameEnd=!isSolo&&state.phase==='game_end';
   const iWon=isGameEnd&&state.winner===myTeamIdx;
   const curPlayerName=players.find(p=>p.userId===curPlayerId)?.username||'';
   const canStart=isWaiting&&players.length>=2;
@@ -702,11 +789,23 @@ export default function Billiards({ user }) {
       <div className="casino-roul-panel">
         <div className="casino-roul-panel__title">🎱 Billar 8-Ball</div>
         <div style={{textAlign:'center',fontSize:9,fontFamily:'Unbounded,system-ui',fontWeight:700,letterSpacing:'0.1em',color:'var(--c-text4)'}}>
-          {state.mode?.toUpperCase()||'1V1'} · {players.length}/{state.maxPlayers||2} jugadores
+          {isSolo ? 'PRÁCTICA SOLO' : `${state.mode?.toUpperCase()||'1V1'} · ${players.length}/${state.maxPlayers||2} jugadores`}
         </div>
 
-        {/* Teams */}
-        {state.phase==='playing'&&(
+        {/* Solo pocketed balls */}
+        {isSolo&&soloPocketed.length>0&&(
+          <div style={{background:'var(--c-surface2)',borderRadius:10,padding:'10px 12px'}}>
+            <div style={{fontSize:9,fontFamily:'Unbounded,system-ui',color:'var(--c-text4)',letterSpacing:'0.08em',marginBottom:6}}>EMBOCADAS</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
+              {soloPocketed.map(id=>(
+                <div key={id} style={{width:16,height:16,borderRadius:'50%',background:BCLR[id]||'#fff',border:'1px solid rgba(0,0,0,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:6,fontWeight:800,color:id<=7||id===8?'#fff':BCLR[id]}}>{id}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Multiplayer teams */}
+        {!isSolo&&state.phase==='playing'&&(
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {[{t:myTeam,isMe:true},{t:oppTeam,isMe:false}].map(({t,isMe})=>(
               <div key={isMe?'me':'opp'} style={{background:'var(--c-surface2)',borderRadius:10,padding:'10px 12px',border:isMe?'1px solid rgba(255,45,122,0.25)':'1px solid var(--c-line2)'}}>
@@ -714,7 +813,7 @@ export default function Billiards({ user }) {
                   <span style={{fontSize:9,fontFamily:'Unbounded,system-ui',fontWeight:700,color:isMe?'var(--c-accent)':'var(--c-text3)',letterSpacing:'0.08em'}}>{isMe?'TU EQUIPO':'RIVALES'}</span>
                   <span style={{fontSize:9,fontWeight:700,color:t.group==='solids'?'#f5c518':t.group==='stripes'?'#4a90e2':'var(--c-text4)',fontFamily:'Unbounded,system-ui'}}>{t.group?t.group.toUpperCase():'?'}</span>
                 </div>
-                <div style={{display:'flex',flexWrap:'wrap',gap:3,marginTop:2}}>
+                <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                   {(t.pocketed||[]).map(id=>(
                     <div key={id} style={{width:16,height:16,borderRadius:'50%',background:BCLR[id]||'#fff',border:'1px solid rgba(0,0,0,0.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:6,fontWeight:800,color:'#fff'}}>{id}</div>
                   ))}
@@ -725,21 +824,23 @@ export default function Billiards({ user }) {
           </div>
         )}
 
-        {/* Hit position control */}
-        {state.phase==='playing'&&isMyTurn&&gamePhase==='aiming'&&(
+        {/* Hit position control — always shown when aiming */}
+        {isMyTurn&&gamePhase==='aiming'&&(
           <CueBallControl hitPos={hitPos} onChange={(p)=>{setHitPos(p);hitPosRef.current=p;}} disabled={false}/>
         )}
 
-        {/* Turn */}
-        {state.phase==='playing'&&(
+        {/* Turn indicator */}
+        {(isSolo||state.phase==='playing')&&(
           <div style={{borderRadius:8,padding:'10px 12px',textAlign:'center',background:isMyTurn?'rgba(111,255,125,0.07)':'rgba(255,215,0,0.04)',border:`1px solid ${isMyTurn?'rgba(111,255,125,0.3)':'rgba(255,215,0,0.15)'}`}}>
             {isMyTurn?(
               <>
-                <div style={{fontSize:8,fontFamily:'Unbounded,system-ui',color:'var(--c-accent2)',letterSpacing:'0.1em',marginBottom:4}}>● TU TURNO</div>
+                <div style={{fontSize:8,fontFamily:'Unbounded,system-ui',color:'var(--c-accent2)',letterSpacing:'0.1em',marginBottom:4}}>
+                  {isSolo?'● PRÁCTICA LIBRE':'● TU TURNO'}
+                </div>
                 <div style={{fontSize:11,color:'var(--c-text2)'}}>
-                  {gamePhase==='placing'?'Hacé click para colocar la bola blanca':
-                   gamePhase==='charging'?'Soltá para disparar':
-                   'Apuntá · ajustá el efecto · mantené presionado'}
+                  {gamePhase==='placing'?'Click para colocar la bola blanca':
+                   gamePhase==='charging'?'¡Soltá para disparar!':
+                   'Apuntá → ajustá efecto → mantené para cargar'}
                 </div>
               </>
             ):(
@@ -751,15 +852,18 @@ export default function Billiards({ user }) {
           </div>
         )}
 
-        {/* Power */}
+        {/* Power bar */}
         {isMyTurn&&gamePhase==='charging'&&(
           <div>
             <div style={{fontSize:9,color:'var(--c-text4)',fontFamily:'Unbounded,system-ui',letterSpacing:'0.08em',marginBottom:6}}>POTENCIA</div>
             <div style={{height:8,background:'var(--c-surface3)',borderRadius:4,overflow:'hidden'}}>
-              <div style={{height:'100%',borderRadius:4,transition:'width 0.05s linear',width:`${power*100}%`,background:power<0.4?'#6fff7d':power<0.7?'#f5c518':'#ff6b35'}}/>
+              <div style={{height:'100%',borderRadius:4,width:`${power*100}%`,background:power<0.4?'#6fff7d':power<0.7?'#f5c518':'#ff6b35'}}/>
             </div>
           </div>
         )}
+
+        {/* Solo reset */}
+        {isSolo&&<button onClick={resetSolo} style={{width:'100%',padding:10,borderRadius:8,background:'rgba(111,255,125,0.08)',border:'1px solid rgba(111,255,125,0.3)',color:'var(--c-accent2)',fontFamily:'Unbounded,system-ui',fontSize:'0.7rem',fontWeight:700,cursor:'pointer',letterSpacing:'0.06em'}}>↺ NUEVA MESA</button>}
 
         {/* Game end */}
         {isGameEnd&&(
@@ -767,9 +871,7 @@ export default function Billiards({ user }) {
             <div style={{fontFamily:'Unbounded,system-ui',fontSize:'1.1rem',fontWeight:800,color:iWon?'var(--c-accent2)':'var(--c-accent)',marginBottom:8}}>
               {iWon?'🏆 ¡GANASTE!':'💀 PERDISTE'}
             </div>
-            <button onClick={doRematch} style={{width:'100%',padding:10,borderRadius:8,background:'linear-gradient(135deg,#ff2d7a,#ff5f4b)',border:'none',color:'#fff',fontFamily:'Unbounded,system-ui',fontSize:'0.7rem',fontWeight:700,cursor:'pointer',letterSpacing:'0.06em'}}>
-              REVANCHA
-            </button>
+            <button onClick={doRematch} style={{width:'100%',padding:10,borderRadius:8,background:'linear-gradient(135deg,#ff2d7a,#ff5f4b)',border:'none',color:'#fff',fontFamily:'Unbounded,system-ui',fontSize:'0.7rem',fontWeight:700,cursor:'pointer',letterSpacing:'0.06em'}}>REVANCHA</button>
           </div>
         )}
 
