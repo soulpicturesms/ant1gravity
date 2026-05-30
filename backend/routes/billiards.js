@@ -1,206 +1,202 @@
 const express = require('express');
 const router  = express.Router();
+const { supabase }    = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
-// ── In-memory room store (no Supabase needed) ─────────────────────────────────
+// ── In-memory rooms (cleaned every 10 min, dropped after 2h idle) ────────────
 const rooms = new Map();
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
-  for (const [k, v] of rooms) if (v.ts < cutoff) rooms.delete(k);
+  for (const [id, r] of rooms) if (r.ts < cutoff) rooms.delete(id);
 }, 10 * 60 * 1000);
 
-function newId() {
-  return Math.random().toString(36).slice(2, 10).toUpperCase();
-}
+const newId = () => Math.random().toString(36).slice(2, 10).toUpperCase();
+const BET_OPTIONS = [0, 100, 500, 1000, 5000, 10000];   // valid bet amounts
+const HOUSE_RAKE  = 0.05;                                // 5% rake on pots > 0
 
-// ── Ball rack ─────────────────────────────────────────────────────────────────
-function initialBalls() {
-  const BALL_R = 11;
-  const FW = 808, FH = 380;
-  const rx = FW * 0.70, ry = FH / 2;
-  const dRow = BALL_R * 2 * Math.cos(Math.PI / 6);
-  const dCol = BALL_R * 2;
-
-  const balls = [{ id: 0, x: FW * 0.25, y: ry, pocketed: false }];
-
-  const slots = [];
-  for (let row = 0; row < 5; row++)
-    for (let col = 0; col <= row; col++)
-      slots.push({ x: rx + row * dRow, y: ry - row * BALL_R + col * dCol });
-
-  const others = [1,2,3,4,5,6,7,9,10,11,12,13,14,15];
-  for (let i = others.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [others[i], others[j]] = [others[j], others[i]];
-  }
-  // 8-ball in center of 3-ball row (slot index 4)
-  const ids = [...others.slice(0,4), 8, ...others.slice(4)];
-  slots.forEach((s, i) => balls.push({ id: ids[i], x: s.x, y: s.y, pocketed: false }));
-  return balls;
-}
-
-function freshState(name, mode, firstUser) {
-  const maxPlayers = mode === '2v2' ? 4 : 2;
+function publicRoom(room) {
   return {
-    phase: 'waiting', mode, maxPlayers, name,
-    players: [{ userId: firstUser.id, username: firstUser.username, team: 0 }],
-    teams: [
-      { playerIds: [firstUser.id], group: null, pocketed: [] },
-      { playerIds: [],             group: null, pocketed: [] },
-    ],
-    currentTeam: 0, currentPlayerInTeam: 0,
-    balls: initialBalls(),
-    groupAssigned: false,
-    cueBallInHand: false,
-    winner: null,
+    id: room.id, name: room.name, mode: room.mode, bet: room.bet,
+    maxPlayers: room.maxPlayers, status: room.status,
+    players: room.players.map(p => ({ userId:p.userId, username:p.username, team:p.team })),
+    pot: room.pot, winnerName: room.winnerName || null,
   };
 }
 
-// ── Routes ────────────────────────────────────────────────────────────────────
+async function escrowBet(userId, amount, roomId, mode) {
+  if (amount <= 0) return { ok: true, username: null };
+  const { data: user } = await supabase.from('users').select('coins,username').eq('id', userId).maybeSingle();
+  if (!user) return { ok: false, error: 'Usuario no encontrado' };
+  if (user.coins < amount) return { ok: false, error: 'Tokens insuficientes' };
+  await supabase.from('users').update({ coins: user.coins - amount }).eq('id', userId);
+  await supabase.from('coin_transactions').insert({
+    user_id: userId, username: user.username,
+    amount: -amount, type: 'casino',
+    reason: `Billar ${mode} — apuesta sala ${roomId}`,
+  });
+  return { ok: true, username: user.username };
+}
+
+async function payout(userId, username, amount, roomId, mode, isWin) {
+  if (amount <= 0) return;
+  const { data: user } = await supabase.from('users').select('coins').eq('id', userId).maybeSingle();
+  const cur = user?.coins ?? 0;
+  await supabase.from('users').update({ coins: cur + amount }).eq('id', userId);
+  await supabase.from('coin_transactions').insert({
+    user_id: userId, username,
+    amount, type: 'casino',
+    reason: `Billar ${mode} — ${isWin ? 'Ganador' : 'Reembolso'} sala ${roomId}`,
+  });
+}
+
+async function refundAll(room) {
+  for (const p of room.players) {
+    if (p.refunded) continue;
+    await payout(p.userId, p.username, room.bet, room.id, room.mode, false);
+    p.refunded = true;
+  }
+}
+
+// ── Routes ───────────────────────────────────────────────────────────────────
 router.get('/rooms', requireAuth, (req, res) => {
-  const list = [...rooms.entries()].map(([id, r]) => ({ id, name: r.state.name, state: r.state }));
+  const list = [...rooms.values()].map(publicRoom);
   res.json(list);
 });
 
-router.post('/rooms', requireAuth, (req, res) => {
-  const { name = 'Mesa Billar', mode = '1v1' } = req.body;
-  const id    = newId();
-  const state = freshState(name, mode, req.user);
-  rooms.set(id, { state, ts: Date.now() });
-  res.json({ id, state });
+router.get('/bet-options', requireAuth, (_req, res) => res.json(BET_OPTIONS));
+
+router.post('/rooms', requireAuth, async (req, res) => {
+  const { name = 'Mesa Billar', mode = '1v1', bet = 0 } = req.body;
+  if (!['1v1', '2v2'].includes(mode))       return res.status(400).json({ error: 'Modo inválido' });
+  if (!BET_OPTIONS.includes(Number(bet)))   return res.status(400).json({ error: 'Apuesta inválida' });
+
+  const esc = await escrowBet(req.user.id, Number(bet), 'NEW', mode);
+  if (!esc.ok) return res.status(400).json({ error: esc.error });
+
+  const id = newId();
+  const maxPlayers = mode === '2v2' ? 4 : 2;
+  const room = {
+    id, ts: Date.now(),
+    name: String(name).slice(0, 30), mode, bet: Number(bet), maxPlayers,
+    status: 'waiting',
+    players: [{
+      userId: req.user.id, username: esc.username || req.user.username,
+      team: 0, refunded: false,
+    }],
+    pot: Number(bet),
+    winnerName: null, resultReported: false,
+    createdBy: req.user.id,
+  };
+  rooms.set(id, room);
+  res.json(publicRoom(room));
 });
 
 router.get('/rooms/:id', requireAuth, (req, res) => {
   const room = rooms.get(req.params.id);
   if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  res.json({ state: room.state });
+  res.json(publicRoom(room));
 });
 
-router.post('/rooms/:id/join', requireAuth, (req, res) => {
+router.post('/rooms/:id/join', requireAuth, async (req, res) => {
   const room = rooms.get(req.params.id);
   if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  const state = room.state;
-  if (state.players.find(p => p.userId === req.user.id)) return res.json({ state });
-  if (state.players.length >= state.maxPlayers) return res.status(400).json({ error: 'Sala llena' });
-  if (state.phase !== 'waiting') return res.status(400).json({ error: 'Partida en curso' });
+  if (room.status !== 'waiting')       return res.status(400).json({ error: 'Partida en curso' });
+  if (room.players.find(p => p.userId === req.user.id)) return res.json(publicRoom(room));
+  if (room.players.length >= room.maxPlayers) return res.status(400).json({ error: 'Sala llena' });
 
-  state.players.push({ userId: req.user.id, username: req.user.username, team: 1 });
-  state.teams[1].playerIds.push(req.user.id);
+  const esc = await escrowBet(req.user.id, room.bet, room.id, room.mode);
+  if (!esc.ok) return res.status(400).json({ error: esc.error });
+
+  // Team assignment: 1v1 → [0,1], 2v2 → [0,1,0,1] (seats alternate teams)
+  const team = room.mode === '2v2' ? [0, 1, 0, 1][room.players.length] : room.players.length;
+  room.players.push({
+    userId: req.user.id, username: esc.username || req.user.username,
+    team, refunded: false,
+  });
+  room.pot += room.bet;
   room.ts = Date.now();
-  res.json({ state });
+
+  // Auto-start when full
+  if (room.players.length >= room.maxPlayers) {
+    room.status = 'playing';
+    room.startedAt = Date.now();
+  }
+  res.json(publicRoom(room));
 });
 
-router.post('/rooms/:id/leave', requireAuth, (req, res) => {
+router.post('/rooms/:id/leave', requireAuth, async (req, res) => {
   const room = rooms.get(req.params.id);
   if (!room) return res.json({ ok: true });
-  const state = room.state;
-  state.players = state.players.filter(p => p.userId !== req.user.id);
-  state.teams.forEach(t => { t.playerIds = t.playerIds.filter(id => id !== req.user.id); });
-  if (state.players.length === 0) rooms.delete(req.params.id);
-  else room.ts = Date.now();
+  const player = room.players.find(p => p.userId === req.user.id);
+  if (!player) return res.json({ ok: true });
+
+  if (room.status === 'waiting') {
+    // Refund the leaver, remove them from the room
+    if (room.bet > 0 && !player.refunded) {
+      await payout(player.userId, player.username, room.bet, room.id, room.mode, false);
+      player.refunded = true;
+    }
+    room.players = room.players.filter(p => p.userId !== req.user.id);
+    room.pot = Math.max(0, room.pot - room.bet);
+    if (room.players.length === 0) rooms.delete(req.params.id);
+    return res.json({ ok: true });
+  }
+
+  if (room.status === 'playing') {
+    // Walk-out: forfeit. Opponent team(s) win the pot.
+    const winningTeam = 1 - player.team;
+    const winners = room.players.filter(p => p.team === winningTeam);
+    const losers  = room.players.filter(p => p.team === player.team);
+    if (!room.resultReported && winners.length) {
+      room.resultReported = true;
+      const totalPot = room.pot;
+      const rake = Math.floor(totalPot * HOUSE_RAKE);
+      const winnings = totalPot - rake;
+      const perWinner = Math.floor(winnings / winners.length);
+      for (const w of winners) {
+        await payout(w.userId, w.username, perWinner, room.id, room.mode, true);
+      }
+      room.status = 'finished';
+      room.winnerName = winners.map(w => w.username).join(', ') + ' (oponente abandonó)';
+      // Mark losers (they don't get anything)
+      losers.forEach(l => { l.refunded = true; });
+    }
+    return res.json({ ok: true });
+  }
+
   res.json({ ok: true });
 });
 
-router.post('/rooms/:id/start', requireAuth, (req, res) => {
+// Result is reported by the iframe (one of the players) once the game ends.
+// We accept the first valid result; subsequent calls are ignored.
+router.post('/rooms/:id/result', requireAuth, async (req, res) => {
   const room = rooms.get(req.params.id);
   if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  const state = room.state;
-  if (state.players.length < 2) return res.status(400).json({ error: 'Mínimo 2 jugadores' });
-  Object.assign(state, {
-    phase: 'playing', balls: initialBalls(),
-    groupAssigned: false, currentTeam: 0, currentPlayerInTeam: 0,
-    winner: null, cueBallInHand: false,
-  });
-  state.teams.forEach(t => { t.group = null; t.pocketed = []; });
-  room.ts = Date.now();
-  res.json({ state });
-});
+  if (room.status !== 'playing') return res.json({ ok: true, alreadyFinished: true });
+  if (!room.players.find(p => p.userId === req.user.id))
+    return res.status(403).json({ error: 'No estás en esta sala' });
+  if (room.resultReported) return res.json({ ok: true, alreadyFinished: true });
 
-router.post('/rooms/:id/shot', requireAuth, (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  const state = room.state;
-  if (state.phase !== 'playing') return res.status(400).json({ error: 'No se puede disparar ahora' });
+  const { winnerUsername } = req.body;
+  const winner = room.players.find(p => p.username === winnerUsername);
+  if (!winner) return res.status(400).json({ error: 'Ganador inválido' });
 
-  const team       = state.teams[state.currentTeam];
-  const curId      = team.playerIds[state.currentPlayerInTeam % Math.max(1, team.playerIds.length)];
-  if (curId !== req.user.id) return res.status(400).json({ error: 'No es tu turno' });
+  room.resultReported = true;
+  const winningTeam = winner.team;
+  const winners = room.players.filter(p => p.team === winningTeam);
 
-  const { balls, pocketedThisShot = [], foulCueBall = false } = req.body;
-  if (Array.isArray(balls)) state.balls = balls.map(b => ({ ...b }));
-  state.cueBallInHand = foulCueBall;
-
-  // Group assignment on first pocket
-  if (!state.groupAssigned) {
-    const first = pocketedThisShot.find(id => id !== 0 && id !== 8);
-    if (first != null) {
-      state.groupAssigned = true;
-      const isSolid = first <= 7;
-      state.teams[state.currentTeam].group    = isSolid ? 'solids'  : 'stripes';
-      state.teams[1 - state.currentTeam].group = isSolid ? 'stripes' : 'solids';
+  if (room.pot > 0 && winners.length > 0) {
+    const rake = Math.floor(room.pot * HOUSE_RAKE);
+    const winnings = room.pot - rake;
+    const perWinner = Math.floor(winnings / winners.length);
+    for (const w of winners) {
+      await payout(w.userId, w.username, perWinner, room.id, room.mode, true);
     }
   }
 
-  const myGroup  = team.group;
-  const oppTeam  = state.teams[1 - state.currentTeam];
-  let validPocketed = 0;
-
-  for (const id of pocketedThisShot) {
-    if (id === 0) continue;
-    if (id === 8) {
-      // Check if player cleared their group
-      const remaining = state.balls.filter(b => !b.pocketed && (myGroup === 'solids' ? b.id >= 1 && b.id <= 7 : b.id >= 9 && b.id <= 15));
-      if (myGroup && remaining.length === 0 && !foulCueBall) {
-        state.winner = state.currentTeam;
-      } else {
-        state.winner = 1 - state.currentTeam; // potted 8 early = lose
-      }
-      state.phase = 'game_end';
-      break;
-    } else {
-      const isMine = myGroup === 'solids' ? id <= 7 : id >= 9;
-      if (isMine || !myGroup) { team.pocketed.push(id); validPocketed++; }
-      else                     { oppTeam.pocketed.push(id); }
-    }
-  }
-
-  if (state.phase !== 'game_end') {
-    const keepTurn = validPocketed > 0 && !foulCueBall;
-    if (!keepTurn) {
-      state.currentTeam = 1 - state.currentTeam;
-      state.currentPlayerInTeam = (state.currentPlayerInTeam + 1) % Math.max(1, state.teams[state.currentTeam].playerIds.length);
-    }
-  }
-
-  room.ts = Date.now();
-  res.json({ state });
-});
-
-router.post('/rooms/:id/place-cue', requireAuth, (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  const { x, y } = req.body;
-  const cb = room.state.balls.find(b => b.id === 0);
-  if (cb) { cb.x = x; cb.y = y; cb.pocketed = false; }
-  room.state.cueBallInHand = false;
-  room.ts = Date.now();
-  res.json({ state: room.state });
-});
-
-router.post('/rooms/:id/rematch', requireAuth, (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  const state = room.state;
-  Object.assign(state, {
-    phase: 'playing', balls: initialBalls(),
-    groupAssigned: false,
-    currentTeam: typeof state.winner === 'number' ? 1 - state.winner : 0,
-    currentPlayerInTeam: 0,
-    winner: null, cueBallInHand: false,
-  });
-  state.teams.forEach(t => { t.group = null; t.pocketed = []; });
-  room.ts = Date.now();
-  res.json({ state });
+  room.status = 'finished';
+  room.winnerName = winners.map(w => w.username).join(' & ');
+  res.json({ ok: true, winners: winners.map(w => w.username), pot: room.pot });
 });
 
 module.exports = router;
