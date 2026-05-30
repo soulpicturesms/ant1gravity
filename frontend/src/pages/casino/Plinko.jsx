@@ -64,9 +64,6 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
   const balanceRef = useRef(balance);
   useEffect(() => { balanceRef.current = balance; }, [balance]);
 
-  // Compute current bet scaling factor
-  const betFactor = 1 + Math.min(1.0, Math.log10(bet / 10) * 0.2);
-
   const dropBall = async () => {
     if (bet < 10) return setErr('Apuesta mínima: 10 tokens');
     if (bet > balanceRef.current) return setErr('Tokens insuficientes');
@@ -197,15 +194,12 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
       const bucketHeight = 24;
       const bucketY = startY + rows * rowSpacing + 12;
       const mults = PLINKO_MULTIPLIERS[risk];
-      
-      // Calculate active scaled multipliers for drawing
-      const curBetFactor = 1 + Math.min(1.0, Math.log10(betRef.current / 10) * 0.2);
 
       for (let b = 0; b < 13; b++) {
         const bx = cx + (b - 6) * pegSpacingX - bucketWidth / 2;
         const isSplashed = bucketSplashesRef.current.has(b) && bucketSplashesRef.current.get(b) > now;
         const baseMult = mults[b];
-        const scaledMult = parseFloat((baseMult * curBetFactor).toFixed(1));
+        const scaledMult = baseMult;
         const bgColor = getBucketColor(baseMult);
         const txtColor = getBucketTextColor(baseMult);
         
@@ -498,23 +492,20 @@ export default function Plinko({ balance, onBalanceChange, triggerWinAnimation }
             Multiplicadores Escalonados
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {PLINKO_MULTIPLIERS[risk].filter((m, i, arr) => arr.indexOf(m) === i).sort((a, b) => b - a).slice(0, 6).map(mult => {
-              const scaledMult = parseFloat((mult * betFactor).toFixed(1));
-              return (
-                <span key={mult} style={{
-                  fontSize: '0.72rem', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
-                  color: getBucketTextColor(mult),
-                  background: getBucketColor(mult),
-                  border: `1px solid ${getBucketTextColor(mult)}30`,
-                  borderRadius: 5, padding: '2px 7px',
-                }}>{scaledMult}x</span>
-              );
-            })}
+            {PLINKO_MULTIPLIERS[risk].filter((m, i, arr) => arr.indexOf(m) === i).sort((a, b) => b - a).slice(0, 6).map(mult => (
+              <span key={mult} style={{
+                fontSize: '0.72rem', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
+                color: getBucketTextColor(mult),
+                background: getBucketColor(mult),
+                border: `1px solid ${getBucketTextColor(mult)}30`,
+                borderRadius: 5, padding: '2px 7px',
+              }}>{mult}x</span>
+            ))}
           </div>
         </div>
 
         <div style={{ fontSize: 10, color: 'var(--c-text4)', lineHeight: 1.6 }}>
-          12 filas · 13 canales<br />Los multiplicadores aumentan según el tamaño de tu apuesta.
+          12 filas · 13 canales<br />Mayor riesgo, mayor pago en los bordes.
         </div>
       </div>
 
