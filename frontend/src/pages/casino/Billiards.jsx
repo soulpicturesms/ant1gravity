@@ -4,7 +4,7 @@ import { casinoAudio } from '../../utils/casinoAudio';
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 const BALL_R   = 12;
-const FRICTION = 0.9875;
+const FRICTION = 0.993;        // less friction → balls roll longer, more natural
 const CW = 940, CH = 490;
 const TX = 32,  TY = 26;
 const TW = 860, TH = 430;
@@ -51,13 +51,13 @@ function stepPhysics(balls, spinState) {
     if (b.pocketed) continue;
     b.x+=b.vx; b.y+=b.vy;
     b.vx*=FRICTION; b.vy*=FRICTION;
-    if (Math.abs(b.vx)<0.035) b.vx=0;
-    if (Math.abs(b.vy)<0.035) b.vy=0;
+    if (Math.abs(b.vx)<0.018) b.vx=0;
+    if (Math.abs(b.vy)<0.018) b.vy=0;
     // Cushions
-    if (b.x<BALL_R)    {b.x=BALL_R;    b.vx= Math.abs(b.vx)*0.70;}
-    if (b.x>FW-BALL_R) {b.x=FW-BALL_R; b.vx=-Math.abs(b.vx)*0.70;}
-    if (b.y<BALL_R)    {b.y=BALL_R;    b.vy= Math.abs(b.vy)*0.70;}
-    if (b.y>FH-BALL_R) {b.y=FH-BALL_R; b.vy=-Math.abs(b.vy)*0.70;}
+    if (b.x<BALL_R)    {b.x=BALL_R;    b.vx= Math.abs(b.vx)*0.80;}
+    if (b.x>FW-BALL_R) {b.x=FW-BALL_R; b.vx=-Math.abs(b.vx)*0.80;}
+    if (b.y<BALL_R)    {b.y=BALL_R;    b.vy= Math.abs(b.vy)*0.80;}
+    if (b.y>FH-BALL_R) {b.y=FH-BALL_R; b.vy=-Math.abs(b.vy)*0.80;}
   }
   // Ball-ball collisions
   const active=balls.filter(b=>!b.pocketed);
@@ -78,10 +78,14 @@ function stepPhysics(balls, spinState) {
         // Apply spin on first cue-ball collision
         if (!spinState.applied && (a.id===0||b.id===0) && (a.id===0)!==(b.id===0)) {
           const cb=a.id===0?a:b;
-          const {hx,hy,sdx,sdy}=spinState;
-          cb.vx+=sdx*(-hy)*5; cb.vy+=sdy*(-hy)*5;  // topspin
-          cb.vx-=sdx*Math.max(0,hy)*8; cb.vy-=sdy*Math.max(0,hy)*8; // backspin
-          cb.vx+=(-sdy)*hx*4; cb.vy+=sdx*hx*4;     // english
+          const {hx,hy,sdx,sdy,power}=spinState;
+          // Spin force scales with shot power so soft hits don't fly off
+          const k=Math.max(0.4,power);
+          // hy<0 = topspin: cue ball follows through forward
+          // hy>0 = backspin: cue ball reverses
+          cb.vx+=sdx*(-hy)*3.2*k; cb.vy+=sdy*(-hy)*3.2*k;
+          // english (side spin): perpendicular kick
+          cb.vx+=(-sdy)*hx*2.4*k; cb.vy+=sdx*hx*2.4*k;
           spinState.applied=true;
         }
       }
@@ -279,7 +283,8 @@ function drawTable(ctx) {
 // ── Cue stick ─────────────────────────────────────────────────────────────────
 function drawCue(ctx, cb, angle, power) {
   const cx=FX+cb.x, cy=FY+cb.y;
-  const pullback=power*30, tipD=BALL_R+pullback+5, len=195;
+  // Quadratic pullback to mirror shot force: small at low power, large at full
+  const pullback=power*power*40+power*8, tipD=BALL_R+pullback+5, len=195;
   const ax=-Math.cos(angle), ay=-Math.sin(angle);
   const sx=cx+ax*tipD, sy=cy+ay*tipD;
   const ex=cx+ax*(tipD+len), ey=cy+ay*(tipD+len);
@@ -345,25 +350,37 @@ function drawPowerBar(ctx, power) {
 function CueBallControl({ hitPos, onChange, disabled }) {
   const SIZE=52, ref=useRef(null);
   const dragging=useRef(false);
+  const disabledRef=useRef(disabled);
+  const onChangeRef=useRef(onChange);
+  // Keep latest values without re-binding listeners
+  useEffect(()=>{ disabledRef.current=disabled; },[disabled]);
+  useEffect(()=>{ onChangeRef.current=onChange; },[onChange]);
 
-  const update=(e)=>{
-    if (!ref.current) return;
+  // CRITICAL: stable update() — never changes, never re-creates listeners
+  const update=useCallback((e)=>{
+    if (disabledRef.current||!ref.current) return;
     const rect=ref.current.getBoundingClientRect();
-    const x=((e.clientX-rect.left)-SIZE)/SIZE;
-    const y=((e.clientY-rect.top)-SIZE)/SIZE;
+    // Position relative to center, normalized so 1 = ball radius
+    let x=((e.clientX-rect.left)-SIZE)/SIZE;
+    let y=((e.clientY-rect.top)-SIZE)/SIZE;
     const len=Math.sqrt(x*x+y*y);
-    if (len>1) return;
-    onChange({x,y});
-  };
+    // Clamp to a disk slightly inside the visible ball (so the dot fits)
+    const maxR=0.88;
+    if (len>maxR){ x=x/len*maxR; y=y/len*maxR; }
+    onChangeRef.current({x,y});
+  },[]);
 
+  // Mount window listeners ONCE — no deps, no re-binding loop
   useEffect(()=>{
-    const up=()=>{dragging.current=false;};
-    const move=(e)=>{if(dragging.current)update(e);};
+    const up=()=>{ dragging.current=false; };
+    const move=(e)=>{ if(dragging.current) update(e); };
     window.addEventListener('mousemove',move);
     window.addEventListener('mouseup',up);
-    return()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[onChange]);
+    return()=>{
+      window.removeEventListener('mousemove',move);
+      window.removeEventListener('mouseup',up);
+    };
+  },[update]);
 
   const label=()=>{
     const {x,y}=hitPos;
@@ -548,6 +565,8 @@ export default function Billiards({ user }) {
   // Wrapped setters that keep refs in sync
   const setGamePhase = useCallback((p)=>{ gamePhaseRef.current=p; setGamePhaseUI(p); },[]);
   const setPower     = useCallback((v)=>{ const n=typeof v==='function'?v(powerRef.current):v; powerRef.current=n; setPowerState(n); },[]);
+  // Stable callback for CueBallControl — never recreated so listeners stay mounted
+  const handleHitPosChange = useCallback((p)=>{ hitPosRef.current=p; setHitPos(p); },[]);
 
   useEffect(()=>{ angleRef.current=angle; },[angle]);
   useEffect(()=>{ hitPosRef.current=hitPos; },[hitPos]);
@@ -617,12 +636,16 @@ export default function Billiards({ user }) {
   },[view]); // restarts only when switching views, never on ball updates
 
   // ── Physics runner — uses physicsRafRef, never touches renderRafRef ──
-  const runPhysics = useCallback((snapshot, onDone)=>{
+  const runPhysics = useCallback((snapshot, shotPower, onDone)=>{
     const lb=snapshot.map(b=>({...b}));
     ballsRef.current=lb; // render loop reads this ref every frame automatically
     pocketedRef.current=[]; foulRef.current=false;
     const shotAngle=angleRef.current;
-    const spinState={hx:hitPosRef.current.x,hy:hitPosRef.current.y,sdx:Math.cos(shotAngle),sdy:Math.sin(shotAngle),applied:false};
+    const spinState={
+      hx:hitPosRef.current.x, hy:hitPosRef.current.y,
+      sdx:Math.cos(shotAngle), sdy:Math.sin(shotAngle),
+      power:shotPower, applied:false,
+    };
     let steps=0;
     cancelAnimationFrame(physicsRafRef.current);
     const tick=()=>{
@@ -689,7 +712,7 @@ export default function Billiards({ user }) {
       powerRef.current=0; setPowerState(0);
       chargeStart.current=Date.now();
       const chargeTick=()=>{
-        const p=Math.min(1,(Date.now()-chargeStart.current)/1600);
+        const p=Math.min(1,(Date.now()-chargeStart.current)/2200); // 2.2s for full power
         powerRef.current=p; setPowerState(p);
         chargeRaf.current=requestAnimationFrame(chargeTick);
       };
@@ -706,11 +729,13 @@ export default function Billiards({ user }) {
     setGamePhase('animating');
 
     const a=angleRef.current;
-    const speed=p*28;
+    // Quadratic curve: gentle taps at low power, harder break shots at high power
+    // p=0.3 → 3.6 (soft), p=0.5 → 6.5, p=0.8 → 12.8, p=1.0 → 18 (max break)
+    const speed=p*p*14+p*4;
     const snapshot=(ballsRef.current||[]).map(b=>b.id===0?{...b,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed}:{...b});
     casinoAudio.playChip();
 
-    runPhysics(snapshot,(finalBalls,pocketed,foulCue)=>{
+    runPhysics(snapshot,p,(finalBalls,pocketed,foulCue)=>{
       if(isSolo){
         // Solo mode: just re-rack cue if pocketed, update display
         if(foulCue){
@@ -827,7 +852,7 @@ export default function Billiards({ user }) {
 
         {/* Hit position control — always shown when aiming */}
         {isMyTurn&&gamePhase==='aiming'&&(
-          <CueBallControl hitPos={hitPos} onChange={(p)=>{setHitPos(p);hitPosRef.current=p;}} disabled={false}/>
+          <CueBallControl hitPos={hitPos} onChange={handleHitPosChange} disabled={false}/>
         )}
 
         {/* Turn indicator */}
