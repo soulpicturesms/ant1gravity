@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-// Tailuge billiards — GPL-3.0, https://github.com/tailuge/billiards
-// Embedded via iframe so the casino code remains separate (not a derivative work).
-// Future: replace this URL with our own fork+deploy when we add customizations.
-const POOL_URL = 'https://tailuge.github.io/billiards/dist/';
+// Our customized fork of tailuge/billiards (GPL-3.0).
+// Fork: https://github.com/indgowlad/ant1gravity-billiards
+// Customizations applied:
+//   · camera locked to top-down view (src/view/camera.ts)
+//   · 8-ball mode set by default (dist/embed.html)
+//   · branding (title, future: colors)
+// Casino code stays proprietary — embedded via iframe = not a derivative work
+const POOL_URL = 'https://ant1gravity-billiards.vercel.app/embed.html';
 
 export default function Billiards({ user }) {
   const [iframeOk, setIframeOk] = useState(true);
@@ -32,13 +36,12 @@ export default function Billiards({ user }) {
             fontSize:9, fontFamily:'Unbounded,system-ui', fontWeight:700,
             letterSpacing:'0.1em', color:'var(--c-accent2)',
             textTransform:'uppercase', marginBottom:8,
-          }}>● Powered by tailuge</div>
+          }}>● Edición ANT1GRAVITY</div>
           <div style={{ fontSize:11, color:'var(--c-text2)', lineHeight:1.6 }}>
-            Física basada en papers académicos:
-            <br/>· Stronge cushion model
-            <br/>· Mathavan equations
-            <br/>· Sliding & rolling dynamics
-            <br/>· Backspin / sidespin reales
+            Vista top-down bloqueada<br/>
+            Modo 8-Ball<br/>
+            Física basada en papers académicos<br/>
+            <span style={{ color:'var(--c-text4)' }}>(Stronge cushion · Mathavan eq.)</span>
           </div>
         </div>
 
@@ -49,14 +52,13 @@ export default function Billiards({ user }) {
             fontSize:9, fontFamily:'Unbounded,system-ui', fontWeight:700,
             letterSpacing:'0.1em', color:'var(--c-text4)',
             textTransform:'uppercase', marginBottom:8,
-          }}>Modos disponibles</div>
+          }}>Controles
+          </div>
           <div style={{ fontSize:11, color:'var(--c-text3)', lineHeight:1.7 }}>
-            🎱 8-Ball<br/>
-            🟡 9-Ball<br/>
-            🟦 Snooker<br/>
-            ⚪ Three-cushion<br/>
-            🤖 vs IA (Claw, TheFarJaw)<br/>
-            👥 Multiplayer online
+            🖱️ Mover · apuntar<br/>
+            ⏯️ Click · cargar<br/>
+            🎯 Soltar · disparar<br/>
+            ✨ Spin · click en bola blanca
           </div>
         </div>
 
@@ -79,10 +81,10 @@ export default function Billiards({ user }) {
           fontSize:9, color:'var(--c-text4)', lineHeight:1.5,
           padding:'8px 0', textAlign:'center',
         }}>
-          Licencia: GPL-3.0<br/>
-          Código abierto en{' '}
+          Fork ANT1GRAVITY · GPL-3.0<br/>
+          Basado en{' '}
           <a href="https://github.com/tailuge/billiards" target="_blank" rel="noopener noreferrer"
-            style={{ color:'var(--c-accent2)' }}>github</a>
+            style={{ color:'var(--c-accent2)' }}>tailuge/billiards</a>
         </div>
 
         <div style={{ display:'flex', gap:8, marginTop:'auto', paddingTop:20 }}>
