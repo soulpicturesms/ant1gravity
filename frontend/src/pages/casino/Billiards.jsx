@@ -943,8 +943,16 @@ export default function Billiards({ user }) {
         </div>
       </div>
 
-      {/* ── 3D CANVAS STAGE ── */}
-      <div ref={canvasContainerRef} className="casino-roul-stage" style={{ padding:0, overflow:'hidden', minHeight:560 }}
+      {/* ── 3D CANVAS STAGE — custom container, NOT casino-roul-stage flex (which centers/shrinks) ── */}
+      <div
+        ref={canvasContainerRef}
+        style={{
+          position:'relative', width:'100%',
+          aspectRatio:'1.85 / 1',     // ≈ table proportions, fills stage width naturally
+          minHeight:520, maxHeight:780,
+          background:'linear-gradient(to bottom, #0a0a14 0%, #1a0f1f 100%)',
+          borderRadius:12, overflow:'hidden', border:'1px solid var(--c-line2)',
+        }}
         onMouseMove={onSceneMouseMove}
         onMouseDown={onSceneMouseDown}
         onMouseUp={onSceneMouseUp}
@@ -955,12 +963,11 @@ export default function Billiards({ user }) {
           dpr={[1, 2]}
           camera={{ position:[0, 2.05, 0.001], fov:46, near:0.05, far:50 }}
           onCreated={({ camera }) => {
-            // True top-down view: look straight at origin, with +Z as screen "down"
             camera.up.set(0, 0, -1);
             camera.lookAt(0, 0, 0);
             camera.updateProjectionMatrix();
           }}
-          style={{ width:'100%', height:'100%', display:'block', background:'linear-gradient(to bottom, #0a0a14 0%, #1a0f1f 100%)' }}
+          style={{ position:'absolute', inset:0, display:'block' }}
           gl={{ antialias:true, alpha:false }}
         >
           <Suspense fallback={null}>
