@@ -185,47 +185,91 @@ function TableVisuals() {
   const feltColor = '#1a6840';
   const woodColor = '#4a2e10';
 
+  const RAIL_OUT = 0.13;    // wood width extending beyond playing area
+  const RAIL_TOP_H = 0.04;  // wood height above felt
+  const SLATE_H   = 0.05;   // slate base depth under felt
+
   return (
     <>
-      {/* Felt */}
-      <mesh receiveShadow position={[0, FELT_Y - 0.001, 0]} rotation={[-Math.PI/2, 0, 0]}>
-        <planeGeometry args={[T_W, T_L]} />
-        <meshStandardMaterial color={feltColor} roughness={0.96} />
+      {/* Slate base (under the felt — gives the table thickness) */}
+      <mesh position={[0, FELT_Y - SLATE_H/2, 0]} receiveShadow>
+        <boxGeometry args={[T_W + RAIL_OUT*2, SLATE_H, T_L + RAIL_OUT*2]} />
+        <meshStandardMaterial color="#1f0f06" roughness={0.95} />
       </mesh>
 
-      {/* Pocket holes (visual only) */}
+      {/* GREEN FELT — large plane covering whole playing area */}
+      <mesh receiveShadow position={[0, FELT_Y, 0]} rotation={[-Math.PI/2, 0, 0]}>
+        <planeGeometry args={[T_W, T_L]} />
+        <meshStandardMaterial color={feltColor} roughness={0.95} />
+      </mesh>
+
+      {/* Pocket holes — black circles on the felt */}
       {POCKETS.map(([px, pz], i) => (
         <mesh key={i} position={[px, FELT_Y + 0.001, pz]} rotation={[-Math.PI/2, 0, 0]}>
-          <circleGeometry args={[POCKET_R, 24]} />
+          <circleGeometry args={[POCKET_R, 28]} />
           <meshBasicMaterial color="#000" />
-        </mesh>
-      ))}
-
-      {/* Wooden rim (thick frame around playing area) */}
-      <mesh position={[0, RAIL_H/2 + 0.01, 0]} receiveShadow castShadow>
-        <boxGeometry args={[T_W + RAIL_T*2 + 0.18, RAIL_H + 0.02, T_L + RAIL_T*2 + 0.18]} />
-        <meshStandardMaterial color={woodColor} roughness={0.7} />
-      </mesh>
-
-      {/* Felt visual on top of wood inset */}
-      <mesh position={[0, RAIL_H/2 + 0.022, 0]}>
-        <boxGeometry args={[T_W + 0.001, 0.005, T_L + 0.001]} />
-        <meshStandardMaterial color="#0e3a22" roughness={0.95} />
-      </mesh>
-
-      {/* Pocket caps inside wood (small black cylinders) */}
-      {POCKETS.map(([px, pz], i) => (
-        <mesh key={`cap-${i}`} position={[px, RAIL_H/2 + 0.015, pz]}>
-          <cylinderGeometry args={[POCKET_R + 0.005, POCKET_R + 0.005, 0.025, 18]} />
-          <meshStandardMaterial color="#070707" roughness={0.9} />
         </mesh>
       ))}
 
       {/* Head string line */}
       <mesh position={[0, FELT_Y + 0.0005, -T_L*0.27]} rotation={[-Math.PI/2, 0, 0]}>
         <planeGeometry args={[T_W - 0.05, 0.003]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.12} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.18} />
       </mesh>
+
+      {/* Wood rails — 4 separate bars around the felt */}
+      {/* Long rails (front and back in Z) */}
+      {[+1, -1].map(zSign => (
+        <mesh
+          key={`rail-long-${zSign}`}
+          position={[0, RAIL_TOP_H/2, zSign * (T_L/2 + RAIL_OUT/2)]}
+          receiveShadow castShadow
+        >
+          <boxGeometry args={[T_W + RAIL_OUT*2, RAIL_TOP_H, RAIL_OUT]} />
+          <meshStandardMaterial color={woodColor} roughness={0.7} />
+        </mesh>
+      ))}
+      {/* Short rails (left and right in X) */}
+      {[+1, -1].map(xSign => (
+        <mesh
+          key={`rail-short-${xSign}`}
+          position={[xSign * (T_W/2 + RAIL_OUT/2), RAIL_TOP_H/2, 0]}
+          receiveShadow castShadow
+        >
+          <boxGeometry args={[RAIL_OUT, RAIL_TOP_H, T_L]} />
+          <meshStandardMaterial color={woodColor} roughness={0.7} />
+        </mesh>
+      ))}
+
+      {/* Gold inner trim — thin strip between wood and felt */}
+      {[+1, -1].map(zSign => (
+        <mesh
+          key={`trim-long-${zSign}`}
+          position={[0, RAIL_TOP_H + 0.001, zSign * (T_L/2 - 0.002)]}
+          rotation={[-Math.PI/2, 0, 0]}
+        >
+          <planeGeometry args={[T_W + 0.01, 0.008]} />
+          <meshBasicMaterial color="#c9963d" />
+        </mesh>
+      ))}
+      {[+1, -1].map(xSign => (
+        <mesh
+          key={`trim-short-${xSign}`}
+          position={[xSign * (T_W/2 - 0.002), RAIL_TOP_H + 0.001, 0]}
+          rotation={[-Math.PI/2, 0, Math.PI/2]}
+        >
+          <planeGeometry args={[T_L + 0.01, 0.008]} />
+          <meshBasicMaterial color="#c9963d" />
+        </mesh>
+      ))}
+
+      {/* Pocket trim — gold rings around each pocket */}
+      {POCKETS.map(([px, pz], i) => (
+        <mesh key={`pcap-${i}`} position={[px, FELT_Y + 0.0008, pz]} rotation={[-Math.PI/2, 0, 0]}>
+          <ringGeometry args={[POCKET_R, POCKET_R + 0.008, 28]} />
+          <meshBasicMaterial color="#c9963d" />
+        </mesh>
+      ))}
     </>
   );
 }
@@ -331,15 +375,18 @@ function Scene({ ballState, shootRef, aimAngleRef, hitPosRef, isMyTurnRef, gameP
 
   return (
     <>
-      {/* Camera + lights */}
-      <ambientLight intensity={0.55} />
+      {/* Lights — top-down view needs broader fill */}
+      <ambientLight intensity={0.85} />
       <directionalLight
-        position={[0, 4, 0.5]} intensity={1.1} castShadow
+        position={[0.4, 4, 0.3]} intensity={1.1} castShadow
         shadow-mapSize-width={2048} shadow-mapSize-height={2048}
-        shadow-camera-left={-2} shadow-camera-right={2}
-        shadow-camera-top={2} shadow-camera-bottom={-2}
+        shadow-camera-left={-1.6} shadow-camera-right={1.6}
+        shadow-camera-top={1.0} shadow-camera-bottom={-1.0}
+        shadow-bias={-0.0005}
       />
-      <directionalLight position={[-2, 3, -1]} intensity={0.3} />
+      {/* Fill lights from side to highlight ball curvature */}
+      <directionalLight position={[-2, 1.5, 0]} intensity={0.35} />
+      <directionalLight position={[2, 1.5, 0]} intensity={0.35} />
 
       <TableVisuals />
       <Cushions />
@@ -366,6 +413,9 @@ function DynamicAimAndCue({ cueRef, aimAngleRef, gamePhaseRef, isMyTurnRef }) {
   const ghostRef = useRef(null);
   const stickRef = useRef(null);
   const powerRefLocal = useRef(0);
+  const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
+  const fromVec = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  const dirVec  = useMemo(() => new THREE.Vector3(), []);
 
   // Bind to global power changes
   useEffect(() => {
@@ -387,37 +437,41 @@ function DynamicAimAndCue({ cueRef, aimAngleRef, gamePhaseRef, isMyTurnRef }) {
     const ang = aimAngleRef.current;
     const pwr = powerRefLocal.current;
 
-    // Aim line
-    const aimLen = 3.0;
     const dx = Math.cos(ang), dz = Math.sin(ang);
+
+    // Aim line — plane laid flat (XZ), rotated to align with shot direction
+    const aimLen = 3.0;
     aimRef.current.position.set(cb.x + dx*aimLen/2, FELT_Y + 0.004, cb.z + dz*aimLen/2);
-    aimRef.current.rotation.set(-Math.PI/2, 0, -ang);
+    aimRef.current.rotation.set(-Math.PI/2, -ang, 0);
     aimRef.current.scale.set(aimLen, 1, 1);
 
     // Ghost ball ~0.4m forward
     ghostRef.current.position.set(cb.x + dx*0.4, BALL_Y, cb.z + dz*0.4);
 
-    // Cue stick
+    // Cue stick — laid horizontally along aim direction
     const pullback = pwr*pwr*0.18 + pwr*0.04;
     const stickLen = 1.3;
     const distFromBall = BALL_R + 0.02 + pullback;
     const cx = cb.x - dx * (distFromBall + stickLen/2);
     const cz = cb.z - dz * (distFromBall + stickLen/2);
-    stickRef.current.position.set(cx, BALL_Y + 0.002, cz);
-    stickRef.current.rotation.set(0, -ang + Math.PI/2, 0);
+    stickRef.current.position.set(cx, BALL_Y + 0.004, cz);
+    // Rotate cylinder's default Y axis to point along (dx, 0, dz)
+    dirVec.set(dx, 0, dz);
+    tmpQuat.setFromUnitVectors(fromVec, dirVec);
+    stickRef.current.quaternion.copy(tmpQuat);
   });
 
   return (
     <>
       <mesh ref={aimRef} visible={false}>
-        <planeGeometry args={[1, 0.004]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.35} depthWrite={false} />
+        <planeGeometry args={[1, 0.005]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.4} depthWrite={false} />
       </mesh>
       <mesh ref={ghostRef} visible={false}>
-        <sphereGeometry args={[BALL_R*1.02, 20, 20]} />
+        <sphereGeometry args={[BALL_R*1.05, 20, 20]} />
         <meshBasicMaterial color="#ffffff" transparent opacity={0.18} wireframe />
       </mesh>
-      <mesh ref={stickRef} visible={false}>
+      <mesh ref={stickRef} visible={false} castShadow>
         <cylinderGeometry args={[0.009, 0.015, 1.3, 14]} />
         <meshStandardMaterial color="#c9a55a" roughness={0.42} metalness={0.12} />
       </mesh>
@@ -687,11 +741,10 @@ export default function Billiards({ user }) {
     const rect = e.currentTarget.getBoundingClientRect();
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-    // Approximate: camera is angled overhead, treat (nx,ny) as a world X/Z offset from centre
-    // Cue ball is roughly at (cueX, cueZ); we want angle from cue ball to mouse target on felt
-    // Use simple approximation: world X = nx * 1.5, world Z = -ny * 0.9 (Z inverted)
-    const targetX = nx * 1.7;
-    const targetZ = -ny * 1.0;
+    // Top-down view at y=2.05, FOV=46. Visible area ≈ 2.73m × 1.74m
+    // Map normalized screen coords to world XZ plane (camera.up = -Z so screen-y → world+Z)
+    const targetX = nx * 1.4;
+    const targetZ = -ny * 0.9;
     const cueX = ballState?.find(b => b.id === 0)?.x ?? 0;
     const cueZ = ballState?.find(b => b.id === 0)?.z ?? -T_L*0.3;
     // Use actual cue position via shootRef if we can get it
@@ -900,7 +953,13 @@ export default function Billiards({ user }) {
         <Canvas
           shadows
           dpr={[1, 2]}
-          camera={{ position:[0, 1.8, 1.55], fov:42, near:0.05, far:50 }}
+          camera={{ position:[0, 2.05, 0.001], fov:46, near:0.05, far:50 }}
+          onCreated={({ camera }) => {
+            // True top-down view: look straight at origin, with +Z as screen "down"
+            camera.up.set(0, 0, -1);
+            camera.lookAt(0, 0, 0);
+            camera.updateProjectionMatrix();
+          }}
           style={{ width:'100%', height:'100%', display:'block', background:'linear-gradient(to bottom, #0a0a14 0%, #1a0f1f 100%)' }}
           gl={{ antialias:true, alpha:false }}
         >
