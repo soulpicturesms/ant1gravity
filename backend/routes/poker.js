@@ -79,10 +79,18 @@ function publicState(state) {
   return {
     ...rest,
     players: state.players.map(p=>({...p,holeCards:p.holeCards?p.holeCards.map(()=>null):[]})),
+    pendingPlayers: (state.pendingPlayers||[]).map(p=>({userId:p.userId,username:p.username,chips:p.chips,albion_avatar:p.albion_avatar,albion_ring:p.albion_ring})),
   };
 }
 
 function startHand(state) {
+  // Admit pending players before filtering
+  if (state.pendingPlayers?.length) {
+    for (const p of state.pendingPlayers) {
+      if (state.players.length < state.maxPlayers) state.players.push(p);
+    }
+    state.pendingPlayers = [];
+  }
   state.players = state.players.filter(p=>p.chips>0);
   if (state.players.length<2) { state.status='waiting'; state.phase='waiting'; state.showdown=null; return; }
   const deck=newDeck();
@@ -241,26 +249,41 @@ router.post('/rooms/:id/join', requireAuth, async (req,res) => {
   try {
     const room=await getRoom(req.params.id);
     const state=room.full_state;
-    if(state.players.length>=state.maxPlayers) return res.status(400).json({error:'Sala llena'});
-    if(state.status==='playing') return res.status(400).json({error:'Partida en curso'});
-    if(!state.players.find(p=>p.userId===req.user.id)) {
-      const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', req.user.id).maybeSingle();
-      state.players.push({
-        userId:req.user.id,
-        username:req.user.username,
-        albion_avatar: user?.albion_avatar || null,
-        albion_ring: user?.albion_ring || null,
-        chips:state.buyIn*10,
-        status:'waiting',
-        holeCards:[],
-        roundBet:0,
-        acted:false,
-        bestHand:null
-      });
+    if(!state.pendingPlayers) state.pendingPlayers=[];
+    const alreadyIn=state.players.find(p=>p.userId===req.user.id);
+    const inPending=state.pendingPlayers.find(p=>p.userId===req.user.id);
+    if(alreadyIn||inPending) {
+      return res.json({state:publicState(state),myCards:alreadyIn?.holeCards||[]});
+    }
+    const totalOccupied=state.players.length+state.pendingPlayers.length;
+    if(totalOccupied>=state.maxPlayers) return res.status(400).json({error:'Sala llena'});
+    const { data: user }=await supabase.from('users').select('albion_avatar,albion_ring').eq('id',req.user.id).maybeSingle();
+    const newPlayer={
+      userId:req.user.id, username:req.user.username,
+      albion_avatar:user?.albion_avatar||null, albion_ring:user?.albion_ring||null,
+      chips:state.buyIn*10, status:'waiting', holeCards:[], roundBet:0, acted:false, bestHand:null,
+    };
+    if(state.status==='playing') {
+      state.pendingPlayers.push(newPlayer);  // joins next hand
+    } else {
+      state.players.push(newPlayer);
     }
     await saveRoom(req.params.id,state);
     const me=state.players.find(p=>p.userId===req.user.id);
     res.json({state:publicState(state),myCards:me?.holeCards||[]});
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
+router.post('/rooms/:id/reload', requireAuth, async (req,res) => {
+  try {
+    const room=await getRoom(req.params.id);
+    const state=room.full_state;
+    const player=state.players.find(p=>p.userId===req.user.id);
+    if(!player) return res.status(400).json({error:'No estás en esta mesa'});
+    if(player.chips>0) return res.status(400).json({error:'Todavía tenés fichas'});
+    player.chips=state.buyIn*10;
+    await saveRoom(req.params.id,state);
+    res.json({state:publicState(state),myCards:player.holeCards||[]});
   } catch(e) { res.status(500).json({error:e.message}); }
 });
 

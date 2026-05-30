@@ -183,12 +183,28 @@ const SEAT_POS = {
   6: [[50, 88], [6, 68], [12, 28], [50, 12], [88, 28], [94, 68]],
 };
 
-function PokerTable({ players, myUserId, myCards, community, pot, phase, currentIdx, showdown }) {
+function EmptySeat({ pos }) {
+  return (
+    <div style={{
+      width: 74, height: 74, borderRadius: '50%',
+      background: 'rgba(255,255,255,0.02)',
+      border: '2px dashed rgba(255,255,255,0.12)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 3,
+    }}>
+      <div style={{ fontSize: 16, opacity: 0.2 }}>♟</div>
+      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', fontFamily: 'Inter,system-ui', letterSpacing: '0.06em' }}>LIBRE</div>
+    </div>
+  );
+}
+
+function PokerTable({ players, myUserId, myCards, community, pot, phase, currentIdx, showdown, maxPlayers = 6 }) {
   const myIdx = players.findIndex(p => p.userId === myUserId);
   const ordered = myIdx >= 0
     ? [...players.slice(myIdx), ...players.slice(0, myIdx)]
     : players;
-  const n = Math.min(Math.max(ordered.length, 1), 6);
+  const totalSeats = Math.max(ordered.length, maxPlayers, 2);
+  const n = Math.min(totalSeats, 6);
   const positions = SEAT_POS[n] || SEAT_POS[6];
   const currentPlayer = players[currentIdx];
 
@@ -283,9 +299,15 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
         )}
       </div>
 
-      {/* Player seats positioned around board */}
-      {ordered.map((player, i) => {
+      {/* All seats (active players + empty slots) */}
+      {Array.from({ length: n }, (_, i) => {
+        const player = ordered[i] || null;
         const [px, py] = positions[i] || [50, 50];
+        if (!player) return (
+          <div key={`empty-${i}`} style={{ position:'absolute', left:`${px}%`, top:`${py}%`, transform:'translate(-50%,-50%)', zIndex:2 }}>
+            <EmptySeat />
+          </div>
+        );
         const isMe = player.userId === myUserId;
         const isCurrent = player.userId === currentPlayer?.userId;
         return (
@@ -395,7 +417,9 @@ function RoomList({ onJoin }) {
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Buy-in (chips)</label>
                 <select className="input" value={buyIn} onChange={e => setBuyIn(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
-                  {[50, 100, 200, 500, 1000].map(v => <option key={v} value={v}>{v.toLocaleString('es-AR')}</option>)}
+                  {[100, 500, 1000, 5000, 10000, 25000, 50000, 100000].map(v => (
+                    <option key={v} value={v}>{v >= 1000 ? `${(v/1000).toLocaleString('es-AR')}k` : v}</option>
+                  ))}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
@@ -433,19 +457,19 @@ function RoomList({ onJoin }) {
                   <span style={{ marginLeft: 8, color: isPlaying ? '#ffd700' : '#00cc66' }}>● {isPlaying ? 'En juego' : 'Esperando'}</span>
                 </div>
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => join(r.id)} disabled={isFull || isPlaying} style={{
+              <button className="btn btn-primary btn-sm" onClick={() => join(r.id)} disabled={isFull} style={{
                 flexShrink: 0,
-                background: isPlaying ? 'var(--c-surface2)' : 'rgba(255,45,122,0.15)',
-                border: isPlaying ? '1px solid var(--c-line2)' : '1px solid rgba(255,45,122,0.3)',
-                color: isPlaying ? 'var(--c-text4)' : '#ff2d7a',
+                background: isFull ? 'var(--c-surface2)' : isPlaying ? 'rgba(255,215,0,0.12)' : 'rgba(255,45,122,0.15)',
+                border: isFull ? '1px solid var(--c-line2)' : isPlaying ? '1px solid rgba(255,215,0,0.3)' : '1px solid rgba(255,45,122,0.3)',
+                color: isFull ? 'var(--c-text4)' : isPlaying ? '#ffd700' : '#ff2d7a',
                 fontFamily: "'Unbounded', system-ui",
                 fontSize: '0.65rem',
                 fontWeight: 700,
                 padding: '8px 14px',
                 borderRadius: 8,
-                cursor: (isFull || isPlaying) ? 'not-allowed' : 'pointer'
+                cursor: isFull ? 'not-allowed' : 'pointer'
               }}>
-                {isPlaying ? 'En juego' : isFull ? 'Llena' : 'Unirse →'}
+                {isFull ? 'Llena' : isPlaying ? 'Próx. mano →' : 'Unirse →'}
               </button>
             </div>
           );
@@ -636,11 +660,22 @@ export default function Poker({ user }) {
     } catch (e) { setErr(e.message); }
   };
 
+  const doReload = async () => {
+    setErr('');
+    try {
+      const res = await api.pokerReload(roomId);
+      setGameState(res.state);
+      if (res.myCards?.length) setMyCards(res.myCards);
+    } catch (e) { setErr(e.message); }
+  };
+
   if (view === 'lobby') return <RoomList onJoin={handleJoin} />;
 
   const state = gameState || {};
   const players = state.players || [];
+  const pendingPlayers = state.pendingPlayers || [];
   const me = players.find(p => p.userId === user.id);
+  const mePending = !me && pendingPlayers.find(p => p.userId === user.id);
   const currentPlayer = players[state.currentIdx];
   const isMyTurn = currentPlayer?.userId === user.id && state.phase !== 'waiting' && state.phase !== 'showdown';
   const callAmt = Math.max(0, (state.currentBet || 0) - (me?.roundBet || 0));
@@ -649,6 +684,7 @@ export default function Poker({ user }) {
   const isShowdown = state.phase === 'showdown';
   const minRaise = (state.currentBet || 0) + (state.minRaise || state.buyIn || 100);
   const maxRaise = Math.min((me?.chips || 0) + (me?.roundBet || 0), (state.currentBet || 0) + 10000);
+  const canReload = me && me.chips === 0 && state.phase !== 'playing';
 
   return (
     <div className="casino-roul-view">
@@ -1002,6 +1038,40 @@ export default function Poker({ user }) {
             </div>
           )}
 
+          {/* Reload chips */}
+          {canReload && (
+            <button onClick={doReload} style={{
+              width: '100%', padding: '11px', borderRadius: 8,
+              background: 'rgba(111,255,125,0.08)', border: '1px solid rgba(111,255,125,0.35)',
+              color: '#6fff7d', fontFamily: "'Unbounded', system-ui", fontWeight: 700,
+              fontSize: '0.68rem', letterSpacing: '0.06em', cursor: 'pointer', transition: 'all 0.15s',
+            }}>
+              🔄 RECARGAR FICHAS ({((state.buyIn||100)*10).toLocaleString('es-AR')})
+            </button>
+          )}
+
+          {/* Pending (waiting for next hand) */}
+          {mePending && (
+            <div style={{
+              borderRadius: 8, padding: '10px 12px', textAlign: 'center',
+              background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.2)',
+            }}>
+              <div style={{ fontSize: 9, fontFamily: "'Unbounded',system-ui", color: '#ffd700', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+                ⏳ Esperando próxima mano
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--c-text3)' }}>
+                Fichas: {mePending.chips?.toLocaleString('es-AR')}
+              </div>
+            </div>
+          )}
+
+          {/* Other pending players */}
+          {pendingPlayers.filter(p => p.userId !== user.id).length > 0 && (
+            <div style={{ fontSize: 10, color: 'var(--c-text4)', fontFamily: 'Inter,system-ui' }}>
+              Esperando mano: {pendingPlayers.filter(p=>p.userId!==user.id).map(p=>p.username).join(', ')}
+            </div>
+          )}
+
           {err && <div className="casino-err">{err}</div>}
 
           {/* Seed footer */}
@@ -1104,6 +1174,7 @@ export default function Poker({ user }) {
           phase={state.phase}
           currentIdx={state.currentIdx}
           showdown={state.showdown}
+          maxPlayers={state.maxPlayers || 6}
         />
 
         {isWaiting && players.length < 2 && (

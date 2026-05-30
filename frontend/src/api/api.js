@@ -152,6 +152,7 @@ export const api = {
   pokerStartGame: (id) => req(`/api/poker/rooms/${id}/start`, { method: 'POST', headers: headers() }),
   pokerAction: (id, body) => req(`/api/poker/rooms/${id}/action`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   pokerNextHand: (id) => req(`/api/poker/rooms/${id}/next-hand`, { method: 'POST', headers: headers() }),
+  pokerReload:   (id) => req(`/api/poker/rooms/${id}/reload`,    { method: 'POST', headers: headers() }),
 
   // Domino
   dominoGetRooms:   ()       => req('/api/domino/rooms', { headers: headers() }),
