@@ -84,7 +84,12 @@ function startHand(state, fullState) {
   state.gameOver       = null;
   state.phase          = 'playing';
   state.status         = 'playing';
-  state.currentUserId  = state.players[0].userId;
+
+  // Alternate who starts each hand: round 1 → player 0, round 2 → player 1, etc.
+  const n = state.players.length;
+  const startIdx = ((state.handStartIdx || 0)) % n;
+  state.currentUserId = state.players[startIdx].userId;
+  state.handStartIdx  = (startIdx + 1) % n;
 }
 
 function resolveTrick(state) {
@@ -544,6 +549,7 @@ router.post('/rooms/:id/rematch', requireAuth, async (req, res) => {
     // Reset scores for new game
     state.scores = [0, 0];
     state.gameOver = null;
+    state.handStartIdx = 0;   // restart rotation from player 0
     startHand(state, fullState);
 
     await saveRoom(room.id, state, fullState);
