@@ -9,6 +9,7 @@ import Poker from './casino/Poker';
 import Truco from './casino/Truco';
 import Plinko from './casino/Plinko';
 import Slots from './casino/Slots';
+import Domino from './casino/Domino';
 import './casino/casino.css';
 
 const GAMES = [
@@ -59,6 +60,14 @@ const GAMES = [
     bg: 'linear-gradient(135deg, #1a2210, #0a1208)',
     art: '◆',
     tag: 'live', live: 280,
+  },
+  {
+    id: 'domino',
+    name: 'Dominó 2×2',
+    desc: '4 jugadores · 2 equipos · EN VIVO',
+    bg: 'linear-gradient(135deg, #1a1530, #0c0a1e)',
+    art: '🁣',
+    tag: 'new', live: 0,
   },
 ];
 
@@ -742,6 +751,7 @@ export default function Casino() {
 
           {activeGame === 'poker'     && <Poker user={user} balance={balance} onBalanceChange={setBalance} />}
           {activeGame === 'truco'     && <Truco user={user} balance={balance} />}
+          {activeGame === 'domino'    && <Domino user={user} />}
         </div>
       )}
 

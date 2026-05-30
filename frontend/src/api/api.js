@@ -153,6 +153,17 @@ export const api = {
   pokerAction: (id, body) => req(`/api/poker/rooms/${id}/action`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   pokerNextHand: (id) => req(`/api/poker/rooms/${id}/next-hand`, { method: 'POST', headers: headers() }),
 
+  // Domino
+  dominoGetRooms:   ()       => req('/api/domino/rooms', { headers: headers() }),
+  dominoGetRoom:    (id)     => req(`/api/domino/rooms/${id}`, { headers: headers() }),
+  dominoCreateRoom: (body)   => req('/api/domino/rooms', { method:'POST', headers:headers(), body:JSON.stringify(body) }),
+  dominoJoinRoom:   (id)     => req(`/api/domino/rooms/${id}/join`,  { method:'POST', headers:headers() }),
+  dominoLeaveRoom:  (id)     => req(`/api/domino/rooms/${id}/leave`, { method:'POST', headers:headers() }),
+  dominoStartGame:  (id)     => req(`/api/domino/rooms/${id}/start`, { method:'POST', headers:headers() }),
+  dominoPlay:       (id, b)  => req(`/api/domino/rooms/${id}/play`,  { method:'POST', headers:headers(), body:JSON.stringify(b) }),
+  dominoPass:       (id)     => req(`/api/domino/rooms/${id}/pass`,  { method:'POST', headers:headers() }),
+  dominoNextRound:  (id)     => req(`/api/domino/rooms/${id}/next-round`, { method:'POST', headers:headers() }),
+
   // Truco (REST-based, no WebSocket)
   trucoGetRooms:      ()       => req('/api/truco/rooms', { headers: headers() }),
   trucoGetRoom:       (id)     => req(`/api/truco/rooms/${id}`, { headers: headers() }),
