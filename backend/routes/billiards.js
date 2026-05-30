@@ -3,23 +3,20 @@ const router  = express.Router();
 const { supabase }    = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
-// ── In-memory rooms (cleaned every 10 min, dropped after 2h idle) ────────────
-const rooms = new Map();
-setInterval(() => {
-  const cutoff = Date.now() - 2 * 60 * 60 * 1000;
-  for (const [id, r] of rooms) if (r.ts < cutoff) rooms.delete(id);
-}, 10 * 60 * 1000);
-
 const newId = () => Math.random().toString(36).slice(2, 10).toUpperCase();
-const BET_OPTIONS = [0, 100, 500, 1000, 5000, 10000];   // valid bet amounts
-const HOUSE_RAKE  = 0.05;                                // 5% rake on pots > 0
+const BET_OPTIONS = [0, 100, 500, 1000, 5000, 10000];
+const HOUSE_RAKE  = 0.05;
 
-function publicRoom(room) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function publicRoom(row) {
   return {
-    id: room.id, name: room.name, mode: room.mode, bet: room.bet,
-    maxPlayers: room.maxPlayers, status: room.status,
-    players: room.players.map(p => ({ userId:p.userId, username:p.username, team:p.team })),
-    pot: room.pot, winnerName: room.winnerName || null,
+    id: row.id, name: row.name, mode: row.mode, bet: row.bet,
+    maxPlayers: row.max_players, status: row.status,
+    players: (row.players || []).map(p => ({
+      userId: p.userId, username: p.username, team: p.team,
+    })),
+    pot: row.pot,
+    winnerName: row.winner_name || null,
   };
 }
 
@@ -49,154 +46,193 @@ async function payout(userId, username, amount, roomId, mode, isWin) {
   });
 }
 
-async function refundAll(room) {
-  for (const p of room.players) {
-    if (p.refunded) continue;
-    await payout(p.userId, p.username, room.bet, room.id, room.mode, false);
-    p.refunded = true;
-  }
+async function getRoom(id) {
+  const { data, error } = await supabase.from('billiards_rooms').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function saveRoom(id, patch) {
+  patch.updated_at = new Date().toISOString();
+  const { error } = await supabase.from('billiards_rooms').update(patch).eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+// Lazy cleanup of stale rooms (>2h). Runs occasionally per request.
+let lastCleanup = 0;
+async function maybeCleanup() {
+  const now = Date.now();
+  if (now - lastCleanup < 5 * 60 * 1000) return;
+  lastCleanup = now;
+  const cutoff = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+  await supabase.from('billiards_rooms').delete().lt('updated_at', cutoff);
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
-router.get('/rooms', requireAuth, (req, res) => {
-  const list = [...rooms.values()].map(publicRoom);
-  res.json(list);
+router.get('/rooms', requireAuth, async (_req, res) => {
+  try {
+    await maybeCleanup();
+    const { data, error } = await supabase
+      .from('billiards_rooms')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(40);
+    if (error) throw error;
+    res.json((data || []).map(publicRoom));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/bet-options', requireAuth, (_req, res) => res.json(BET_OPTIONS));
 
 router.post('/rooms', requireAuth, async (req, res) => {
-  const { name = 'Mesa Billar', mode = '1v1', bet = 0 } = req.body;
-  if (!['1v1', '2v2'].includes(mode))       return res.status(400).json({ error: 'Modo inválido' });
-  if (!BET_OPTIONS.includes(Number(bet)))   return res.status(400).json({ error: 'Apuesta inválida' });
+  try {
+    const { name = 'Mesa Billar', mode = '1v1', bet = 0 } = req.body;
+    if (!['1v1', '2v2'].includes(mode))     return res.status(400).json({ error: 'Modo inválido' });
+    if (!BET_OPTIONS.includes(Number(bet))) return res.status(400).json({ error: 'Apuesta inválida' });
 
-  const esc = await escrowBet(req.user.id, Number(bet), 'NEW', mode);
-  if (!esc.ok) return res.status(400).json({ error: esc.error });
+    const id = newId();
+    const esc = await escrowBet(req.user.id, Number(bet), id, mode);
+    if (!esc.ok) return res.status(400).json({ error: esc.error });
 
-  const id = newId();
-  const maxPlayers = mode === '2v2' ? 4 : 2;
-  const room = {
-    id, ts: Date.now(),
-    name: String(name).slice(0, 30), mode, bet: Number(bet), maxPlayers,
-    status: 'waiting',
-    players: [{
-      userId: req.user.id, username: esc.username || req.user.username,
+    const maxPlayers = mode === '2v2' ? 4 : 2;
+    const players = [{
+      userId: req.user.id,
+      username: esc.username || req.user.username,
       team: 0, refunded: false,
-    }],
-    pot: Number(bet),
-    winnerName: null, resultReported: false,
-    createdBy: req.user.id,
-  };
-  rooms.set(id, room);
-  res.json(publicRoom(room));
+    }];
+
+    const { data, error } = await supabase.from('billiards_rooms').insert({
+      id, name: String(name).slice(0, 30), mode,
+      bet: Number(bet), max_players: maxPlayers,
+      status: 'waiting', pot: Number(bet),
+      players, winner_name: null, result_reported: false,
+      created_by: req.user.id,
+    }).select().single();
+    if (error) throw error;
+    res.json(publicRoom(data));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-router.get('/rooms/:id', requireAuth, (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  res.json(publicRoom(room));
+router.get('/rooms/:id', requireAuth, async (req, res) => {
+  try {
+    const room = await getRoom(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
+    res.json(publicRoom(room));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.post('/rooms/:id/join', requireAuth, async (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  if (room.status !== 'waiting')       return res.status(400).json({ error: 'Partida en curso' });
-  if (room.players.find(p => p.userId === req.user.id)) return res.json(publicRoom(room));
-  if (room.players.length >= room.maxPlayers) return res.status(400).json({ error: 'Sala llena' });
+  try {
+    const room = await getRoom(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
+    if (room.status !== 'waiting') return res.status(400).json({ error: 'Partida en curso' });
 
-  const esc = await escrowBet(req.user.id, room.bet, room.id, room.mode);
-  if (!esc.ok) return res.status(400).json({ error: esc.error });
+    const players = room.players || [];
+    if (players.find(p => p.userId === req.user.id)) return res.json(publicRoom(room));
+    if (players.length >= room.max_players)         return res.status(400).json({ error: 'Sala llena' });
 
-  // Team assignment: 1v1 → [0,1], 2v2 → [0,1,0,1] (seats alternate teams)
-  const team = room.mode === '2v2' ? [0, 1, 0, 1][room.players.length] : room.players.length;
-  room.players.push({
-    userId: req.user.id, username: esc.username || req.user.username,
-    team, refunded: false,
-  });
-  room.pot += room.bet;
-  room.ts = Date.now();
+    const esc = await escrowBet(req.user.id, room.bet, room.id, room.mode);
+    if (!esc.ok) return res.status(400).json({ error: esc.error });
 
-  // Auto-start when full
-  if (room.players.length >= room.maxPlayers) {
-    room.status = 'playing';
-    room.startedAt = Date.now();
-  }
-  res.json(publicRoom(room));
+    const team = room.mode === '2v2' ? [0, 1, 0, 1][players.length] : players.length;
+    players.push({
+      userId: req.user.id,
+      username: esc.username || req.user.username,
+      team, refunded: false,
+    });
+    const newPot = room.pot + room.bet;
+    const filled = players.length >= room.max_players;
+
+    await saveRoom(room.id, {
+      players,
+      pot: newPot,
+      status: filled ? 'playing' : 'waiting',
+    });
+
+    const updated = await getRoom(room.id);
+    res.json(publicRoom(updated));
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.post('/rooms/:id/leave', requireAuth, async (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.json({ ok: true });
-  const player = room.players.find(p => p.userId === req.user.id);
-  if (!player) return res.json({ ok: true });
+  try {
+    const room = await getRoom(req.params.id);
+    if (!room) return res.json({ ok: true });
+    const players = room.players || [];
+    const player = players.find(p => p.userId === req.user.id);
+    if (!player) return res.json({ ok: true });
 
-  if (room.status === 'waiting') {
-    // Refund the leaver, remove them from the room
-    if (room.bet > 0 && !player.refunded) {
-      await payout(player.userId, player.username, room.bet, room.id, room.mode, false);
-      player.refunded = true;
+    if (room.status === 'waiting') {
+      if (room.bet > 0 && !player.refunded) {
+        await payout(player.userId, player.username, room.bet, room.id, room.mode, false);
+        player.refunded = true;
+      }
+      const remaining = players.filter(p => p.userId !== req.user.id);
+      if (remaining.length === 0) {
+        await supabase.from('billiards_rooms').delete().eq('id', room.id);
+      } else {
+        await saveRoom(room.id, { players: remaining, pot: Math.max(0, room.pot - room.bet) });
+      }
+      return res.json({ ok: true });
     }
-    room.players = room.players.filter(p => p.userId !== req.user.id);
-    room.pot = Math.max(0, room.pot - room.bet);
-    if (room.players.length === 0) rooms.delete(req.params.id);
-    return res.json({ ok: true });
-  }
 
-  if (room.status === 'playing') {
-    // Walk-out: forfeit. Opponent team(s) win the pot.
-    const winningTeam = 1 - player.team;
-    const winners = room.players.filter(p => p.team === winningTeam);
-    const losers  = room.players.filter(p => p.team === player.team);
-    if (!room.resultReported && winners.length) {
-      room.resultReported = true;
-      const totalPot = room.pot;
-      const rake = Math.floor(totalPot * HOUSE_RAKE);
-      const winnings = totalPot - rake;
+    if (room.status === 'playing' && !room.result_reported) {
+      // Walk-out = forfeit. Opponent team wins the pot.
+      const winningTeam = 1 - player.team;
+      const winners = players.filter(p => p.team === winningTeam);
+      if (winners.length) {
+        const totalPot = room.pot;
+        const rake = Math.floor(totalPot * HOUSE_RAKE);
+        const winnings = totalPot - rake;
+        const perWinner = Math.floor(winnings / winners.length);
+        for (const w of winners) {
+          await payout(w.userId, w.username, perWinner, room.id, room.mode, true);
+        }
+        await saveRoom(room.id, {
+          status: 'finished',
+          result_reported: true,
+          winner_name: winners.map(w => w.username).join(', ') + ' (oponente abandonó)',
+        });
+      }
+    }
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/rooms/:id/result', requireAuth, async (req, res) => {
+  try {
+    const room = await getRoom(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
+    if (room.status !== 'playing') return res.json({ ok: true, alreadyFinished: true });
+
+    const players = room.players || [];
+    if (!players.find(p => p.userId === req.user.id))
+      return res.status(403).json({ error: 'No estás en esta sala' });
+    if (room.result_reported) return res.json({ ok: true, alreadyFinished: true });
+
+    const { winnerUsername } = req.body;
+    const winner = players.find(p => p.username === winnerUsername);
+    if (!winner) return res.status(400).json({ error: 'Ganador inválido' });
+
+    const winningTeam = winner.team;
+    const winners = players.filter(p => p.team === winningTeam);
+
+    if (room.pot > 0 && winners.length > 0) {
+      const rake = Math.floor(room.pot * HOUSE_RAKE);
+      const winnings = room.pot - rake;
       const perWinner = Math.floor(winnings / winners.length);
       for (const w of winners) {
         await payout(w.userId, w.username, perWinner, room.id, room.mode, true);
       }
-      room.status = 'finished';
-      room.winnerName = winners.map(w => w.username).join(', ') + ' (oponente abandonó)';
-      // Mark losers (they don't get anything)
-      losers.forEach(l => { l.refunded = true; });
     }
-    return res.json({ ok: true });
-  }
 
-  res.json({ ok: true });
-});
-
-// Result is reported by the iframe (one of the players) once the game ends.
-// We accept the first valid result; subsequent calls are ignored.
-router.post('/rooms/:id/result', requireAuth, async (req, res) => {
-  const room = rooms.get(req.params.id);
-  if (!room) return res.status(404).json({ error: 'Sala no encontrada' });
-  if (room.status !== 'playing') return res.json({ ok: true, alreadyFinished: true });
-  if (!room.players.find(p => p.userId === req.user.id))
-    return res.status(403).json({ error: 'No estás en esta sala' });
-  if (room.resultReported) return res.json({ ok: true, alreadyFinished: true });
-
-  const { winnerUsername } = req.body;
-  const winner = room.players.find(p => p.username === winnerUsername);
-  if (!winner) return res.status(400).json({ error: 'Ganador inválido' });
-
-  room.resultReported = true;
-  const winningTeam = winner.team;
-  const winners = room.players.filter(p => p.team === winningTeam);
-
-  if (room.pot > 0 && winners.length > 0) {
-    const rake = Math.floor(room.pot * HOUSE_RAKE);
-    const winnings = room.pot - rake;
-    const perWinner = Math.floor(winnings / winners.length);
-    for (const w of winners) {
-      await payout(w.userId, w.username, perWinner, room.id, room.mode, true);
-    }
-  }
-
-  room.status = 'finished';
-  room.winnerName = winners.map(w => w.username).join(' & ');
-  res.json({ ok: true, winners: winners.map(w => w.username), pot: room.pot });
+    await saveRoom(room.id, {
+      status: 'finished',
+      result_reported: true,
+      winner_name: winners.map(w => w.username).join(' & '),
+    });
+    res.json({ ok: true, winners: winners.map(w => w.username), pot: room.pot });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;
