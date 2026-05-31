@@ -17,6 +17,10 @@ import Ruleta from './pages/Ruleta';
 import Casino from './pages/Casino';
 import Apuestas from './pages/Apuestas';
 import Marble from './pages/Marble';
+import Games from './pages/Games';
+import Coliseo from './pages/Coliseo';
+import Meteoros from './pages/Meteoros';
+import RuletaRusa from './pages/RuletaRusa';
 
 function PendingScreen() {
   const { logout } = useAuth();
@@ -71,6 +75,10 @@ function AppRoutes() {
         <Route path="/casino" element={<ProtectedRoute><Casino /></ProtectedRoute>} />
         <Route path="/apuestas" element={<Apuestas />} />
         <Route path="/marble" element={<Marble />} />
+        <Route path="/juegos" element={<Games />} />
+        <Route path="/coliseo" element={<Coliseo />} />
+        <Route path="/meteoros" element={<Meteoros />} />
+        <Route path="/ruleta-rusa" element={<RuletaRusa />} />
       </Routes>
       <footer style={{ borderTop: '1px solid #1e1e30', padding: '20px', textAlign: 'center', color: '#4a4a6a', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
         ANT1GRAVITY © 2026

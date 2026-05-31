@@ -119,6 +119,13 @@ export const api = {
   startMarble: () => req('/api/marble/start', { method: 'POST', headers: headers() }),
   resetMarble: () => req('/api/marble/reset', { method: 'POST', headers: headers() }),
 
+  // Arena games (Coliseo, Meteoros, Ruleta Rusa)
+  getArenaSession: (type) => req(`/api/arena/current?type=${type}`),
+  joinArena: (name, type) => req('/api/arena/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type }) }),
+  createArena: (type) => req('/api/arena/create', { method: 'POST', headers: headers(), body: JSON.stringify({ type }) }),
+  startArena: (type) => req('/api/arena/start', { method: 'POST', headers: headers(), body: JSON.stringify({ type }) }),
+  resetArena: (type) => req('/api/arena/reset', { method: 'POST', headers: headers(), body: JSON.stringify({ type }) }),
+
   // Ruleta
   getRuletaPrizes: () => req('/api/ruleta/prizes'),
   setRuletaPrizes: (prizes) => req('/api/ruleta/prizes', { method: 'PUT', headers: headers(), body: JSON.stringify({ prizes }) }),
