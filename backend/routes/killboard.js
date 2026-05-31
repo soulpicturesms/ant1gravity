@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { supabase } = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
 const GUILD_ID   = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
