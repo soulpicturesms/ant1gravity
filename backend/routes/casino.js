@@ -29,12 +29,39 @@ function handTotal(cards) {
   return total;
 }
 
-// ── In-memory session store ───────────────────────────────────────────────────
-const sessions = new Map();
-setInterval(() => {
-  const cutoff = Date.now() - 30 * 60 * 1000;
-  for (const [k, v] of sessions) if (v.ts < cutoff) sessions.delete(k);
-}, 5 * 60 * 1000);
+// ── Blackjack session store (Supabase-backed, survives serverless restarts) ──
+// In-flight hand state lives in `blackjack_sessions` so consecutive
+// hit/stand/double/split requests find the session regardless of which
+// Vercel instance routes them.
+async function getSession(id, userId) {
+  const { data } = await supabase
+    .from('blackjack_sessions')
+    .select('state')
+    .eq('id', id)
+    .maybeSingle();
+  if (!data) return null;
+  const s = data.state;
+  if (userId && s.userId !== userId) return null;
+  return s;
+}
+async function saveSession(s) {
+  await supabase.from('blackjack_sessions').upsert({
+    id: s.id, user_id: s.userId, state: s,
+    updated_at: new Date().toISOString(),
+  });
+}
+async function deleteSession(id) {
+  await supabase.from('blackjack_sessions').delete().eq('id', id);
+}
+// Lazy cleanup of stale sessions (>30 min)
+let _bjLastCleanup = 0;
+async function maybeCleanupSessions() {
+  const now = Date.now();
+  if (now - _bjLastCleanup < 5 * 60 * 1000) return;
+  _bjLastCleanup = now;
+  const cutoff = new Date(now - 30 * 60 * 1000).toISOString();
+  await supabase.from('blackjack_sessions').delete().lt('updated_at', cutoff);
+}
 
 // ── BLACKJACK ─────────────────────────────────────────────────────────────────
 
@@ -53,8 +80,10 @@ router.post('/blackjack/start', requireAuth, async (req, res) => {
 
   await supabase.from('users').update({ coins: user.coins - bet }).eq('id', req.user.id);
 
+  await maybeCleanupSessions();
   const id = crypto.randomUUID();
-  sessions.set(id, { id, userId: req.user.id, bet, deck, playerCards, dealerCards, ts: Date.now() });
+  const session = { id, userId: req.user.id, bet, deck, playerCards, dealerCards };
+  await saveSession(session);
 
   if (playerTotal === 21) {
     const fin = await finishBlackjack(id, user, 'blackjack');
@@ -72,8 +101,8 @@ router.post('/blackjack/start', requireAuth, async (req, res) => {
 });
 
 router.post('/blackjack/split', requireAuth, async (req, res) => {
-  const s = sessions.get(req.body.sessionId);
-  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+  const s = await getSession(req.body.sessionId, req.user.id);
+  if (!s) return res.status(400).json({ error: 'Sesión inválida' });
   if (s.isSplit) return res.status(400).json({ error: 'Ya has dividido las cartas' });
   if (s.playerCards.length !== 2 || s.playerCards[0].value !== s.playerCards[1].value)
     return res.status(400).json({ error: 'Las cartas deben ser iguales para dividir' });
@@ -88,9 +117,10 @@ router.post('/blackjack/split', requireAuth, async (req, res) => {
   s.hands = [ [s.playerCards[0]], [s.playerCards[1]] ];
   s.handBets = [s.bet, s.bet];
   s.activeHandIdx = 0;
-  
+
   // Deal second card to hand 0
   s.hands[0].push(s.deck.pop());
+  await saveSession(s);
 
   res.json({
     isSplit: true,
@@ -104,13 +134,13 @@ router.post('/blackjack/split', requireAuth, async (req, res) => {
 });
 
 router.post('/blackjack/hit', requireAuth, async (req, res) => {
-  const s = sessions.get(req.body.sessionId);
-  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+  const s = await getSession(req.body.sessionId, req.user.id);
+  if (!s) return res.status(400).json({ error: 'Sesión inválida' });
 
   if (s.isSplit) {
     s.hands[s.activeHandIdx].push(s.deck.pop());
     const total = handTotal(s.hands[s.activeHandIdx]);
-    
+
     if (total >= 21) {
       if (s.activeHandIdx === 0) {
         // Move to Hand 1
@@ -122,6 +152,7 @@ router.post('/blackjack/hit', requireAuth, async (req, res) => {
           const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
           return res.json(await finishBlackjack(s.id, user, 'stand'));
         }
+        await saveSession(s);
         return res.json({
           isSplit: true,
           hands: s.hands,
@@ -137,6 +168,7 @@ router.post('/blackjack/hit', requireAuth, async (req, res) => {
       }
     }
     
+    await saveSession(s);
     return res.json({
       isSplit: true,
       hands: s.hands,
@@ -154,12 +186,13 @@ router.post('/blackjack/hit', requireAuth, async (req, res) => {
     const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
     return res.json(await finishBlackjack(s.id, user, total > 21 ? 'bust' : 'stand'));
   }
+  await saveSession(s);
   res.json({ playerCards: s.playerCards, playerTotal: total, status: 'playing' });
 });
 
 router.post('/blackjack/stand', requireAuth, async (req, res) => {
-  const s = sessions.get(req.body.sessionId);
-  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+  const s = await getSession(req.body.sessionId, req.user.id);
+  if (!s) return res.status(400).json({ error: 'Sesión inválida' });
 
   const { data: user } = await supabase.from('users').select('coins,username').eq('id', req.user.id).maybeSingle();
 
@@ -173,6 +206,7 @@ router.post('/blackjack/stand', requireAuth, async (req, res) => {
         // Hand 1 completes instantly. Finish game
         return res.json(await finishBlackjack(s.id, user, 'stand'));
       }
+      await saveSession(s);
       return res.json({
         isSplit: true,
         hands: s.hands,
@@ -191,8 +225,8 @@ router.post('/blackjack/stand', requireAuth, async (req, res) => {
 });
 
 router.post('/blackjack/double', requireAuth, async (req, res) => {
-  const s = sessions.get(req.body.sessionId);
-  if (!s || s.userId !== req.user.id) return res.status(400).json({ error: 'Sesión inválida' });
+  const s = await getSession(req.body.sessionId, req.user.id);
+  if (!s) return res.status(400).json({ error: 'Sesión inválida' });
 
   if (s.isSplit) {
     const activeHandCards = s.hands[s.activeHandIdx];
@@ -214,6 +248,7 @@ router.post('/blackjack/double', requireAuth, async (req, res) => {
       if (total1 >= 21) {
         return res.json(await finishBlackjack(s.id, { ...user, coins: user.coins - handBet }, 'stand'));
       }
+      await saveSession(s);
       return res.json({
         isSplit: true,
         hands: s.hands,
@@ -242,8 +277,9 @@ router.post('/blackjack/double', requireAuth, async (req, res) => {
 });
 
 async function finishBlackjack(id, user, trigger) {
-  const s = sessions.get(id);
-  sessions.delete(id);
+  const s = await getSession(id);
+  await deleteSession(id);
+  if (!s) return { error: 'Sesión inválida', status: 'error' };
 
   if (s.isSplit) {
     const tot0 = handTotal(s.hands[0]);
@@ -726,7 +762,11 @@ router.get('/stats', async (req, res) => {
     else if (reason.startsWith('Tragaperras')) gameMap.slots.add(user_id);
     else if (reason.startsWith('Plinko')) gameMap.plinko.add(user_id);
   }
-  const activePlayers = new Set(recentRows.map(r => r.user_id)).size + sessions.size;
+  // Count in-flight blackjack sessions as additional active players
+  const { count: bjActiveCount } = await supabase
+    .from('blackjack_sessions')
+    .select('id', { count: 'exact', head: true });
+  const activePlayers = new Set(recentRows.map(r => r.user_id)).size + (bjActiveCount || 0);
   const liveByGame = Object.fromEntries(Object.entries(gameMap).map(([k, s]) => [k, s.size]));
 
   // Paid 24h + delta
