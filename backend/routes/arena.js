@@ -1,27 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
-const jwt = require('jsonwebtoken');
-
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const { supabase } = require('../supabase');
+const { requireAdmin } = require('../middleware/auth');
 
 const COLORS = [
   '#ff4444','#44ff88','#4488ff','#ffdd44','#ff44cc','#44ffee',
   '#ff8844','#88ff44','#ff44ff','#44ccff','#ffcc44','#cc44ff',
 ];
-
-function adminMiddleware(req, res, next) {
-  const token = (req.headers.authorization || '').replace('Bearer ', '');
-  if (!token) return res.status(401).json({ error: 'No token' });
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET);
-    if (user.role !== 'admin' && user.role !== 'officer') return res.status(403).json({ error: 'Forbidden' });
-    req.user = user;
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-}
 
 router.get('/current', async (req, res) => {
   const type = req.query.type || 'coliseo';
@@ -78,7 +63,7 @@ router.post('/join', async (req, res) => {
   res.json({ participant: data });
 });
 
-router.post('/create', adminMiddleware, async (req, res) => {
+router.post('/create', requireAdmin, async (req, res) => {
   const { type = 'coliseo' } = req.body;
   await supabase
     .from('marble_sessions')
@@ -96,7 +81,7 @@ router.post('/create', adminMiddleware, async (req, res) => {
   res.json({ session: data });
 });
 
-router.post('/start', adminMiddleware, async (req, res) => {
+router.post('/start', requireAdmin, async (req, res) => {
   const { type = 'coliseo' } = req.body;
 
   const { data: sessions } = await supabase
@@ -138,7 +123,7 @@ router.post('/start', adminMiddleware, async (req, res) => {
   res.json({ session: data });
 });
 
-router.post('/reset', adminMiddleware, async (req, res) => {
+router.post('/reset', requireAdmin, async (req, res) => {
   const { type = 'coliseo' } = req.body;
   await supabase
     .from('marble_sessions')
