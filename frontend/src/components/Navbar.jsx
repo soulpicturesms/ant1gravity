@@ -30,6 +30,7 @@ export default function Navbar() {
     { to: '/builds', label: 'Builds' },
     { to: '/killboard', label: 'Killboard' },
     { to: '/ruleta', label: 'Ruleta' },
+    { to: '/marble', label: 'Marble' },
     { to: '/apuestas', label: '🎲 Apuestas' },
     { to: '/casino', label: '🎰 Casino', auth: true },
     { to: '/reequip', label: 'Reequipo', auth: true },

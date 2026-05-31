@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -15,7 +16,7 @@ import BattleDetail from './pages/BattleDetail';
 import Ruleta from './pages/Ruleta';
 import Casino from './pages/Casino';
 import Apuestas from './pages/Apuestas';
-import { SocketProvider } from './context/SocketContext';
+import Marble from './pages/Marble';
 
 function PendingScreen() {
   const { logout } = useAuth();
@@ -69,6 +70,7 @@ function AppRoutes() {
         <Route path="/ruleta" element={<Ruleta />} />
         <Route path="/casino" element={<ProtectedRoute><Casino /></ProtectedRoute>} />
         <Route path="/apuestas" element={<Apuestas />} />
+        <Route path="/marble" element={<Marble />} />
       </Routes>
       <footer style={{ borderTop: '1px solid #1e1e30', padding: '20px', textAlign: 'center', color: '#4a4a6a', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
         ANT1GRAVITY © 2026
