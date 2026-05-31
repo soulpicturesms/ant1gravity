@@ -98,7 +98,9 @@ function startHand(state) {
   for (const p of state.players) Object.assign(p, {status:'active',roundBet:0,acted:false,holeCards:[deck.pop(),deck.pop()],bestHand:null});
   const sbIdx=(state.dealerIdx+1)%state.players.length;
   const bbIdx=(state.dealerIdx+2)%state.players.length;
-  const sbAmt=Math.floor(state.buyIn/2), bbAmt=state.buyIn;
+  // Legacy rooms have no bigBlind field — fall back to buyIn/100 (or buyIn itself if too small)
+  const bbAmt = state.bigBlind || Math.max(2, Math.floor(state.buyIn / 100));
+  const sbAmt = Math.max(1, Math.floor(bbAmt / 2));
   postBlind(state,sbIdx,sbAmt); postBlind(state,bbIdx,bbAmt);
   state.currentBet=bbAmt; state.minRaise=bbAmt;
   state.currentIdx=(bbIdx+1)%state.players.length;
@@ -202,7 +204,10 @@ router.get('/rooms', async (req,res) => {
 
 router.post('/rooms', requireAuth, async (req,res) => {
   try {
-    const {name='Mesa ANT1',buyIn=100,maxPlayers=6}=req.body;
+    const {name='Mesa ANT1',buyIn=100,maxPlayers=6,bigBlind}=req.body;
+    // Big blind defaults to buyIn / 100 (100 BB starting stack — standard cash game)
+    // Client may override with an explicit bigBlind value
+    const bb = Math.max(2, Math.floor(Number(bigBlind) || buyIn / 100));
     const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', req.user.id).maybeSingle();
     const init={
       status:'waiting',
@@ -225,8 +230,9 @@ router.post('/rooms', requireAuth, async (req,res) => {
       currentIdx:0,
       dealerIdx:-1,
       buyIn,
+      bigBlind: bb,
       maxPlayers,
-      minRaise:buyIn,
+      minRaise: bb,
       showdown:null,
       name
     };

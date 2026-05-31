@@ -341,6 +341,7 @@ function RoomList({ onJoin }) {
   const [name, setName] = useState('');
   const [buyIn, setBuyIn] = useState(100);
   const [maxP, setMaxP] = useState(6);
+  const [bigBlind, setBigBlind] = useState(0); // 0 = auto (buyIn / 100)
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState('');
 
@@ -357,7 +358,7 @@ function RoomList({ onJoin }) {
     if (!name.trim()) return setErr('Ingresá un nombre de sala');
     setCreating(true); setErr('');
     try {
-      const room = await api.pokerCreateRoom({ name: name.trim(), buyIn, maxPlayers: maxP });
+      const room = await api.pokerCreateRoom({ name: name.trim(), buyIn, maxPlayers: maxP, bigBlind: bigBlind || undefined });
       const res = await api.pokerJoinRoom(room.id);
       onJoin(room.id, res.state, res.myCards);
     } catch (e) { setErr(e.message); }
@@ -420,6 +421,26 @@ function RoomList({ onJoin }) {
                   {[100, 500, 1000, 5000, 10000, 25000, 50000, 100000].map(v => (
                     <option key={v} value={v}>{v >= 1000 ? `${(v/1000).toLocaleString('es-AR')}k` : v}</option>
                   ))}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Big blind</label>
+                <select className="input" value={bigBlind} onChange={e => setBigBlind(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
+                  <option value={0}>Auto (100 BB stack)</option>
+                  {(() => {
+                    // BB options spanning ~10x range from "deep" (200 BB) to "shallow" (20 BB)
+                    const opts = new Set();
+                    [200, 100, 50, 20].forEach(n => {
+                      const v = Math.max(2, Math.floor(buyIn * 10 / n));
+                      opts.add(v);
+                    });
+                    return [...opts].sort((a,b) => a-b).map(v => (
+                      <option key={v} value={v}>
+                        {v >= 1000 ? `${(v/1000).toLocaleString('es-AR')}k` : v}
+                        {' '}({Math.floor(buyIn * 10 / v)} BB)
+                      </option>
+                    ));
+                  })()}
                 </select>
               </div>
               <div style={{ flex: 1 }}>
@@ -682,7 +703,7 @@ export default function Poker({ user }) {
   const isWaiting = state.status === 'waiting' || state.phase === 'waiting';
   const canStart = isWaiting && players.length >= 2 && me;
   const isShowdown = state.phase === 'showdown';
-  const minRaise = (state.currentBet || 0) + (state.minRaise || state.buyIn || 100);
+  const minRaise = (state.currentBet || 0) + (state.minRaise || state.bigBlind || Math.max(2, Math.floor((state.buyIn || 100) / 100)));
   const maxRaise = Math.min((me?.chips || 0) + (me?.roundBet || 0), (state.currentBet || 0) + 10000);
   const canReload = me && me.chips === 0 && state.phase !== 'playing';
 
@@ -1129,7 +1150,12 @@ export default function Poker({ user }) {
             }}>CASINO</span>
           </div>
           <div style={{ display: 'flex', gap: 10, fontSize: '0.72rem', color: 'var(--c-text3)', fontFamily: 'Inter' }}>
-            <span>Blinds: <strong style={{ color: '#fff' }}>{(state.buyIn ? state.buyIn/2 : 50)}/{(state.buyIn || 100)}</strong></span>
+            {(() => {
+              const bb = state.bigBlind || Math.max(2, Math.floor((state.buyIn || 100) / 100));
+              const sb = Math.max(1, Math.floor(bb / 2));
+              const fmt = n => n >= 1000 ? `${(n/1000).toLocaleString('es-AR')}k` : n;
+              return <span>Blinds: <strong style={{ color: '#fff' }}>{fmt(sb)}/{fmt(bb)}</strong></span>;
+            })()}
             <span style={{ color: 'var(--c-line2)' }}>•</span>
             <span style={{ textTransform: 'uppercase' }}>Fase: <strong style={{ color: 'var(--c-accent2)' }}>{state.phase || 'Esperando'}</strong></span>
           </div>
