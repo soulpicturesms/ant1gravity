@@ -3,15 +3,6 @@ import { Link } from 'react-router-dom';
 
 const GAMES = [
   {
-    to: '/marble',
-    emoji: '🔮',
-    title: 'MARBLE RACE',
-    description: 'Canicas neón corren hacia la meta. ¿Quién llega primero?',
-    color: '#00d4ff',
-    bg: 'rgba(0,212,255,0.06)',
-    border: 'rgba(0,212,255,0.2)',
-  },
-  {
     to: '/coliseo',
     emoji: '⚔️',
     title: 'COLISEO',

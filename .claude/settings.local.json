@@ -34,7 +34,11 @@
       "Bash(node app.js)",
       "Bash(curl -s http://localhost:3000/api/rankings/top)",
       "Bash(cmd.exe /c \"netstat -ano | findstr :3000\")",
-      "Bash(node migrate.js)"
+      "Bash(node migrate.js)",
+      "PowerShell(Start-Process \"http://localhost:5173\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

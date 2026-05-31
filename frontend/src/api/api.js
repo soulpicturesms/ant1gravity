@@ -112,13 +112,6 @@ export const api = {
   rejectDeathRequest: (id, body) => req(`/api/reequip/admin/death-requests/${id}/reject`, { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   getDeathStats: () => req('/api/reequip/admin/death-stats', { headers: headers() }),
 
-  // Marble Race
-  getMarbleSession: () => req('/api/marble/current'),
-  joinMarble: (name) => req('/api/marble/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) }),
-  createMarble: () => req('/api/marble/create', { method: 'POST', headers: headers() }),
-  startMarble: () => req('/api/marble/start', { method: 'POST', headers: headers() }),
-  resetMarble: () => req('/api/marble/reset', { method: 'POST', headers: headers() }),
-
   // Arena games (Coliseo, Meteoros, Ruleta Rusa)
   getArenaSession: (type) => req(`/api/arena/current?type=${type}`),
   joinArena: (name, type) => req('/api/arena/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, type }) }),

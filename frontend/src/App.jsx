@@ -16,7 +16,6 @@ import BattleDetail from './pages/BattleDetail';
 import Ruleta from './pages/Ruleta';
 import Casino from './pages/Casino';
 import Apuestas from './pages/Apuestas';
-import Marble from './pages/Marble';
 import Games from './pages/Games';
 import Coliseo from './pages/Coliseo';
 import Meteoros from './pages/Meteoros';
@@ -74,7 +73,6 @@ function AppRoutes() {
         <Route path="/ruleta" element={<Ruleta />} />
         <Route path="/casino" element={<ProtectedRoute><Casino /></ProtectedRoute>} />
         <Route path="/apuestas" element={<Apuestas />} />
-        <Route path="/marble" element={<Marble />} />
         <Route path="/juegos" element={<Games />} />
         <Route path="/coliseo" element={<Coliseo />} />
         <Route path="/meteoros" element={<Meteoros />} />
