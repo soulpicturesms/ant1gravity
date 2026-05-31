@@ -189,7 +189,9 @@ router.get('/rooms', requireAuth, async (req, res) => {
 router.post('/rooms', requireAuth, async (req, res) => {
   try {
     const { name, mode = '1v1' } = req.body;
-    const maxPlayers = mode === '2v2' ? 4 : 2;
+    if (!['1v1', '2v2', '3v3'].includes(mode))
+      return res.status(400).json({ error: 'Modo inválido' });
+    const maxPlayers = mode === '3v3' ? 6 : mode === '2v2' ? 4 : 2;
     const { id: userId, username } = req.user;
     const { data: user } = await supabase.from('users').select('albion_avatar, albion_ring').eq('id', userId).maybeSingle();
 

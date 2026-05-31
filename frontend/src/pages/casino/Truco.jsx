@@ -275,17 +275,20 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: '#ff2d7a', letterSpacing: '0.1em' }}>🀄 TRUCO ARGENTINO</div>
-        <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 o 2v2 · Primero a 15</div>
+        <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 · 2v2 · 3v3 · Primero a 15</div>
       </div>
 
       {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={() => onCreate('1v1')} disabled={loading} style={{ background: 'rgba(255,45,122,0.08)', border: '1px solid rgba(255,45,122,0.28)', color: '#ff2d7a', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 1v1
         </button>
         <button onClick={() => onCreate('2v2')} disabled={loading} style={{ background: 'rgba(255,45,122,0.06)', border: '1px solid rgba(255,45,122,0.18)', color: 'rgba(255,45,122,0.7)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
           + Nueva sala 2v2
+        </button>
+        <button onClick={() => onCreate('3v3')} disabled={loading} style={{ background: 'rgba(255,45,122,0.04)', border: '1px solid rgba(255,45,122,0.14)', color: 'rgba(255,45,122,0.55)', borderRadius: 8, padding: '10px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.95rem' }}>
+          + Nueva sala 3v3
         </button>
       </div>
 
