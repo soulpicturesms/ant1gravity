@@ -27,8 +27,8 @@ function genRuletaRusa(participants, seedStr, winnerName) {
     [victims[i], victims[j]] = [victims[j], victims[i]];
   }
 
-  const timePerElim = Math.max(3200, Math.min(8000, (RACE_MS - 2000) / Math.max(1, n - 1)));
-  const spinDuration = Math.min(2200, timePerElim * 0.65);
+  const timePerElim = Math.max(900, Math.min(6000, (RACE_MS - 2000) / Math.max(1, n - 1)));
+  const spinDuration = Math.min(1800, timePerElim * 0.7);
 
   const players = participants.map((p, i) => ({
     name: p.name,
@@ -60,10 +60,11 @@ function genRuletaRusa(participants, seedStr, winnerName) {
     curTime = ev.spinStartTime;
     keyframes.push({ time: curTime, angle: curAngle, phase: 'spinStart' });
 
-    // Spin to target
-    const normalized = ev.targetAngle - Math.PI / 2; // needle points right when angle=0 from default
-    let delta = (normalized - (curAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-    if (delta < 0.1) delta += Math.PI * 2;
+    // Spin to target — needle at angle θ points toward player at angle θ
+    const targetNorm = ((ev.targetAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const curNorm = ((curAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    let delta = targetNorm - curNorm;
+    if (delta <= 0.05) delta += Math.PI * 2;
     curAngle += Math.PI * 2 * ev.rotations + delta;
     curTime = ev.eventTime;
     keyframes.push({ time: curTime, angle: curAngle, phase: 'impact', name: ev.name });

@@ -17,7 +17,6 @@ import Ruleta from './pages/Ruleta';
 import Casino from './pages/Casino';
 import Apuestas from './pages/Apuestas';
 import Games from './pages/Games';
-import Coliseo from './pages/Coliseo';
 import Meteoros from './pages/Meteoros';
 import RuletaRusa from './pages/RuletaRusa';
 
@@ -74,7 +73,6 @@ function AppRoutes() {
         <Route path="/casino" element={<ProtectedRoute><Casino /></ProtectedRoute>} />
         <Route path="/apuestas" element={<Apuestas />} />
         <Route path="/juegos" element={<Games />} />
-        <Route path="/coliseo" element={<Coliseo />} />
         <Route path="/meteoros" element={<Meteoros />} />
         <Route path="/ruleta-rusa" element={<RuletaRusa />} />
       </Routes>

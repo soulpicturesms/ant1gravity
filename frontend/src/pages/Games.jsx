@@ -3,15 +3,6 @@ import { Link } from 'react-router-dom';
 
 const GAMES = [
   {
-    to: '/coliseo',
-    emoji: '⚔️',
-    title: 'COLISEO',
-    description: 'Gladiadores combaten en la arena hasta que queda uno en pie.',
-    color: '#ffd700',
-    bg: 'rgba(255,215,0,0.06)',
-    border: 'rgba(255,215,0,0.2)',
-  },
-  {
     to: '/meteoros',
     emoji: '☄️',
     title: 'METEOROS',
