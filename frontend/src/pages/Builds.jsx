@@ -37,6 +37,36 @@ const SHARED_SLOTS = [
 
 const ALL_SLOTS = [...GEAR_SLOTS, ...SHARED_SLOTS];
 
+// ── Normalization helpers ─────────────────────────────────────────────────────
+// Schema evolved from 1 build + optional 2nd to N builds, and from 1 shared
+// item per slot to N. The server normalizes on read but tolerate both shapes
+// here too for safety with stale data.
+function variantEquipments(v) {
+  if (!v) return [{}];
+  if (Array.isArray(v.equipments)) return v.equipments.filter(Boolean);
+  if (Array.isArray(v.equipment))  return v.equipment.filter(Boolean);
+  const list = [v.equipment || {}];
+  if (v.has_alt && v.equipment_alt) list.push(v.equipment_alt);
+  return list.length ? list : [{}];
+}
+
+function sharedSlotItems(shared, key) {
+  const val = shared?.[key];
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter(Boolean);
+  return [val];
+}
+
+function firstSharedItem(shared, key) {
+  return sharedSlotItems(shared, key)[0] || null;
+}
+
+function buildLabel(i, total) {
+  if (total <= 1) return null;
+  if (i === 0) return 'Principal';
+  return `Alt ${i}`;
+}
+
 const CAT_COLORS = {
   ZVZ: '#ff3355', PVP: '#ff7700', AVALON: '#aa44ff',
   DUNGEON: '#4488ff', HCE: '#00d4ff', GATHERING: '#88cc44', OTROS: '#6a6a8a',
@@ -136,17 +166,24 @@ function ItemIconWithSpells({ code, spells: storedSpells, size = 56, label }) {
 /* ── BUILD ROW (thumbnail inside card) ── */
 function BuildRow({ variant, sharedItems, size = 36 }) {
   const col = roleColor(variant.role);
-  const eq = variant.equipment || {};
+  const equipments = variantEquipments(variant);
+  const eq = equipments[0] || {};
+  const extraBuilds = equipments.length - 1;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
       <div style={{
         width: 52, flexShrink: 0,
         fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.65rem',
         color: col, letterSpacing: '0.04em', textAlign: 'right', paddingRight: 6,
-      }}>{variant.role}</div>
+      }}>
+        {variant.role}
+        {extraBuilds > 0 && (
+          <div style={{ fontSize: '0.55rem', color: col + 'aa' }}>+{extraBuilds}</div>
+        )}
+      </div>
       {GEAR_SLOTS.map(s => <ItemIcon key={s.key} code={eq[s.key]?.code} size={size} />)}
       <div style={{ width: 1, background: 'rgba(255,255,255,0.1)', height: size, margin: '0 2px', flexShrink: 0 }} />
-      {SHARED_SLOTS.map(s => <ItemIcon key={s.key} code={sharedItems?.[s.key]?.code} size={size} />)}
+      {SHARED_SLOTS.map(s => <ItemIcon key={s.key} code={firstSharedItem(sharedItems, s.key)?.code} size={size} />)}
     </div>
   );
 }
@@ -227,10 +264,12 @@ function formatSilver(n) {
 }
 
 function BuildDetail({ variant, sharedItems }) {
-  const [showAlt, setShowAlt]       = useState(false);
+  const equipments = variantEquipments(variant);
+  const [buildIdx, setBuildIdx]     = useState(0);
   const [prices, setPrices]         = useState(null);   // null=hidden, {}=loading/loaded
   const [priceLoading, setPriceLoading] = useState(false);
-  const eq = showAlt ? (variant.equipment_alt || {}) : (variant.equipment || {});
+  const safeIdx = Math.min(buildIdx, equipments.length - 1);
+  const eq = equipments[safeIdx] || {};
   const col = roleColor(variant.role);
 
   function baseId(code) {
@@ -238,10 +277,15 @@ function BuildDetail({ variant, sharedItems }) {
     return code.replace(/^T\d+_/, '').replace(/@\d+$/, '');
   }
 
+  // For pricing we include every item across all shared slot entries
+  const allSharedItems = SHARED_SLOTS.flatMap(s =>
+    sharedSlotItems(sharedItems, s.key).map(it => ({ ...it, label: s.label }))
+  );
+
   const fetchPrices = async () => {
     const codes = [
       ...GEAR_SLOTS.map(s => eq[s.key]?.code),
-      ...SHARED_SLOTS.map(s => sharedItems?.[s.key]?.code),
+      ...allSharedItems.map(it => it.code),
     ].filter(Boolean);
     if (!codes.length) return;
     setPriceLoading(true);
@@ -262,19 +306,20 @@ function BuildDetail({ variant, sharedItems }) {
 
   const allItems = [
     ...GEAR_SLOTS.map(s => ({ ...eq[s.key], label: s.label })),
-    ...SHARED_SLOTS.map(s => ({ ...sharedItems?.[s.key], label: s.label })),
+    ...allSharedItems,
   ].filter(i => i?.code);
 
   const total = prices ? allItems.reduce((sum, i) => sum + (prices[i.code]?.price || 0), 0) : 0;
 
   return (
     <div>
-      {/* Alt toggle + price button row */}
+      {/* Build switcher + price button row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {variant.has_alt && ['Principal', 'Alternativa'].map((lbl, i) => {
-          const active = i === 0 ? !showAlt : showAlt;
+        {equipments.length > 1 && equipments.map((_, i) => {
+          const active = i === safeIdx;
+          const lbl = buildLabel(i, equipments.length) || `Build ${i+1}`;
           return (
-            <button key={lbl} onClick={() => setShowAlt(i === 1)} style={{
+            <button key={i} onClick={() => setBuildIdx(i)} style={{
               padding: '5px 14px', borderRadius: 6, cursor: 'pointer',
               fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem',
               border: `1px solid ${active ? col : '#2a2a3a'}`,
@@ -338,17 +383,25 @@ function BuildDetail({ variant, sharedItems }) {
         ))}
       </div>
 
-      {/* Shared items */}
-      {sharedItems && Object.values(sharedItems).some(v => v?.code) && (
+      {/* Shared items — each slot may have multiple options */}
+      {allSharedItems.length > 0 && (
         <div style={{ borderTop: '1px solid #1a1a28', paddingTop: 12, marginBottom: 14 }}>
           <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Compartido</div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {SHARED_SLOTS.map(s => sharedItems[s.key]?.code && (
-              <div key={s.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ fontSize: '0.55rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase' }}>{s.label}</div>
-                <ItemIcon code={sharedItems[s.key].code} size={44} />
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {SHARED_SLOTS.map(s => {
+              const items = sharedSlotItems(sharedItems, s.key);
+              if (!items.length) return null;
+              return (
+                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ fontSize: '0.55rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', minWidth: 60 }}>{s.label}</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {items.map((it, i) => (
+                      <ItemIcon key={`${it.code}-${i}`} code={it.code} size={40} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -403,7 +456,7 @@ function ContentModal({ content, onClose, onEdit, isAdmin }) {
                 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: c, flexShrink: 0 }} />
                   {v.role}
-                  {v.has_alt && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', color: c + '88' }}>+Alt</span>}
+                  {variantEquipments(v).length > 1 && <span style={{ marginLeft: 'auto', fontSize: '0.6rem', color: c + '88' }}>×{variantEquipments(v).length}</span>}
                 </button>
               );
             })}
@@ -468,6 +521,21 @@ function SlotButton({ slotKey, label, value, onChange, compact = false }) {
 function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPickItem }) {
   const col = roleColor(variant.role);
   const customRoles = ROLES.map(r => r.key);
+  // Normalize equipments — older variants might still carry equipment/equipment_alt
+  const equipments = variant.equipments && variant.equipments.length
+    ? variant.equipments
+    : variantEquipments(variant);
+
+  const updateBuild = (buildIdx, newBuild) => {
+    const next = equipments.map((b, i) => i === buildIdx ? newBuild : b);
+    onUpdate(index, { ...variant, equipments: next });
+  };
+  const addBuild = () => onUpdate(index, { ...variant, equipments: [...equipments, {}] });
+  const removeBuild = (buildIdx) => {
+    if (equipments.length <= 1) return;
+    const next = equipments.filter((_, i) => i !== buildIdx);
+    onUpdate(index, { ...variant, equipments: next });
+  };
 
   return (
     <div style={{ background: '#0a0a14', border: `1px solid ${col}33`, borderRadius: 10, padding: '14px 16px', position: 'relative' }}>
@@ -485,44 +553,41 @@ function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPick
           <input value={variant.role} onChange={e => onUpdate(index, { ...variant, role: e.target.value })}
             placeholder="Nombre del rol" style={{ background: '#0f0f1e', border: '1px solid #2a2a3a', borderRadius: 6, padding: '5px 10px', color: '#e0e0f0', fontSize: '0.85rem', width: 120 }} />
         )}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', marginLeft: 'auto' }}>
-          <input type="checkbox" checked={!!variant.has_alt} onChange={e => onUpdate(index, { ...variant, has_alt: e.target.checked })}
-            style={{ cursor: 'pointer' }} />
-          <span style={{ fontSize: '0.75rem', color: '#6a6a8a', fontFamily: 'Rajdhani' }}>2da build</span>
-        </label>
-        <button onClick={() => onDuplicate(index)} title="Duplicar" style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.15)', borderRadius: 6, color: '#00d4ff88', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>⧉ Duplicar</button>
+        <button onClick={() => onDuplicate(index)} title="Duplicar rol" style={{ marginLeft: 'auto', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.15)', borderRadius: 6, color: '#00d4ff88', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>⧉ Duplicar rol</button>
         <button onClick={() => onRemove(index)} style={{ background: 'rgba(255,50,50,0.08)', border: '1px solid rgba(255,50,50,0.15)', borderRadius: 6, color: '#ff5555aa', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>✕</button>
       </div>
 
-      {/* Primary equipment */}
-      <div style={{ marginBottom: variant.has_alt ? 12 : 0 }}>
-        <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Build Principal</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {GEAR_SLOTS.map(s => (
-            <SlotButton key={s.key} slotKey={s.key} label={s.label} value={variant.equipment?.[s.key]}
-              onChange={(k, clear) => {
-                if (clear) { onUpdate(index, { ...variant, equipment: { ...variant.equipment, [k]: null } }); return; }
-                onPickItem(index, 'equipment', k);
-              }} compact />
-          ))}
-        </div>
-      </div>
-
-      {/* Alt equipment */}
-      {variant.has_alt && (
-        <div style={{ paddingTop: 10, borderTop: '1px solid #1a1a28' }}>
-          <div style={{ fontSize: '0.6rem', color: '#ff8c0088', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Build Alternativa <span style={{ color: '#3a3a5a' }}>(slots opcionales)</span></div>
+      {/* N builds, each with its own gear set */}
+      {equipments.map((build, bi) => (
+        <div key={bi} style={{ marginBottom: 12, paddingTop: bi === 0 ? 0 : 10, borderTop: bi === 0 ? 'none' : '1px solid #1a1a28' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ fontSize: '0.6rem', color: bi === 0 ? '#4a4a6a' : '#ff8c0088', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              {bi === 0 ? 'Build Principal' : `Build Alternativa ${bi}`}
+            </div>
+            {equipments.length > 1 && (
+              <button onClick={() => removeBuild(bi)} title="Quitar esta build"
+                style={{ background: 'rgba(255,50,50,0.06)', border: '1px solid rgba(255,50,50,0.15)', borderRadius: 4, color: '#ff555588', cursor: 'pointer', padding: '1px 6px', fontSize: '0.65rem' }}
+              >✕ quitar</button>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {GEAR_SLOTS.map(s => (
-              <SlotButton key={s.key} slotKey={s.key} label={s.label} value={variant.equipment_alt?.[s.key]}
+              <SlotButton key={s.key} slotKey={s.key} label={s.label} value={build?.[s.key]}
                 onChange={(k, clear) => {
-                  if (clear) { onUpdate(index, { ...variant, equipment_alt: { ...variant.equipment_alt, [k]: null } }); return; }
-                  onPickItem(index, 'equipment_alt', k);
+                  if (clear) { updateBuild(bi, { ...build, [k]: null }); return; }
+                  onPickItem(index, bi, k);
                 }} compact />
             ))}
           </div>
         </div>
-      )}
+      ))}
+
+      {/* Add build button */}
+      <button onClick={addBuild} style={{
+        marginTop: 4, padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+        background: 'rgba(0,212,255,0.05)', border: '1px dashed rgba(0,212,255,0.25)',
+        color: '#00d4ffaa', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.75rem',
+      }}>+ Agregar otra build</button>
     </div>
   );
 }
@@ -533,12 +598,29 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
   const [name, setName]           = useState(initial?.name || '');
   const [category, setCategory]   = useState(initial?.category || 'ZVZ');
   const [description, setDesc]    = useState(initial?.description || '');
-  const [sharedItems, setShared]  = useState(initial?.shared_items || {});
-  const [variants, setVariants]   = useState(initial?.variants?.length ? initial.variants.map(v => ({ ...v, equipment: v.equipment || {}, equipment_alt: v.equipment_alt || {} })) : [{ role: 'DPS', equipment: {}, equipment_alt: {}, has_alt: false }]);
-  const [picker, setPicker]       = useState(null); // { target: 'shared'|variantIndex, field: 'equipment'|'equipment_alt', slot }
+  // Normalize shared_items into { slot: array } shape (server already does this,
+  // but old cached payloads may still be single-object)
+  const initShared = (() => {
+    const out = {};
+    for (const s of SHARED_SLOTS) {
+      const v = initial?.shared_items?.[s.key];
+      if (Array.isArray(v)) out[s.key] = v.filter(Boolean);
+      else if (v) out[s.key] = [v];
+      else out[s.key] = [];
+    }
+    return out;
+  })();
+  const [sharedItems, setShared]  = useState(initShared);
+  // Normalize variants into { equipments: [...] }
+  const initVariants = initial?.variants?.length
+    ? initial.variants.map(v => ({ role: v.role, notes: v.notes, equipments: variantEquipments(v).map(e => e || {}) }))
+    : [{ role: 'DPS', equipments: [{}] }];
+  const [variants, setVariants]   = useState(initVariants);
+  // picker target: 'shared'|variantIndex; for shared: { slot, addingNew }; for variant: { buildIdx, slot }
+  const [picker, setPicker]       = useState(null);
   const [saving, setSaving]       = useState(false);
 
-  const addVariant = () => setVariants(v => [...v, { role: 'DPS', equipment: {}, equipment_alt: {}, has_alt: false }]);
+  const addVariant = () => setVariants(v => [...v, { role: 'DPS', equipments: [{}] }]);
 
   const duplicateVariant = (i) => setVariants(v => {
     const copy = JSON.parse(JSON.stringify(v[i]));
@@ -551,12 +633,19 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
   const handlePickerSelect = ({ id, name: iname, code }) => {
     const item = { id, name: iname, code };
     if (picker.target === 'shared') {
-      setShared(s => ({ ...s, [picker.slot]: item }));
+      setShared(s => {
+        const list = Array.isArray(s[picker.slot]) ? [...s[picker.slot]] : [];
+        if (typeof picker.replaceIdx === 'number') list[picker.replaceIdx] = item;
+        else list.push(item);
+        return { ...s, [picker.slot]: list };
+      });
     } else {
-      const i = picker.target;
-      setVariants(vs => vs.map((v, idx) => idx !== i ? v : {
-        ...v,
-        [picker.field]: { ...(v[picker.field] || {}), [picker.slot]: item },
+      const vi = picker.target;
+      const bi = picker.buildIdx;
+      setVariants(vs => vs.map((v, idx) => {
+        if (idx !== vi) return v;
+        const equipments = (v.equipments || [{}]).map((b, j) => j === bi ? { ...(b || {}), [picker.slot]: item } : b);
+        return { ...v, equipments };
       }));
     }
     setPicker(null);
@@ -621,17 +710,44 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
             <input value={description} onChange={e => setDesc(e.target.value)} placeholder="Notas sobre el contenido..." style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3a', borderRadius: 7, padding: '8px 12px', color: '#e0e0f0', fontSize: '0.85rem' }} />
           </div>
 
-          {/* Shared items */}
+          {/* Shared items — multiple per slot */}
           <div style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Items Compartidos — todas las builds</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {SHARED_SLOTS.map(s => (
-                <SlotButton key={s.key} slotKey={s.key} label={s.label} value={sharedItems[s.key]}
-                  onChange={(k, clear) => {
-                    if (clear) { setShared(x => ({ ...x, [k]: null })); return; }
-                    setPicker({ target: 'shared', field: null, slot: k });
-                  }} />
-              ))}
+            <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+              Items Compartidos — todas las builds <span style={{ color: '#3a3a5a' }}>(podés agregar varios)</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {SHARED_SLOTS.map(s => {
+                const items = sharedItems[s.key] || [];
+                return (
+                  <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 68, fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+                      {items.map((it, i) => (
+                        <SlotButton
+                          key={i} slotKey={s.key} label={s.label} value={it}
+                          onChange={(k, clear) => {
+                            if (clear) {
+                              setShared(x => ({ ...x, [k]: (x[k] || []).filter((_, j) => j !== i) }));
+                              return;
+                            }
+                            setPicker({ target: 'shared', slot: k, replaceIdx: i });
+                          }} compact
+                        />
+                      ))}
+                      {/* "+" button to add one more option to this slot */}
+                      <button
+                        onClick={() => setPicker({ target: 'shared', slot: s.key })}
+                        style={{
+                          width: 44, height: 44, borderRadius: 7, cursor: 'pointer',
+                          background: 'rgba(0,212,255,0.05)',
+                          border: '1px dashed rgba(0,212,255,0.25)',
+                          color: '#00d4ff77', fontSize: '1.1rem',
+                        }}
+                      >+</button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
