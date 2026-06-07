@@ -463,6 +463,21 @@ export default function Admin() {
                     <td style={{ fontFamily: 'Rajdhani', color: '#ff8844' }}>{m.cta_attendance}</td>
                     <td style={{ fontFamily: 'Rajdhani', color: '#ffd700' }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</td>
                     <td>
+                      <button
+                        className="btn-icon"
+                        title="Resetear contraseña"
+                        style={{ borderColor: '#ffaa0044', color: '#ffaa00', marginRight: 4 }}
+                        onClick={async () => {
+                          if (!confirm(`¿Generar una contraseña temporal para ${m.username}?`)) return;
+                          try {
+                            const r = await api.adminResetPassword(m.id);
+                            window.prompt(
+                              `Contraseña temporal para ${r.username}\nCopiala y pasala por DM. El usuario debe cambiarla al loguearse.`,
+                              r.tempPassword
+                            );
+                          } catch (e) { notify(false, e.message); }
+                        }}
+                      >🔑</button>
                       {isStrictAdmin && <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>}
                     </td>
                   </tr>

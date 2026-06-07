@@ -107,4 +107,40 @@ router.put('/users/:id/username', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Reset another user's password to a randomly generated temp value.
+// Returns the plaintext temp password ONLY to the admin (never stored in plaintext).
+// The admin shares the temp via Discord, user logs in and changes it via PUT /auth/password.
+router.post('/users/:id/reset-password', requireAdmin, async (req, res) => {
+  const { data: target } = await supabase
+    .from('users')
+    .select('id,username,role')
+    .eq('id', req.params.id)
+    .maybeSingle();
+  if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  // Officers can't reset an admin's password — only a strict admin can
+  if (target.role === 'admin' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Solo el administrador puede resetear contraseñas de admin' });
+  }
+
+  // 8-char temp pwd: 4 letters + 4 digits, no ambiguous chars (no 0/O/I/l/1)
+  const chars  = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const pick = (s) => s[Math.floor(Math.random() * s.length)];
+  const tempPassword =
+    pick(chars) + pick(chars) + pick(chars) + pick(chars) +
+    pick(digits) + pick(digits) + pick(digits) + pick(digits);
+
+  const hash = bcrypt.hashSync(tempPassword, 10);
+  const { error } = await supabase.from('users').update({ password: hash }).eq('id', target.id);
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({
+    ok: true,
+    username: target.username,
+    tempPassword,
+    note: 'Compartí esta contraseña con el usuario por un canal privado. Será inválida una vez la cambie.',
+  });
+});
+
 module.exports = router;

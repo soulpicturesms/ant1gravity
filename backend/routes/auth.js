@@ -111,6 +111,25 @@ router.get('/me', requireAuth, async (req, res) => {
   res.json(safe(user));
 });
 
+// Self-service password change. Requires the current password as proof.
+router.put('/password', requireAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Faltan campos' });
+  if (newPassword.length < 6) return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres' });
+  if (newPassword === currentPassword) return res.status(400).json({ error: 'La nueva contraseña debe ser diferente' });
+
+  const { data: user } = await supabase.from('users').select('id,password').eq('id', req.user.id).maybeSingle();
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (!bcrypt.compareSync(currentPassword, user.password)) {
+    return res.status(401).json({ error: 'Contraseña actual incorrecta' });
+  }
+
+  const hash = bcrypt.hashSync(newPassword, 10);
+  const { error } = await supabase.from('users').update({ password: hash }).eq('id', user.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 router.put('/profile', requireAuth, async (req, res) => {
   const { albion_character, albion_avatar, albion_ring } = req.body;
   

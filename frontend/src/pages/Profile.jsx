@@ -39,6 +39,13 @@ export default function Profile() {
   const [avatarLimit, setAvatarLimit] = useState(48);
   const [ringLimit, setRingLimit] = useState(48);
 
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwNew2, setPwNew2] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState('');
+  const [pwErr, setPwErr] = useState('');
+
   useEffect(() => {
     if (user && showCustomizer) {
       setSelectedAvatar(user.albion_avatar || '');
@@ -169,6 +176,21 @@ export default function Profile() {
   };
 
   const hasPending = myRequests.some(r => r.status === 'pending');
+
+  const doChangePassword = async (e) => {
+    e.preventDefault();
+    setPwMsg(''); setPwErr('');
+    if (!pwCurrent || !pwNew) return setPwErr('Completá todos los campos');
+    if (pwNew.length < 6) return setPwErr('La nueva contraseña debe tener al menos 6 caracteres');
+    if (pwNew !== pwNew2) return setPwErr('Las contraseñas nuevas no coinciden');
+    setPwBusy(true);
+    try {
+      await api.changePassword({ currentPassword: pwCurrent, newPassword: pwNew });
+      setPwMsg('✅ Contraseña actualizada');
+      setPwCurrent(''); setPwNew(''); setPwNew2('');
+    } catch (e) { setPwErr(e.message); }
+    finally { setPwBusy(false); }
+  };
 
   const doTransfer = async (e) => {
     e.preventDefault();
@@ -381,6 +403,23 @@ export default function Profile() {
                 )}
               </div>
             )}
+          </div>
+
+          <div className="card">
+            <div className="card-title" style={{ marginBottom: 14 }}>🔐 Cambiar Contraseña</div>
+            {pwMsg && <div className="alert alert-success" style={{ marginBottom: 12 }}>{pwMsg}</div>}
+            {pwErr && <div className="alert alert-error" style={{ marginBottom: 12 }}>{pwErr}</div>}
+            <form onSubmit={doChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input className="input" type="password" placeholder="Contraseña actual" value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} autoComplete="current-password" />
+              <input className="input" type="password" placeholder="Nueva contraseña (mín. 6 caracteres)" value={pwNew} onChange={e => setPwNew(e.target.value)} autoComplete="new-password" />
+              <input className="input" type="password" placeholder="Repetí la nueva contraseña" value={pwNew2} onChange={e => setPwNew2(e.target.value)} autoComplete="new-password" />
+              <button type="submit" className="btn btn-primary" disabled={pwBusy || !pwCurrent || !pwNew || !pwNew2}>
+                {pwBusy ? 'Guardando...' : 'Cambiar contraseña'}
+              </button>
+              <div style={{ fontSize: '0.72rem', color: '#6a6a8a', marginTop: 4 }}>
+                ¿La olvidaste? Pedile a un admin del gremio por Discord que te genere una contraseña temporal.
+              </div>
+            </form>
           </div>
 
           <div className="card">
