@@ -109,8 +109,12 @@ router.get('/my-deaths', requireAuth, async (req, res) => {
     const searchRes = await fetch(`${ALBION_API}/search?q=${encodeURIComponent(charName)}`);
     if (!searchRes.ok) throw new Error(`Albion API ${searchRes.status} al buscar jugador`);
     const searchData = await searchRes.json();
-    const player = (searchData.players || []).find(p => p.Name.toLowerCase() === charName.toLowerCase());
-    if (!player) return res.json({ deaths: [], playerNotFound: true, character: charName });
+    const matches = (searchData.players || []).filter(p => p.Name.toLowerCase() === charName.toLowerCase());
+    if (!matches.length) return res.json({ deaths: [], playerNotFound: true, character: charName });
+    // When multiple characters share a name, pick the one with most total fame (the active player)
+    const player = matches.reduce((best, p) =>
+      ((p.KillFame || 0) + (p.DeathFame || 0)) > ((best.KillFame || 0) + (best.DeathFame || 0)) ? p : best
+    );
 
     const deathsRes = await fetch(`${ALBION_API}/players/${player.Id}/deaths?limit=20&offset=0`);
     const deaths = deathsRes.ok ? await deathsRes.json() : [];
