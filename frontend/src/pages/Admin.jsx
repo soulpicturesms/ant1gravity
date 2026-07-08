@@ -63,6 +63,7 @@ export default function Admin() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [pendingBuilds, setPendingBuilds] = useState([]);
   const [editingUsername, setEditingUsername] = useState({}); // { [id]: newName }
+  const [resetPw, setResetPw] = useState({}); // { [id]: draftPassword }
 
   const notify = (ok, msg) => { if (ok) setMsg(msg); else setErr(msg); setTimeout(() => { setMsg(''); setErr(''); }, 4000); };
 
@@ -463,6 +464,7 @@ export default function Admin() {
                     <td style={{ fontFamily: 'Rajdhani', color: '#ff8844' }}>{m.cta_attendance}</td>
                     <td style={{ fontFamily: 'Rajdhani', color: '#ffd700' }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</td>
                     <td>
+<<<<<<< Updated upstream
                       <button
                         className="btn-icon"
                         title="Resetear contraseña"
@@ -479,6 +481,38 @@ export default function Admin() {
                         }}
                       >🔑</button>
                       {isStrictAdmin && <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>}
+=======
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {isStrictAdmin && (
+                          resetPw[m.id] !== undefined ? (
+                            <>
+                              <input
+                                autoFocus
+                                className="input"
+                                style={{ width: 130, padding: '3px 8px', fontSize: '0.8rem' }}
+                                placeholder="Nueva contraseña"
+                                value={resetPw[m.id]}
+                                onChange={e => setResetPw(p => ({ ...p, [m.id]: e.target.value }))}
+                                onKeyDown={e => e.key === 'Escape' && setResetPw(p => { const n = { ...p }; delete n[m.id]; return n; })}
+                              />
+                              <button className="btn btn-primary btn-sm" onClick={async () => {
+                                if (!resetPw[m.id]?.trim()) return;
+                                try {
+                                  await api.resetUserPassword(m.id, resetPw[m.id].trim());
+                                  setResetPw(p => { const n = { ...p }; delete n[m.id]; return n; });
+                                  notify(true, `✅ Password de "${m.username}" actualizado`);
+                                } catch (e) { notify(false, e.message); }
+                              }}>OK</button>
+                              <button className="btn btn-secondary btn-sm" onClick={() => setResetPw(p => { const n = { ...p }; delete n[m.id]; return n; })}>✕</button>
+                            </>
+                          ) : (
+                            <button className="btn-icon" title="Resetear contraseña" style={{ borderColor: '#ffaa0044', color: '#ffaa00' }}
+                              onClick={() => setResetPw(p => ({ ...p, [m.id]: '' }))}>🔑</button>
+                          )
+                        )}
+                        {isStrictAdmin && <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688' }} onClick={async () => { if (confirm(`¿Eliminar a ${m.username}?`)) { await api.deleteUser(m.id); loadAll(); } }}>🗑️</button>}
+                      </div>
+>>>>>>> Stashed changes
                     </td>
                   </tr>
                 ))}

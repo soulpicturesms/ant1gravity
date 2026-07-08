@@ -19,17 +19,29 @@ function easeOutQuint(t) {
   return 1 - Math.pow(1 - t, 5);
 }
 
+// Returns the [start, end) angle (in turns, 0..1) of each prize's segment, sized by weight
+function segmentRanges(prizes) {
+  const total = prizes.reduce((s, p) => s + (p.weight || 1), 0);
+  let acc = 0;
+  return prizes.map(p => {
+    const start = acc / total;
+    acc += (p.weight || 1);
+    return [start, acc / total];
+  });
+}
+
 function drawWheel(ctx, prizes, rot) {
   const n = prizes.length;
   if (n < 2) return;
-  const arc = (2 * Math.PI) / n;
   ctx.clearRect(0, 0, SIZE, SIZE);
   const rotRad = (rot * Math.PI) / 180;
+  const ranges = segmentRanges(prizes);
 
   for (let i = 0; i < n; i++) {
-    const start = rotRad + i * arc - Math.PI / 2;
-    const end = rotRad + (i + 1) * arc - Math.PI / 2;
-    const mid = rotRad + (i + 0.5) * arc - Math.PI / 2;
+    const [segStart, segEnd] = ranges[i];
+    const start = rotRad + segStart * 2 * Math.PI - Math.PI / 2;
+    const end = rotRad + segEnd * 2 * Math.PI - Math.PI / 2;
+    const mid = (start + end) / 2;
 
     ctx.beginPath();
     ctx.moveTo(CX, CY);
@@ -52,11 +64,12 @@ function drawWheel(ctx, prizes, rot) {
 
     const maxW = R * 0.54;
     ctx.font = 'bold 12px Rajdhani, sans-serif';
+    const name = prizes[i].name;
 
-    if (ctx.measureText(prizes[i]).width <= maxW) {
-      ctx.fillText(prizes[i], R - 14, 0);
+    if (ctx.measureText(name).width <= maxW) {
+      ctx.fillText(name, R - 14, 0);
     } else {
-      const words = prizes[i].split(' ');
+      const words = name.split(' ');
       const half = Math.ceil(words.length / 2);
       ctx.font = 'bold 10px Rajdhani, sans-serif';
       ctx.fillText(words.slice(0, half).join(' '), R - 14, -6);
@@ -130,10 +143,18 @@ export default function Ruleta() {
     setWinner(null);
     setShowWinner(false);
 
-    const n = prizes.length;
-    const winIndex = Math.floor(Math.random() * n);
-    const segDeg = 360 / n;
-    const normalizedTarget = ((-(winIndex + 0.5) * segDeg) % 360 + 360) % 360;
+    const ranges = segmentRanges(prizes);
+    const totalWeight = prizes.reduce((s, p) => s + (p.weight || 1), 0);
+    let pick = Math.random() * totalWeight;
+    let winIndex = 0;
+    for (let i = 0; i < prizes.length; i++) {
+      pick -= (prizes[i].weight || 1);
+      if (pick <= 0) { winIndex = i; break; }
+      winIndex = i;
+    }
+    const [segStart, segEnd] = ranges[winIndex];
+    const midTurns = (segStart + segEnd) / 2;
+    const normalizedTarget = ((-midTurns * 360) % 360 + 360) % 360;
     const currentNorm = ((rotRef.current % 360) + 360) % 360;
     let delta = (normalizedTarget - currentNorm + 360) % 360;
     if (delta < 20) delta += 360;
@@ -157,7 +178,7 @@ export default function Ruleta() {
         rotRef.current = totalTarget;
         drawWheel(ctx, currentPrizes, totalTarget);
         setSpinning(false);
-        setWinner(currentPrizes[winIndex]);
+        setWinner(currentPrizes[winIndex].name);
         setShowWinner(true);
       }
     };
@@ -168,7 +189,7 @@ export default function Ruleta() {
   const addPrize = async () => {
     const name = newPrize.trim();
     if (!name) return;
-    const updated = [...prizes, name];
+    const updated = [...prizes, { name, weight: 1 }];
     setSaving(true);
     try {
       await api.setRuletaPrizes(updated);
@@ -198,6 +219,25 @@ export default function Ruleta() {
     setSaving(false);
     setTimeout(() => setEditMsg(''), 3000);
   };
+
+  const commitWeight = async (index, rawValue) => {
+    const weight = Math.max(0.01, Number(rawValue) || 1);
+    if (weight === prizes[index].weight) return;
+    const updated = prizes.map((p, i) => (i === index ? { ...p, weight } : p));
+    setSaving(true);
+    try {
+      await api.setRuletaPrizes(updated);
+      setPrizes(updated);
+      prizesRef.current = updated;
+      setEditMsg('Probabilidad actualizada');
+    } catch (e) {
+      setEditMsg(e.message);
+    }
+    setSaving(false);
+    setTimeout(() => setEditMsg(''), 3000);
+  };
+
+  const totalWeight = prizes.reduce((s, p) => s + (p.weight || 1), 0);
 
   if (loading) return <div className="loading"><div className="spinner"></div> Cargando ruleta...</div>;
 
@@ -323,9 +363,10 @@ export default function Ruleta() {
         {/* Prizes list */}
         <div className="card" style={{ width: '100%', maxWidth: 520 }}>
           <div className="card-title" style={{ marginBottom: 14 }}>Premios disponibles ({prizes.length})</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {prizes.map((p, i) => {
-              const isWinner = showWinner && winner === p;
+              const isWinner = showWinner && winner === p.name;
+              const pct = totalWeight > 0 ? ((p.weight || 1) / totalWeight) * 100 : 0;
               return (
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
@@ -343,8 +384,30 @@ export default function Ruleta() {
                     fontFamily: 'Rajdhani', fontWeight: isWinner ? 700 : 500,
                     fontSize: '0.88rem', color: isWinner ? '#00d4ff' : '#9090b0',
                     flex: 1, transition: 'color 0.4s',
-                  }}>{p}</span>
+                  }}>{p.name}</span>
                   {isWinner && <span style={{ fontSize: '0.75rem' }}>🏆</span>}
+                  <span style={{
+                    fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.8rem',
+                    color: '#4a8a9a', minWidth: 46, textAlign: 'right', flexShrink: 0,
+                  }}>{pct.toFixed(1)}%</span>
+                  {isAdmin && !spinning && (
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      defaultValue={p.weight || 1}
+                      title="Peso (a mayor peso, mayor probabilidad)"
+                      disabled={saving}
+                      onBlur={e => commitWeight(i, e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && e.target.blur()}
+                      style={{
+                        width: 56, background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid #2a2a40', borderRadius: 4,
+                        color: '#9090b0', fontSize: '0.78rem', padding: '3px 6px',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
                   {isAdmin && !spinning && (
                     <button
                       onClick={() => removePrize(i)}
@@ -364,6 +427,12 @@ export default function Ruleta() {
               );
             })}
           </div>
+          {isAdmin && (
+            <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#4a4a6a', lineHeight: 1.6 }}>
+              El número junto a cada premio es su <b style={{ color: '#6a6a8a' }}>peso</b>: a mayor peso, más probable que salga.
+              Un peso de 1 = probabilidad base; 0.5 = la mitad de probable; 2 = el doble. El % se recalcula solo.
+            </div>
+          )}
         </div>
 
         {/* Admin: add prize */}
