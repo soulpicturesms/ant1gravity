@@ -10,10 +10,10 @@ function StatusBadge({ status }) {
   const map = {
     open:      { label: '🟢 Abierta', color: '#00cc66' },
     locked:    { label: '🔒 Cerrada', color: '#ffaa00' },
-    resolved:  { label: '✅ Resuelta', color: '#00d4ff' },
+    resolved:  { label: '✅ Resuelta', color: '#ff7a1a' },
     cancelled: { label: '❌ Cancelada', color: '#ff4466' },
   };
-  const s = map[status] || { label: status, color: '#6a6a8a' };
+  const s = map[status] || { label: status, color: '#8a8a8a' };
   return (
     <span style={{ fontSize: '0.75rem', padding: '2px 10px', borderRadius: 20, background: s.color + '22', color: s.color, border: `1px solid ${s.color}44`, fontFamily: 'Rajdhani', fontWeight: 700 }}>
       {s.label}
@@ -24,23 +24,23 @@ function StatusBadge({ status }) {
 function EventCard({ event, onOpen }) {
   const total = (event.options || []).reduce((s, o) => s + (event.totals?.[o.id] || 0), 0);
   return (
-    <div className="card" style={{ cursor: 'pointer', transition: 'border 0.2s', border: '1px solid #1e1e30' }}
+    <div className="card" style={{ cursor: 'pointer', transition: 'border 0.2s', border: '1px solid #2a2a2a' }}
       onClick={() => onOpen(event.id)}
-      onMouseEnter={e => e.currentTarget.style.borderColor = '#00d4ff44'}
-      onMouseLeave={e => e.currentTarget.style.borderColor = '#1e1e30'}>
+      onMouseEnter={e => e.currentTarget.style.borderColor = '#ff7a1a44'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = '#2a2a2a'}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
         <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.15rem', color: 'white', flex: 1 }}>{event.title}</div>
         <StatusBadge status={event.status} />
       </div>
-      {event.description && <p style={{ fontSize: '0.88rem', color: '#9090b0', marginBottom: 12 }}>{event.description}</p>}
+      {event.description && <p style={{ fontSize: '0.88rem', color: '#b0b0b0', marginBottom: 12 }}>{event.description}</p>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {(event.options || []).map(opt => (
-          <div key={opt.id} style={{ padding: '5px 14px', borderRadius: 6, background: 'rgba(0,212,255,0.07)', border: '1px solid rgba(0,212,255,0.2)', fontSize: '0.85rem', fontFamily: 'Rajdhani', fontWeight: 600, color: '#e0e0f0' }}>
+          <div key={opt.id} style={{ padding: '5px 14px', borderRadius: 6, background: 'rgba(255, 122, 26,0.07)', border: '1px solid rgba(255, 122, 26,0.2)', fontSize: '0.85rem', fontFamily: 'Rajdhani', fontWeight: 600, color: '#ededed' }}>
             {opt.label}
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#4a4a6a', display: 'flex', gap: 16 }}>
+      <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#5c5c5c', display: 'flex', gap: 16 }}>
         <span>💰 Bote: <strong style={{ color: '#ffd700' }}>{total.toLocaleString('es-AR')}</strong></span>
         <span>📅 {fmtDate(event.created_at)}</span>
       </div>
@@ -106,10 +106,10 @@ function EventModal({ eventId, onClose, onRefresh }) {
             <h2 style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: 'white', marginBottom: 6 }}>{event.title}</h2>
             <StatusBadge status={event.status} />
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6a6a8a', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#8a8a8a', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
         </div>
 
-        {event.description && <p style={{ color: '#9090b0', fontSize: '0.9rem', marginBottom: 16 }}>{event.description}</p>}
+        {event.description && <p style={{ color: '#b0b0b0', fontSize: '0.9rem', marginBottom: 16 }}>{event.description}</p>}
 
         {err && <div className="alert alert-error" style={{ marginBottom: 12 }}>{err}</div>}
         {msg && <div className="alert alert-success" style={{ marginBottom: 12 }}>{msg}</div>}
@@ -125,9 +125,9 @@ function EventModal({ eventId, onClose, onRefresh }) {
               <div key={opt.id}
                 onClick={() => canBet && setSelectedOpt(opt.id)}
                 style={{
-                  border: `2px solid ${isWinner ? '#ffd700' : myPick ? '#00cc66' : selectedOpt === opt.id ? '#00d4ff' : '#1e1e30'}`,
+                  border: `2px solid ${isWinner ? '#ffd700' : myPick ? '#00cc66' : selectedOpt === opt.id ? '#ff7a1a' : '#2a2a2a'}`,
                   borderRadius: 10, padding: '10px 14px', cursor: canBet ? 'pointer' : 'default',
-                  background: isWinner ? 'rgba(255,215,0,0.06)' : myPick ? 'rgba(0,204,102,0.06)' : selectedOpt === opt.id ? 'rgba(0,212,255,0.06)' : 'rgba(255,255,255,0.02)',
+                  background: isWinner ? 'rgba(255,215,0,0.06)' : myPick ? 'rgba(0,204,102,0.06)' : selectedOpt === opt.id ? 'rgba(255, 122, 26,0.06)' : 'rgba(255,255,255,0.02)',
                   transition: 'all 0.15s',
                 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -138,15 +138,15 @@ function EventModal({ eventId, onClose, onRefresh }) {
                     {optTotal.toLocaleString('es-AR')} tokens · {pct.toFixed(1)}%
                   </span>
                 </div>
-                <div style={{ height: 6, background: '#1a1a28', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: isWinner ? '#ffd700' : '#00d4ff', borderRadius: 3, transition: 'width 0.5s' }} />
+                <div style={{ height: 6, background: '#1c1c1c', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: isWinner ? '#ffd700' : '#ff7a1a', borderRadius: 3, transition: 'width 0.5s' }} />
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, fontSize: '0.88rem', color: '#6a6a8a' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, fontSize: '0.88rem', color: '#8a8a8a' }}>
           <span>💰 Bote total: <strong style={{ color: '#ffd700' }}>{totalPot.toLocaleString('es-AR')} tokens</strong></span>
           <span>👥 {(event.entries || []).length} apuestas</span>
         </div>
@@ -155,7 +155,7 @@ function EventModal({ eventId, onClose, onRefresh }) {
         {myBet && (
           <div style={{ background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.3)', borderRadius: 8, padding: '10px 16px', marginBottom: 16, fontSize: '0.88rem' }}>
             <div style={{ color: '#00cc66', fontFamily: 'Rajdhani', fontWeight: 700 }}>Tu apuesta:</div>
-            <div style={{ color: '#e0e0f0', marginTop: 4 }}>
+            <div style={{ color: '#ededed', marginTop: 4 }}>
               {event.options.find(o => o.id === myBet.option_id)?.label} — <strong>{myBet.amount.toLocaleString('es-AR')} tokens</strong>
               {myBet.won !== null && myBet.won !== undefined && (
                 <span style={{ marginLeft: 10, color: myBet.won ? '#ffd700' : '#ff4466' }}>
@@ -168,8 +168,8 @@ function EventModal({ eventId, onClose, onRefresh }) {
 
         {/* Place bet form */}
         {canBet && (
-          <div style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid #1e1e30', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#00d4ff', marginBottom: 10 }}>
+          <div style={{ background: 'rgba(255, 122, 26,0.04)', border: '1px solid #2a2a2a', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#ff7a1a', marginBottom: 10 }}>
               Apostá tus tokens
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -182,15 +182,15 @@ function EventModal({ eventId, onClose, onRefresh }) {
                 {placing ? '...' : '🎲 Apostar'}
               </button>
             </div>
-            {selectedOpt && <div style={{ marginTop: 6, fontSize: '0.8rem', color: '#6a6a8a' }}>
-              Apostando a: <strong style={{ color: '#e0e0f0' }}>{event.options.find(o => o.id === selectedOpt)?.label}</strong>
+            {selectedOpt && <div style={{ marginTop: 6, fontSize: '0.8rem', color: '#8a8a8a' }}>
+              Apostando a: <strong style={{ color: '#ededed' }}>{event.options.find(o => o.id === selectedOpt)?.label}</strong>
             </div>}
           </div>
         )}
 
         {/* Admin controls */}
         {isAdmin && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid #1e1e30' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid #2a2a2a' }}>
             {event.status === 'open' && (
               <button className="btn btn-secondary btn-sm" onClick={() => adminAction('lockBets')}>🔒 Cerrar apuestas</button>
             )}
@@ -236,14 +236,14 @@ function CreateEventForm({ onCreated }) {
   };
 
   return (
-    <div className="card" style={{ border: '1px solid rgba(0,212,255,0.2)' }}>
+    <div className="card" style={{ border: '1px solid rgba(255, 122, 26,0.2)' }}>
       <div className="card-title" style={{ marginBottom: 16 }}>➕ Crear Apuesta</div>
       {err && <div className="alert alert-error" style={{ marginBottom: 12 }}>{err}</div>}
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <input className="input" placeholder="Título (ej: Argentina vs Brasil)" value={title} onChange={e => setTitle(e.target.value)} required />
         <textarea className="input" placeholder="Descripción opcional..." value={desc} onChange={e => setDesc(e.target.value)} rows={2} style={{ resize: 'vertical' }} />
         <div>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem', color: '#9090b0', marginBottom: 8 }}>Opciones</div>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem', color: '#b0b0b0', marginBottom: 8 }}>Opciones</div>
           {opts.map((o, i) => (
             <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
               <input className="input" placeholder={`Opción ${i + 1}`} value={o} onChange={e => { const n = [...opts]; n[i] = e.target.value; setOpts(n); }} style={{ flex: 1 }} />
@@ -297,9 +297,9 @@ export default function Apuestas() {
               <button key={v} onClick={() => setFilter(v)} style={{
                 padding: '6px 16px', borderRadius: 6, cursor: 'pointer',
                 fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem',
-                border: `1px solid ${filter === v ? '#00d4ff66' : '#1e1e30'}`,
-                background: filter === v ? 'rgba(0,212,255,0.1)' : 'transparent',
-                color: filter === v ? '#00d4ff' : '#6a6a8a',
+                border: `1px solid ${filter === v ? '#ff7a1a66' : '#2a2a2a'}`,
+                background: filter === v ? 'rgba(255, 122, 26,0.1)' : 'transparent',
+                color: filter === v ? '#ff7a1a' : '#8a8a8a',
               }}>{l}</button>
             ))}
           </div>

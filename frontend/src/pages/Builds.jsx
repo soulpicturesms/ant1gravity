@@ -69,11 +69,11 @@ function buildLabel(i, total) {
 
 const CAT_COLORS = {
   ZVZ: '#ff3355', PVP: '#ff7700', AVALON: '#aa44ff',
-  DUNGEON: '#4488ff', HCE: '#00d4ff', GATHERING: '#88cc44', OTROS: '#6a6a8a',
+  DUNGEON: '#4488ff', HCE: '#ff7a1a', GATHERING: '#88cc44', OTROS: '#8a8a8a',
 };
 
 function roleColor(key) {
-  return ROLES.find(r => r.key === key)?.color || '#6a6a8a';
+  return ROLES.find(r => r.key === key)?.color || '#8a8a8a';
 }
 
 /* ── ITEM ICON ── */
@@ -85,7 +85,7 @@ function ItemIcon({ code, size = 40, empty = true }) {
     return <div style={{ width: size, height: size, background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 5, flexShrink: 0 }} />;
   }
   return (
-    <div style={{ width: size, height: size, borderRadius: 5, overflow: 'hidden', background: '#0a0a14', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: 5, overflow: 'hidden', background: '#0c0c0c', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
       {ok
         ? <img src={`${RENDER}/${code}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setOk(false)} />
         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.2, fontSize: size * 0.35 }}>?</div>
@@ -146,15 +146,15 @@ function ItemIconWithSpells({ code, spells: storedSpells, size = 56, label }) {
           top: tipPos.top - 8,
           left: tipPos.centerX,
           transform: 'translate(-50%, -100%)',
-          background: '#0d0d1a', border: '1px solid #2a2a40',
+          background: '#0d0d1a', border: '1px solid #333333',
           borderRadius: 10, padding: '10px 14px', zIndex: 9999,
           boxShadow: '0 8px 40px rgba(0,0,0,0.9)',
           minWidth: 160, pointerEvents: 'none',
         }}>
-          <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+          <div style={{ fontSize: '0.6rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
             {label}
           </div>
-          {loading && <div style={{ fontSize: '0.7rem', color: '#3a3a5a' }}>···</div>}
+          {loading && <div style={{ fontSize: '0.7rem', color: '#444444' }}>···</div>}
           {hasSpells && <SpellRow spells={spells} size={42} gap={6} />}
         </div>,
         document.body
@@ -191,13 +191,13 @@ function BuildRow({ variant, sharedItems, size = 36 }) {
 /* ── CONTENT CARD ── */
 function ContentCard({ content, onClick }) {
   const cat = content.category;
-  const accent = CAT_COLORS[cat] || '#6a6a8a';
+  const accent = CAT_COLORS[cat] || '#8a8a8a';
   return (
     <div
       onClick={onClick}
       style={{
         background: '#0d0d1a',
-        border: `1px solid #1e1e30`,
+        border: `1px solid #2a2a2a`,
         borderTop: `3px solid ${accent}`,
         borderRadius: 10,
         padding: '14px 16px',
@@ -205,7 +205,7 @@ function ContentCard({ content, onClick }) {
         transition: 'all 0.15s',
       }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = accent + '66'; e.currentTarget.style.background = '#10101e'; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = '#1e1e30'; e.currentTarget.style.background = '#0d0d1a'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.background = '#0d0d1a'; }}
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -214,7 +214,7 @@ function ContentCard({ content, onClick }) {
             {content.name}
           </div>
           {content.description && (
-            <div style={{ fontSize: '0.72rem', color: '#5a5a7a', marginTop: 2, lineHeight: 1.4 }}>{content.description}</div>
+            <div style={{ fontSize: '0.72rem', color: '#6e6e6e', marginTop: 2, lineHeight: 1.4 }}>{content.description}</div>
           )}
         </div>
         <div style={{
@@ -231,12 +231,12 @@ function ContentCard({ content, onClick }) {
           <BuildRow key={v.id} variant={v} sharedItems={content.shared_items} size={34} />
         ))}
         {(!content.variants || content.variants.length === 0) && (
-          <div style={{ fontSize: '0.72rem', color: '#3a3a5a', padding: '8px 0' }}>Sin builds configuradas</div>
+          <div style={{ fontSize: '0.72rem', color: '#444444', padding: '8px 0' }}>Sin builds configuradas</div>
         )}
       </div>
 
       {/* Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTop: '1px solid #1a1a28' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTop: '1px solid #1c1c1c' }}>
         <div style={{ display: 'flex', gap: 5 }}>
           {content.variants?.map(v => (
             <div key={v.id} style={{
@@ -246,7 +246,7 @@ function ContentCard({ content, onClick }) {
             }}>{v.role}</div>
           ))}
         </div>
-        <div style={{ fontSize: '0.65rem', color: '#3a3a5a' }}>
+        <div style={{ fontSize: '0.65rem', color: '#444444' }}>
           {content.author_name && `por ${content.author_name}`}
         </div>
       </div>
@@ -322,18 +322,18 @@ function BuildDetail({ variant, sharedItems }) {
             <button key={i} onClick={() => setBuildIdx(i)} style={{
               padding: '5px 14px', borderRadius: 6, cursor: 'pointer',
               fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem',
-              border: `1px solid ${active ? col : '#2a2a3a'}`,
+              border: `1px solid ${active ? col : '#303030'}`,
               background: active ? col + '22' : 'transparent',
-              color: active ? col : '#5a5a7a', transition: 'all 0.15s',
+              color: active ? col : '#6e6e6e', transition: 'all 0.15s',
             }}>{lbl}</button>
           );
         })}
         <button onClick={togglePrices} style={{
           marginLeft: 'auto', padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
           fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
-          border: `1px solid ${prices !== null ? '#ffaa0055' : '#2a2a3a'}`,
+          border: `1px solid ${prices !== null ? '#ffaa0055' : '#303030'}`,
           background: prices !== null ? 'rgba(255,170,0,0.1)' : 'transparent',
-          color: prices !== null ? '#ffaa00' : '#5a5a7a', transition: 'all 0.15s',
+          color: prices !== null ? '#ffaa00' : '#6e6e6e', transition: 'all 0.15s',
           display: 'flex', alignItems: 'center', gap: 5,
         }}>
           {priceLoading ? '⏳ Consultando...' : prices !== null ? '💰 Ocultar precio' : '💰 Ver precio estimado'}
@@ -348,9 +348,9 @@ function BuildDetail({ variant, sharedItems }) {
               const p = prices[item.code];
               return (
                 <div key={item.code} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.72rem' }}>
-                  <span style={{ color: '#5a5a7a', minWidth: 70, fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6rem' }}>{item.label}</span>
-                  <span style={{ color: '#9090b0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.code}</span>
-                  <span style={{ color: p ? '#ffcc44' : '#3a3a5a', fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0 }}>
+                  <span style={{ color: '#6e6e6e', minWidth: 70, fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.6rem' }}>{item.label}</span>
+                  <span style={{ color: '#b0b0b0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.code}</span>
+                  <span style={{ color: p ? '#ffcc44' : '#444444', fontFamily: 'Rajdhani', fontWeight: 700, flexShrink: 0 }}>
                     {p ? `${formatSilver(p.price)} 🪙` : 'Sin datos'}
                   </span>
                 </div>
@@ -358,7 +358,7 @@ function BuildDetail({ variant, sharedItems }) {
             })}
           </div>
           <div style={{ borderTop: '1px solid rgba(255,170,0,0.15)', paddingTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.6rem', color: '#4a4a6a' }}>Precio mínimo de venta · Albion Online Data Project</span>
+            <span style={{ fontSize: '0.6rem', color: '#5c5c5c' }}>Precio mínimo de venta · Albion Online Data Project</span>
             <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#ffaa00' }}>
               ~{formatSilver(total)} plata
             </span>
@@ -370,30 +370,30 @@ function BuildDetail({ variant, sharedItems }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
         {GEAR_SLOTS.map(s => (
           <div key={s.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-            <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
+            <div style={{ fontSize: '0.6rem', color: '#5c5c5c', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
             <ItemIconWithSpells
               code={eq[s.key]?.code}
               spells={eq[s.key]?.spells}
               label={eq[s.key]?.name || s.label}
               size={56}
             />
-            {eq[s.key]?.name && <div style={{ fontSize: '0.65rem', color: '#9090b0', textAlign: 'center', lineHeight: 1.2 }}>{eq[s.key].name}</div>}
-            {eq[s.key]?.code && <div style={{ fontSize: '0.55rem', color: '#3a3a5a', fontFamily: 'monospace' }}>{eq[s.key].code}</div>}
+            {eq[s.key]?.name && <div style={{ fontSize: '0.65rem', color: '#b0b0b0', textAlign: 'center', lineHeight: 1.2 }}>{eq[s.key].name}</div>}
+            {eq[s.key]?.code && <div style={{ fontSize: '0.55rem', color: '#444444', fontFamily: 'monospace' }}>{eq[s.key].code}</div>}
           </div>
         ))}
       </div>
 
       {/* Shared items — each slot may have multiple options */}
       {allSharedItems.length > 0 && (
-        <div style={{ borderTop: '1px solid #1a1a28', paddingTop: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Compartido</div>
+        <div style={{ borderTop: '1px solid #1c1c1c', paddingTop: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: '0.6rem', color: '#5c5c5c', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Compartido</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {SHARED_SLOTS.map(s => {
               const items = sharedSlotItems(sharedItems, s.key);
               if (!items.length) return null;
               return (
                 <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ fontSize: '0.55rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', minWidth: 60 }}>{s.label}</div>
+                  <div style={{ fontSize: '0.55rem', color: '#5c5c5c', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', minWidth: 60 }}>{s.label}</div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {items.map((it, i) => (
                       <ItemIcon key={`${it.code}-${i}`} code={it.code} size={40} />
@@ -412,7 +412,7 @@ function BuildDetail({ variant, sharedItems }) {
 /* ── CONTENT MODAL (role picker → build detail) ── */
 function ContentModal({ content, onClose, onEdit, isAdmin }) {
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const col = CAT_COLORS[content.category] || '#6a6a8a';
+  const col = CAT_COLORS[content.category] || '#8a8a8a';
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -423,24 +423,24 @@ function ContentModal({ content, onClose, onEdit, isAdmin }) {
         boxShadow: '0 0 60px rgba(0,0,0,0.6)',
       }}>
         {/* Header */}
-        <div style={{ padding: '16px 22px', borderBottom: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div style={{ padding: '16px 22px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: 'white', letterSpacing: '0.05em' }}>{content.name}</span>
               <span style={{ background: col + '22', border: `1px solid ${col}44`, borderRadius: 5, padding: '1px 8px', fontSize: '0.65rem', fontFamily: 'Rajdhani', fontWeight: 700, color: col }}>{content.category}</span>
             </div>
-            {content.description && <div style={{ fontSize: '0.75rem', color: '#5a5a7a', marginTop: 3 }}>{content.description}</div>}
+            {content.description && <div style={{ fontSize: '0.75rem', color: '#6e6e6e', marginTop: 3 }}>{content.description}</div>}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {isAdmin && <button onClick={onEdit} style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)', color: '#00d4ff', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem' }}>Editar</button>}
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
+            {isAdmin && <button onClick={onEdit} style={{ background: 'rgba(255, 122, 26,0.1)', border: '1px solid rgba(255, 122, 26,0.2)', color: '#ff7a1a', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem' }}>Editar</button>}
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8a8a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
           </div>
         </div>
 
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
           {/* Left: role selector */}
-          <div style={{ width: 160, flexShrink: 0, borderRight: '1px solid #1a1a28', padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
-            <div style={{ fontSize: '0.6rem', color: '#3a3a5a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, paddingLeft: 4 }}>Seleccionar Rol</div>
+          <div style={{ width: 160, flexShrink: 0, borderRight: '1px solid #1c1c1c', padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto' }}>
+            <div style={{ fontSize: '0.6rem', color: '#444444', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, paddingLeft: 4 }}>Seleccionar Rol</div>
             {content.variants?.map(v => {
               const c = roleColor(v.role);
               const active = selectedVariant?.id === v.id;
@@ -448,9 +448,9 @@ function ContentModal({ content, onClose, onEdit, isAdmin }) {
                 <button key={v.id} onClick={() => setSelectedVariant(v)} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-                  border: `1px solid ${active ? c + '66' : '#1e1e30'}`,
+                  border: `1px solid ${active ? c + '66' : '#2a2a2a'}`,
                   background: active ? c + '18' : 'transparent',
-                  color: active ? c : '#6a6a8a',
+                  color: active ? c : '#8a8a8a',
                   fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem',
                   transition: 'all 0.12s', textAlign: 'left', width: '100%',
                 }}>
@@ -465,7 +465,7 @@ function ContentModal({ content, onClose, onEdit, isAdmin }) {
           {/* Right: build detail */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
             {!selectedVariant ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 10, color: '#3a3a5a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 10, color: '#444444' }}>
                 <div style={{ fontSize: '2rem' }}>←</div>
                 <div style={{ fontFamily: 'Rajdhani', fontSize: '0.9rem' }}>Seleccioná un rol</div>
               </div>
@@ -490,26 +490,26 @@ function SlotButton({ slotKey, label, value, onChange, compact = false }) {
   const size = compact ? 40 : 48;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-      <div style={{ fontSize: '0.55rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
+      <div style={{ fontSize: '0.55rem', color: '#5c5c5c', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
       <div style={{ position: 'relative' }}>
         <div
           onClick={() => onChange(slotKey)}
           style={{
             width: size, height: size, borderRadius: 7, overflow: 'hidden', cursor: 'pointer',
-            background: value?.code ? '#0a0a14' : 'rgba(255,255,255,0.03)',
-            border: `1px ${value?.code ? 'solid rgba(0,212,255,0.3)' : 'dashed rgba(255,255,255,0.1)'}`,
+            background: value?.code ? '#0c0c0c' : 'rgba(255,255,255,0.03)',
+            border: `1px ${value?.code ? 'solid rgba(255, 122, 26,0.3)' : 'dashed rgba(255,255,255,0.1)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
           {value?.code
             ? <img src={`${RENDER}/${value.code}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => e.target.style.display = 'none'} />
-            : <span style={{ color: '#2a2a3a', fontSize: size * 0.35 }}>+</span>
+            : <span style={{ color: '#303030', fontSize: size * 0.35 }}>+</span>
           }
         </div>
         {value?.code && (
           <div
             onClick={e => { e.stopPropagation(); onChange(slotKey, true); }}
-            style={{ position: 'absolute', top: -5, right: -5, width: 14, height: 14, borderRadius: '50%', background: '#1a1a2a', border: '1px solid #3a3a5a', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.55rem', color: '#6a6a8a' }}
+            style={{ position: 'absolute', top: -5, right: -5, width: 14, height: 14, borderRadius: '50%', background: '#1e1e1e', border: '1px solid #444444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.55rem', color: '#8a8a8a' }}
           >✕</div>
         )}
       </div>
@@ -538,7 +538,7 @@ function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPick
   };
 
   return (
-    <div style={{ background: '#0a0a14', border: `1px solid ${col}33`, borderRadius: 10, padding: '14px 16px', position: 'relative' }}>
+    <div style={{ background: '#0c0c0c', border: `1px solid ${col}33`, borderRadius: 10, padding: '14px 16px', position: 'relative' }}>
       {/* Role + controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <select
@@ -551,17 +551,17 @@ function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPick
         </select>
         {!customRoles.includes(variant.role) && (
           <input value={variant.role} onChange={e => onUpdate(index, { ...variant, role: e.target.value })}
-            placeholder="Nombre del rol" style={{ background: '#0f0f1e', border: '1px solid #2a2a3a', borderRadius: 6, padding: '5px 10px', color: '#e0e0f0', fontSize: '0.85rem', width: 120 }} />
+            placeholder="Nombre del rol" style={{ background: '#0f0f1e', border: '1px solid #303030', borderRadius: 6, padding: '5px 10px', color: '#ededed', fontSize: '0.85rem', width: 120 }} />
         )}
-        <button onClick={() => onDuplicate(index)} title="Duplicar rol" style={{ marginLeft: 'auto', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.15)', borderRadius: 6, color: '#00d4ff88', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>⧉ Duplicar rol</button>
+        <button onClick={() => onDuplicate(index)} title="Duplicar rol" style={{ marginLeft: 'auto', background: 'rgba(255, 122, 26,0.08)', border: '1px solid rgba(255, 122, 26,0.15)', borderRadius: 6, color: '#ff7a1a88', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>⧉ Duplicar rol</button>
         <button onClick={() => onRemove(index)} style={{ background: 'rgba(255,50,50,0.08)', border: '1px solid rgba(255,50,50,0.15)', borderRadius: 6, color: '#ff5555aa', cursor: 'pointer', padding: '4px 8px', fontSize: '0.75rem' }}>✕</button>
       </div>
 
       {/* N builds, each with its own gear set */}
       {equipments.map((build, bi) => (
-        <div key={bi} style={{ marginBottom: 12, paddingTop: bi === 0 ? 0 : 10, borderTop: bi === 0 ? 'none' : '1px solid #1a1a28' }}>
+        <div key={bi} style={{ marginBottom: 12, paddingTop: bi === 0 ? 0 : 10, borderTop: bi === 0 ? 'none' : '1px solid #1c1c1c' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div style={{ fontSize: '0.6rem', color: bi === 0 ? '#4a4a6a' : '#ff8c0088', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            <div style={{ fontSize: '0.6rem', color: bi === 0 ? '#5c5c5c' : '#ff8c0088', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               {bi === 0 ? 'Build Principal' : `Build Alternativa ${bi}`}
             </div>
             {equipments.length > 1 && (
@@ -585,8 +585,8 @@ function VariantEditor({ variant, index, onUpdate, onRemove, onDuplicate, onPick
       {/* Add build button */}
       <button onClick={addBuild} style={{
         marginTop: 4, padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
-        background: 'rgba(0,212,255,0.05)', border: '1px dashed rgba(0,212,255,0.25)',
-        color: '#00d4ffaa', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.75rem',
+        background: 'rgba(255, 122, 26,0.05)', border: '1px dashed rgba(255, 122, 26,0.25)',
+        color: '#ff7a1aaa', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.75rem',
       }}>+ Agregar otra build</button>
     </div>
   );
@@ -681,11 +681,11 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
         boxShadow: '0 0 80px rgba(0,0,0,0.7)',
       }}>
         {/* Header */}
-        <div style={{ padding: '16px 22px', borderBottom: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div style={{ padding: '16px 22px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: 'white', letterSpacing: '0.05em', flex: 1 }}>
             {isEdit ? 'Editar Contenido' : isAdmin ? 'Nuevo Contenido' : 'Proponer Build'}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8a8a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
         </div>
 
         {/* Body */}
@@ -694,33 +694,33 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
           {/* Meta */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Nombre</div>
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Hellgate 5v5 — Marzo" style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3a', borderRadius: 7, padding: '8px 12px', color: '#e0e0f0', fontSize: '0.9rem' }} />
+              <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Nombre</div>
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Ej: Hellgate 5v5 — Marzo" style={{ width: '100%', background: '#0c0c0c', border: '1px solid #303030', borderRadius: 7, padding: '8px 12px', color: '#ededed', fontSize: '0.9rem' }} />
             </div>
             <div style={{ width: 140 }}>
-              <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Categoría</div>
-              <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3a', borderRadius: 7, padding: '8px 12px', color: '#e0e0f0', fontSize: '0.85rem', cursor: 'pointer' }}>
+              <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Categoría</div>
+              <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', background: '#0c0c0c', border: '1px solid #303030', borderRadius: 7, padding: '8px 12px', color: '#ededed', fontSize: '0.85rem', cursor: 'pointer' }}>
                 {CATEGORIES.filter(c => c !== 'Todas').map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
 
           <div style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Descripción (opcional)</div>
-            <input value={description} onChange={e => setDesc(e.target.value)} placeholder="Notas sobre el contenido..." style={{ width: '100%', background: '#0a0a14', border: '1px solid #2a2a3a', borderRadius: 7, padding: '8px 12px', color: '#e0e0f0', fontSize: '0.85rem' }} />
+            <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Descripción (opcional)</div>
+            <input value={description} onChange={e => setDesc(e.target.value)} placeholder="Notas sobre el contenido..." style={{ width: '100%', background: '#0c0c0c', border: '1px solid #303030', borderRadius: 7, padding: '8px 12px', color: '#ededed', fontSize: '0.85rem' }} />
           </div>
 
           {/* Shared items — multiple per slot */}
           <div style={{ marginBottom: 22 }}>
-            <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
-              Items Compartidos — todas las builds <span style={{ color: '#3a3a5a' }}>(podés agregar varios)</span>
+            <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+              Items Compartidos — todas las builds <span style={{ color: '#444444' }}>(podés agregar varios)</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {SHARED_SLOTS.map(s => {
                 const items = sharedItems[s.key] || [];
                 return (
                   <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 68, fontSize: '0.6rem', color: '#4a4a6a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+                    <div style={{ width: 68, fontSize: '0.6rem', color: '#5c5c5c', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', flex: 1 }}>
                       {items.map((it, i) => (
                         <SlotButton
@@ -739,9 +739,9 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
                         onClick={() => setPicker({ target: 'shared', slot: s.key })}
                         style={{
                           width: 44, height: 44, borderRadius: 7, cursor: 'pointer',
-                          background: 'rgba(0,212,255,0.05)',
-                          border: '1px dashed rgba(0,212,255,0.25)',
-                          color: '#00d4ff77', fontSize: '1.1rem',
+                          background: 'rgba(255, 122, 26,0.05)',
+                          border: '1px dashed rgba(255, 122, 26,0.25)',
+                          color: '#ff7a1a77', fontSize: '1.1rem',
                         }}
                       >+</button>
                     </div>
@@ -753,8 +753,8 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
 
           {/* Variants */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Builds por Rol</div>
-            <button onClick={addVariant} style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.2)', borderRadius: 6, color: '#00d4ff', cursor: 'pointer', padding: '5px 12px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem' }}>+ Agregar Rol</button>
+            <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Builds por Rol</div>
+            <button onClick={addVariant} style={{ background: 'rgba(255, 122, 26,0.1)', border: '1px solid rgba(255, 122, 26,0.2)', borderRadius: 6, color: '#ff7a1a', cursor: 'pointer', padding: '5px 12px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem' }}>+ Agregar Rol</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {variants.map((v, i) => (
@@ -770,18 +770,18 @@ function ContentCreator({ initial, onSave, onDelete, onClose, isAdmin }) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 22px', borderTop: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+        <div style={{ padding: '14px 22px', borderTop: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
           {isEdit && isAdmin && (
             <button onClick={onDelete} style={{ background: 'rgba(255,50,50,0.1)', border: '1px solid rgba(255,50,50,0.2)', borderRadius: 7, color: '#ff5555', cursor: 'pointer', padding: '8px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem' }}>Eliminar</button>
           )}
           {!isAdmin && !isEdit && (
-            <div style={{ fontSize: '0.75rem', color: '#6a6a8a', fontFamily: 'Rajdhani' }}>
+            <div style={{ fontSize: '0.75rem', color: '#8a8a8a', fontFamily: 'Rajdhani' }}>
               ⏳ Tu build será revisada por un admin antes de publicarse
             </div>
           )}
           <div style={{ flex: 1 }} />
-          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #2a2a3a', borderRadius: 7, color: '#6a6a8a', cursor: 'pointer', padding: '8px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem' }}>Cancelar</button>
-          <button onClick={handleSave} disabled={saving || !name.trim()} style={{ background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,100,180,0.15))', border: '1px solid rgba(0,212,255,0.4)', borderRadius: 7, color: '#00d4ff', cursor: 'pointer', padding: '8px 22px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.05em' }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: '1px solid #303030', borderRadius: 7, color: '#8a8a8a', cursor: 'pointer', padding: '8px 16px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.85rem' }}>Cancelar</button>
+          <button onClick={handleSave} disabled={saving || !name.trim()} style={{ background: 'linear-gradient(135deg, rgba(255, 122, 26,0.2), rgba(255,77,0,0.15))', border: '1px solid rgba(255, 122, 26,0.4)', borderRadius: 7, color: '#ff7a1a', cursor: 'pointer', padding: '8px 22px', fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.05em' }}>
             {saving ? 'Enviando...' : isEdit ? 'Guardar Cambios' : isAdmin ? 'Crear Contenido' : 'Enviar para Revisión'}
           </button>
         </div>
@@ -839,13 +839,13 @@ export default function Builds() {
             <h1 style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.8rem', color: 'white', margin: 0, letterSpacing: '0.05em' }}>
               BUILDS
             </h1>
-            <div style={{ fontSize: '0.8rem', color: '#4a4a6a', marginTop: 2 }}>Guías de equipamiento por contenido</div>
+            <div style={{ fontSize: '0.8rem', color: '#5c5c5c', marginTop: 2 }}>Guías de equipamiento por contenido</div>
           </div>
           {user && (
             <button onClick={() => setModal({ type: 'create' })} style={{
-              background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,100,180,0.1))',
-              border: '1px solid rgba(0,212,255,0.3)', borderRadius: 8,
-              color: '#00d4ff', cursor: 'pointer', padding: '9px 20px',
+              background: 'linear-gradient(135deg, rgba(255, 122, 26,0.2), rgba(255,77,0,0.1))',
+              border: '1px solid rgba(255, 122, 26,0.3)', borderRadius: 8,
+              color: '#ff7a1a', cursor: 'pointer', padding: '9px 20px',
               fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.06em',
             }}>{isAdmin ? '+ Nuevo Contenido' : '+ Proponer Build'}</button>
           )}
@@ -855,14 +855,14 @@ export default function Builds() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 24, flexWrap: 'wrap' }}>
           {CATEGORIES.map(c => {
             const active = category === c;
-            const col = c === 'Todas' ? '#6a6a8a' : (CAT_COLORS[c] || '#6a6a8a');
+            const col = c === 'Todas' ? '#8a8a8a' : (CAT_COLORS[c] || '#8a8a8a');
             return (
               <button key={c} onClick={() => setCategory(c)} style={{
                 padding: '5px 14px', borderRadius: 20, cursor: 'pointer',
                 fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem', letterSpacing: '0.06em',
-                border: `1px solid ${active ? col : '#2a2a3a'}`,
+                border: `1px solid ${active ? col : '#303030'}`,
                 background: active ? col + '22' : 'transparent',
-                color: active ? col : '#4a4a6a', transition: 'all 0.12s',
+                color: active ? col : '#5c5c5c', transition: 'all 0.12s',
               }}>{c}</button>
             );
           })}
@@ -870,12 +870,12 @@ export default function Builds() {
 
         {/* Content grid */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#4a4a6a' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: '#5c5c5c' }}>
             <div className="spinner" style={{ margin: '0 auto 12px', width: 28, height: 28 }} />
             Cargando builds...
           </div>
         ) : contents.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#3a3a5a' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: '#444444' }}>
             <div style={{ fontSize: '2rem', marginBottom: 10 }}>⚔</div>
             <div style={{ fontFamily: 'Rajdhani', fontSize: '1rem' }}>
               {isAdmin ? 'No hay contenidos. Creá el primero.' : 'No hay builds disponibles aún.'}

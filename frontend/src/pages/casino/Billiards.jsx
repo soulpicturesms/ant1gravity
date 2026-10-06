@@ -406,7 +406,7 @@ function PoolGame({ room, user, onLeave, onResult }) {
       }}>
         <iframe
           src={url}
-          title="ANT1GRAVITY Billar"
+          title="FULLPUSH Billar"
           style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:'none', display:'block' }}
           allow="autoplay; fullscreen; gamepad"
           referrerPolicy="no-referrer"

@@ -65,8 +65,8 @@ const SlotsPage = ({ triggerParticles, mode }) => {
     <div className="main">
       <div className="page-head">
         <div>
-          <div className="page-head__crumbs">Juegos / <span>Anti-Gravity Slots</span></div>
-          <h1>Anti-Gravity <span style={{ color: "var(--accent)" }}>Slots</span></h1>
+          <div className="page-head__crumbs">Juegos / <span>Fullpush Slots</span></div>
+          <h1>Fullpush <span style={{ color: "var(--accent)" }}>Slots</span></h1>
           <div className="page-head__sub">5×3 reels · 1 payline · Max 5,000× · RTP 96.6%</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -88,7 +88,7 @@ const SlotsPage = ({ triggerParticles, mode }) => {
         <div className="stage">
           <div className="stage__header">
             <div className="stage__title-row">
-              <span className="stage__title">Anti-Gravity Slots</span>
+              <span className="stage__title">Fullpush Slots</span>
               <span className="tag tag--green">{mode === "sweepstake" ? "Sweepstake" : "Casino"}</span>
             </div>
             <div style={{ display: "flex", gap: 18, fontSize: 11, color: "var(--text-3)" }}>

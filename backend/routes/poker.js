@@ -204,7 +204,7 @@ router.get('/rooms', async (req,res) => {
 
 router.post('/rooms', requireAuth, async (req,res) => {
   try {
-    const {name='Mesa ANT1',buyIn=100,maxPlayers=6,bigBlind}=req.body;
+    const {name='Mesa FULLPUSH',buyIn=100,maxPlayers=6,bigBlind}=req.body;
     // Big blind defaults to buyIn / 100 (100 BB starting stack — standard cash game)
     // Client may override with an explicit bigBlind value
     const bb = Math.max(2, Math.floor(Number(bigBlind) || buyIn / 100));

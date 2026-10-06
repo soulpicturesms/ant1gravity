@@ -95,7 +95,7 @@ function HandArea({ cards, total, label, isPlayer, isInitialDeal, isDone }) {
 const RESULTS = {
   win:       { label: 'Ganaste',    color: '#6fff7d', prefix: '+' },
   blackjack: { label: 'Blackjack!', color: '#f5c542', prefix: '+' },
-  push:      { label: 'Empate',     color: '#a5a6b8', prefix: '' },
+  push:      { label: 'Empate',     color: '#b8b8b8', prefix: '' },
   lose:      { label: 'Perdiste',   color: '#ff2d7a', prefix: '' },
   bust:      { label: 'Te pasaste', color: '#ff2d7a', prefix: '' },
 };

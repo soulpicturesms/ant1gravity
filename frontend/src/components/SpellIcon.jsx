@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const SLOT_META = {
-  q:       { label: 'Q',  color: '#00d4ff' },
+  q:       { label: 'Q',  color: '#ff7a1a' },
   w:       { label: 'W',  color: '#00e8c0' },
   e:       { label: 'E',  color: '#ff8c00' },
   passive: { label: '★',  color: '#ffaa00' },
@@ -34,7 +34,7 @@ export function SpellIcon({ spell, slot, size = 36, skillName }) {
     >
       <div style={{
         width: size, height: size, borderRadius: 6, overflow: 'hidden',
-        background: '#0a0a14',
+        background: '#0c0c0c',
         border: `1px solid ${meta.color}55`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'default', flexShrink: 0,
@@ -56,7 +56,7 @@ export function SpellIcon({ spell, slot, size = 36, skillName }) {
       {showTip && (
         <div style={{
           position: 'absolute', bottom: '110%', left: '50%', transform: 'translateX(-50%)',
-          background: '#0a0a14', border: `1px solid ${meta.color}44`,
+          background: '#0c0c0c', border: `1px solid ${meta.color}44`,
           borderRadius: 7, padding: '5px 10px', zIndex: 500,
           whiteSpace: 'nowrap', pointerEvents: 'none',
           boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
@@ -66,7 +66,7 @@ export function SpellIcon({ spell, slot, size = 36, skillName }) {
             fontFamily: 'Rajdhani', fontWeight: 800, fontSize: '0.65rem',
             color: meta.color, minWidth: 14, textAlign: 'center',
           }}>{meta.label}</span>
-          <span style={{ fontSize: '0.75rem', color: '#e0e0f0' }}>{displayName || '—'}</span>
+          <span style={{ fontSize: '0.75rem', color: '#ededed' }}>{displayName || '—'}</span>
         </div>
       )}
     </div>

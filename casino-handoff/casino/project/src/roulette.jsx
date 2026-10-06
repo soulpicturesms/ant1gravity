@@ -104,7 +104,7 @@ const RoulettePage = ({ triggerParticles, mode }) => {
               <div className="roul-pointer"/>
               <div className="roul-wheel" style={{ transform: `rotate(${rotation}deg)` }}>
                 <RouletteWheelSVG />
-                <div className="roul-wheel__center">ant1gravity</div>
+                <div className="roul-wheel__center">fullpush</div>
               </div>
               <div className="roul-ball" style={{
                 transform: `translateX(-50%) rotate(${ballAngle}deg) translateY(0)`,

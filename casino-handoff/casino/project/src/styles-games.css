@@ -448,7 +448,7 @@
   max-width: 820px;
 }
 .poker-table::before {
-  content: "ant1gravity poker";
+  content: "fullpush poker";
   position: absolute;
   top: 30%; left: 50%;
   transform: translateX(-50%);

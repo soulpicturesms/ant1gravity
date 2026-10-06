@@ -48,7 +48,7 @@ function VerifyPlayer() {
   return (
     <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 20px 0' }}>
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.2em', color: '#00d4ff', textTransform: 'uppercase', marginBottom: 10 }}>
+        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', letterSpacing: '0.2em', color: '#ff7a1a', textTransform: 'uppercase', marginBottom: 10 }}>
           ⚔️ Verifica Jugador
         </div>
         <form onSubmit={handleCheck} style={{ display: 'flex', gap: 8 }}>
@@ -62,7 +62,7 @@ function VerifyPlayer() {
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', letterSpacing: '0.1em', color: result.blacklisted ? '#ff3355' : '#00cc66' }}>
             {result.blacklisted ? 'JUGADOR EN BLACKLIST' : 'JUGADOR ACEPTADO'}
           </div>
-          <div style={{ fontFamily: 'Rajdhani', fontSize: '1.1rem', color: '#9090b0', marginTop: 4 }}>{result.searched}</div>
+          <div style={{ fontFamily: 'Rajdhani', fontSize: '1.1rem', color: '#b0b0b0', marginTop: 4 }}>{result.searched}</div>
           {result.blacklisted && result.reason && (
             <div style={{ marginTop: 10, padding: '8px 14px', background: 'rgba(255,51,85,0.1)', borderRadius: 6, fontSize: '0.88rem', color: '#ff8899' }}>Motivo: {result.reason}</div>
           )}
@@ -164,9 +164,9 @@ function GiveawayWidget() {
   if (!giveaway) {
     if (!user) return null;
     return (
-      <div className="card" style={{ border: '1px solid #1e1e30' }}>
+      <div className="card" style={{ border: '1px solid #2a2a2a' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#6a6a8a', letterSpacing: '0.08em' }}>🎰 Sin sorteos activos</div>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#8a8a8a', letterSpacing: '0.08em' }}>🎰 Sin sorteos activos</div>
           <button className="btn btn-secondary btn-sm" onClick={() => setShowCreateForm(o => !o)}>
             {showCreateForm ? '✕ Cancelar' : '＋ Crear Sorteo'}
           </button>
@@ -206,20 +206,20 @@ function GiveawayWidget() {
   const isFinished = giveaway.status === 'finished';
 
   return (
-    <div className="card" style={{ border: '2px solid rgba(0,212,255,0.3)', background: 'linear-gradient(135deg, #0a0a18, #0f0f22)', position: 'relative', overflow: 'hidden' }}>
+    <div className="card" style={{ border: '2px solid rgba(255, 122, 26,0.3)', background: 'linear-gradient(135deg, #0a0a18, #0f0f22)', position: 'relative', overflow: 'hidden' }}>
       {/* Glow bg */}
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 122, 26,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       <div style={{ position: 'relative' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.3rem', color: '#00d4ff', letterSpacing: '0.08em' }}>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.3rem', color: '#ff7a1a', letterSpacing: '0.08em' }}>
             🎰 SORTEO — {giveaway.title}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '0.75rem', padding: '3px 10px', borderRadius: 20, fontFamily: 'Rajdhani', fontWeight: 700,
-              background: isActive ? 'rgba(0,204,102,0.15)' : isWaiting ? 'rgba(255,170,0,0.15)' : 'rgba(0,212,255,0.1)',
-              color: isActive ? '#00cc66' : isWaiting ? '#ffaa00' : '#00d4ff',
-              border: `1px solid ${isActive ? '#00cc6644' : isWaiting ? '#ffaa0044' : '#00d4ff44'}` }}>
+              background: isActive ? 'rgba(0,204,102,0.15)' : isWaiting ? 'rgba(255,170,0,0.15)' : 'rgba(255, 122, 26,0.1)',
+              color: isActive ? '#00cc66' : isWaiting ? '#ffaa00' : '#ff7a1a',
+              border: `1px solid ${isActive ? '#00cc6644' : isWaiting ? '#ffaa0044' : '#ff7a1a44'}` }}>
               {isActive ? '🔴 EN VIVO' : isWaiting ? '⏳ PRÓXIMO' : '🏆 FINALIZADO'}
             </span>
             {isFinished && user && (isAdmin || giveaway.created_by === user.id) && (
@@ -247,10 +247,10 @@ function GiveawayWidget() {
         {/* Countdown */}
         {isActive && (
           <div style={{ textAlign: 'center', margin: '12px 0' }}>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '3rem', color: timeLeft <= 10 ? '#ff3355' : '#00d4ff', letterSpacing: '0.1em', lineHeight: 1, transition: 'color 0.3s' }}>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '3rem', color: timeLeft <= 10 ? '#ff3355' : '#ff7a1a', letterSpacing: '0.1em', lineHeight: 1, transition: 'color 0.3s' }}>
               {fmtTime(timeLeft)}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tiempo restante</div>
+            <div style={{ fontSize: '0.75rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tiempo restante</div>
           </div>
         )}
 
@@ -279,8 +279,8 @@ function GiveawayWidget() {
 
         {/* Stats + Join */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-          <div style={{ fontSize: '0.85rem', color: '#6a6a8a' }}>
-            👥 <strong style={{ color: '#9090b0' }}>{participants.length}</strong> inscriptos
+          <div style={{ fontSize: '0.85rem', color: '#8a8a8a' }}>
+            👥 <strong style={{ color: '#b0b0b0' }}>{participants.length}</strong> inscriptos
             {giveaway.prizes.length > 1 && <span style={{ marginLeft: 8 }}>· {giveaway.prizes.length} premios</span>}
           </div>
           {(isActive || isWaiting) && user && !joined && (
@@ -333,15 +333,15 @@ function AlbionRankingsSidebar() {
           <button key={t.key} onClick={() => handleTabChange(t.key)} style={{
             padding: '4px 10px', borderRadius: 5, cursor: 'pointer',
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.78rem',
-            border: `1px solid ${activeTab === t.key ? t.color + '66' : '#1e1e30'}`,
+            border: `1px solid ${activeTab === t.key ? t.color + '66' : '#2a2a2a'}`,
             background: activeTab === t.key ? t.color + '18' : 'transparent',
-            color: activeTab === t.key ? t.color : '#6a6a8a',
+            color: activeTab === t.key ? t.color : '#8a8a8a',
             transition: 'all 0.15s',
           }}>{t.label}</button>
         ))}
       </div>
 
-      {loading && <div style={{ color: '#4a4a6a', fontSize: '0.82rem', padding: '8px 0' }}>Cargando stats...</div>}
+      {loading && <div style={{ color: '#5c5c5c', fontSize: '0.82rem', padding: '8px 0' }}>Cargando stats...</div>}
 
       {data && (() => {
         const full = data[tab.dataKey] || [];
@@ -350,20 +350,20 @@ function AlbionRankingsSidebar() {
         return (
           <>
             {list.length === 0
-              ? <div style={{ color: '#4a4a6a', fontSize: '0.82rem' }}>Sin datos</div>
+              ? <div style={{ color: '#5c5c5c', fontSize: '0.82rem' }}>Sin datos</div>
               : list.map((p, i) => {
                   const pct = (p[tab.statKey] / maxVal) * 100;
                   const top3 = i < 3;
                   return (
                     <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0', borderBottom: i < list.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                      <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: top3 ? '1.05rem' : '0.88rem', width: 26, textAlign: 'center', color: top3 ? undefined : '#5a5a7a', flexShrink: 0 }}>
+                      <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: top3 ? '1.05rem' : '0.88rem', width: 26, textAlign: 'center', color: top3 ? undefined : '#6e6e6e', flexShrink: 0 }}>
                         {top3 ? medals[i] : '#' + (i + 1)}
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: top3 ? '#e0e0f0' : '#a0a0c0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: top3 ? '#ededed' : '#a0a0c0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {p.name}
                         </div>
-                        <div style={{ height: 3, background: '#1a1a28', borderRadius: 2, marginTop: 3, overflow: 'hidden' }}>
+                        <div style={{ height: 3, background: '#1c1c1c', borderRadius: 2, marginTop: 3, overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: pct + '%', background: tab.color, borderRadius: 2 }} />
                         </div>
                       </div>
@@ -377,9 +377,9 @@ function AlbionRankingsSidebar() {
             {full.length > 10 && (
               <button onClick={() => setExpanded(e => !e)} style={{
                 width: '100%', marginTop: 12, padding: '7px 0', borderRadius: 6, cursor: 'pointer',
-                background: 'rgba(255,255,255,0.03)', border: '1px solid #1e1e30',
+                background: 'rgba(255,255,255,0.03)', border: '1px solid #2a2a2a',
                 fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem',
-                color: '#6a6a8a', letterSpacing: '0.05em', transition: 'all 0.15s',
+                color: '#8a8a8a', letterSpacing: '0.05em', transition: 'all 0.15s',
               }}>
                 {expanded ? '▲ Ver menos' : `▼ Ver todos (${full.length})`}
               </button>
@@ -389,7 +389,7 @@ function AlbionRankingsSidebar() {
       })()}
 
       {data?.fetchedAt && (
-        <div style={{ fontSize: '0.68rem', color: '#3a3a5a', textAlign: 'right', marginTop: 10 }}>
+        <div style={{ fontSize: '0.68rem', color: '#444444', textAlign: 'right', marginTop: 10 }}>
           ↻ {new Date(data.fetchedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
         </div>
       )}
@@ -402,9 +402,9 @@ function BannerSlideshow({ slides, idx, visible, slideVisible }) {
   if (!slides.length) return null;
   const slide = slides[idx % slides.length];
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 10, border: '1px solid rgba(0,212,255,0.15)' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 10, border: '1px solid rgba(255, 122, 26,0.15)' }}>
       <div style={{ transition: 'opacity 0.8s ease-in-out', opacity: visible ? 1 : 0, height: '100%' }}>
-        <img src={slide.url} alt={slide.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#08080e', transition: 'transform 8s ease-out', transform: slideVisible ? 'scale(1)' : 'scale(1.04)' }} />
+        <img src={slide.url} alt={slide.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#0a0a0a', transition: 'transform 8s ease-out', transform: slideVisible ? 'scale(1)' : 'scale(1.04)' }} />
         {slide.caption && (
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 10px 8px', background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.8rem', color: 'white', letterSpacing: '0.05em', textAlign: 'center' }}>{slide.caption}</div>
@@ -414,7 +414,7 @@ function BannerSlideshow({ slides, idx, visible, slideVisible }) {
       {slides.length > 1 && (
         <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4 }}>
           {slides.map((_, i) => (
-            <div key={i} style={{ width: i === idx % slides.length ? 14 : 6, height: 6, borderRadius: 3, background: i === idx % slides.length ? '#00d4ff' : 'rgba(255,255,255,0.3)', transition: 'all 0.5s' }} />
+            <div key={i} style={{ width: i === idx % slides.length ? 14 : 6, height: 6, borderRadius: 3, background: i === idx % slides.length ? '#ff7a1a' : 'rgba(255,255,255,0.3)', transition: 'all 0.5s' }} />
           ))}
         </div>
       )}
@@ -488,8 +488,8 @@ export default function Home() {
   return (
     <div>
       {/* Hero */}
-      <div style={{ background: 'linear-gradient(to bottom, #0a0a12, #08080e)', borderBottom: '1px solid #1e1e30', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
+      <div style={{ background: 'linear-gradient(to bottom, #0c0c0c, #0a0a0a)', borderBottom: '1px solid #2a2a2a', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 122, 26,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
         <div className={banners.length > 0 ? 'hero-layout' : ''} style={{ position: 'relative', maxWidth: 1400, margin: '0 auto', padding: '40px 20px' }}>
 
           {/* Left slideshow */}
@@ -501,14 +501,12 @@ export default function Home() {
 
           {/* Center hero */}
           <div style={{ textAlign: 'center', minWidth: 0 }}>
-            <div style={{ position: 'relative', width: '100%', maxWidth: 500, margin: '0 auto' }}>
-              <img src="/logo-banner.png" alt="ANT1GRAVITY" style={{ width: '100%', display: 'block', WebkitMaskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', maskImage: 'radial-gradient(ellipse 65% 60% at 50% 50%, black 25%, transparent 75%)', mixBlendMode: 'luminosity', filter: 'drop-shadow(0 0 25px rgba(0,212,255,0.4)) brightness(1.05)' }}
-                onError={e => { e.target.parentElement.style.display = 'none'; document.getElementById('hero-text').style.display = 'block'; }} />
+            <img src="/logo-fullpush-480.png" alt="FULLPUSH" style={{ height: 'clamp(150px, 22vw, 210px)', width: 'auto', display: 'block', margin: '0 auto', filter: 'drop-shadow(0 0 28px rgba(255, 122, 26,0.35))' }}
+              onError={e => { e.target.style.display = 'none'; }} />
+            <div style={{ fontFamily: 'Rajdhani', fontSize: 'clamp(2.8rem, 7vw, 4.6rem)', fontWeight: 700, color: 'white', letterSpacing: '0.14em', lineHeight: 1, marginTop: 14, textShadow: '0 0 40px rgba(255, 122, 26,0.25)' }}>
+              FULL<span style={{ color: '#ff7a1a', textShadow: '0 0 30px rgba(255, 122, 26,0.6)' }}>PUSH</span>
             </div>
-            <div id="hero-text" style={{ display: 'none', fontFamily: 'Rajdhani', fontSize: 'clamp(2.5rem, 6vw, 4rem)', fontWeight: 700, color: 'white', letterSpacing: '0.12em', lineHeight: 1, textShadow: '0 0 40px rgba(0,212,255,0.3)' }}>
-              ANT<span style={{ color: '#00d4ff', textShadow: '0 0 30px #00d4ff, 0 0 60px rgba(0,212,255,0.4)' }}>1</span>GRAVITY
-            </div>
-            <p style={{ color: '#6a6a8a', marginTop: 8, fontSize: '1rem', letterSpacing: '0.3em', textTransform: 'uppercase', fontFamily: 'Rajdhani' }}>Albion Online</p>
+            <p style={{ color: '#8a8a8a', marginTop: 8, fontSize: '1rem', letterSpacing: '0.3em', textTransform: 'uppercase', fontFamily: 'Rajdhani' }}>Albion Online</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
               <Link to="/members" className="btn btn-primary">Ver Miembros</Link>
               <Link to="/builds" className="btn btn-secondary">Builds</Link>
@@ -579,8 +577,8 @@ export default function Home() {
             {/* Weekly prize photo */}
             {weeklyPrize?.url && (
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', background: 'rgba(0,212,255,0.05)', borderBottom: '1px solid #1e1e30' }}>
-                  <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#00d4ff', letterSpacing: '0.08em' }}>🎁 PREMIOS SEMANALES</div>
+                <div style={{ padding: '14px 18px', background: 'rgba(255, 122, 26,0.05)', borderBottom: '1px solid #2a2a2a' }}>
+                  <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#ff7a1a', letterSpacing: '0.08em' }}>🎁 PREMIOS SEMANALES</div>
                 </div>
                 <img src={weeklyPrize.url} alt="Premios semanales" style={{ width: '100%', maxHeight: 400, objectFit: 'cover', display: 'block' }} />
               </div>

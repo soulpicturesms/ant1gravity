@@ -29,14 +29,15 @@ export default function Login() {
     <div style={{ minHeight: 'calc(100vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="/logo-fullpush-128.png" alt="" style={{ height: 96, width: 'auto', display: 'block', margin: '0 auto 12px', filter: 'drop-shadow(0 0 18px rgba(255, 122, 26, 0.35))' }} />
           <div style={{ fontFamily: 'Rajdhani', fontSize: '2rem', fontWeight: 700, color: 'white', letterSpacing: '0.1em' }}>
-            ANT<span style={{ color: '#00d4ff' }}>1</span>GRAVITY
+            FULL<span style={{ color: '#ff7a1a' }}>PUSH</span>
           </div>
-          <p style={{ color: '#6a6a8a', marginTop: 8 }}>Accede al portal del gremio</p>
+          <p style={{ color: '#8a8a8a', marginTop: 8 }}>Accede al portal del gremio</p>
         </div>
 
-        <div className="card" style={{ boxShadow: '0 0 40px rgba(0,212,255,0.08)' }}>
-          <h2 style={{ fontFamily: 'Rajdhani', fontSize: '1.4rem', fontWeight: 700, color: '#00d4ff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24 }}>Iniciar Sesión</h2>
+        <div className="card" style={{ boxShadow: '0 0 40px rgba(255, 122, 26,0.08)' }}>
+          <h2 style={{ fontFamily: 'Rajdhani', fontSize: '1.4rem', fontWeight: 700, color: '#ff7a1a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24 }}>Iniciar Sesión</h2>
 
           {error && <div className="alert alert-error">{error}</div>}
 
@@ -55,8 +56,8 @@ export default function Login() {
           </form>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: 16, color: '#6a6a8a', fontSize: '0.9rem' }}>
-          ¿No tienes cuenta? <Link to="/register" style={{ color: '#00d4ff' }}>Registrarse</Link>
+        <p style={{ textAlign: 'center', marginTop: 16, color: '#8a8a8a', fontSize: '0.9rem' }}>
+          ¿No tienes cuenta? <Link to="/register" style={{ color: '#ff7a1a' }}>Registrarse</Link>
         </p>
       </div>
     </div>

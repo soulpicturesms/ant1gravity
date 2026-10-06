@@ -32,7 +32,7 @@ const GAMES = [
   },
   {
     id: 'slots',
-    name: 'Anti-Gravity Slots',
+    name: 'Fullpush Slots',
     desc: '5 carretes · Jackpot global',
     bg: 'linear-gradient(135deg, #1e0f2a, #0d0614)',
     art: '✦',
@@ -189,7 +189,7 @@ function parseGameName(reason) {
   if (!reason) return 'Casino';
   if (reason.startsWith('Blackjack')) return 'Blackjack Pro';
   if (reason.startsWith('Plinko')) return 'Plinko Zero-G';
-  if (reason.startsWith('Tragaperras')) return 'Anti-Gravity Slots';
+  if (reason.startsWith('Tragaperras')) return 'Fullpush Slots';
   if (reason.startsWith('Ruleta')) return 'Ruleta Americana';
   return 'Casino';
 }
@@ -232,7 +232,7 @@ const GAME_FILTERS = [
   { id: 'all',       label: 'Todos' },
   { id: 'Blackjack Pro',       label: 'Blackjack' },
   { id: 'Plinko Zero-G',       label: 'Plinko' },
-  { id: 'Anti-Gravity Slots',  label: 'Slots' },
+  { id: 'Fullpush Slots',  label: 'Slots' },
   { id: 'Ruleta Americana',    label: 'Ruleta' },
 ];
 
@@ -724,7 +724,7 @@ export default function Casino() {
 
           {/* Games */}
           <div className="casino-section-head">
-            <h2>Juegos <span className="c-acc">ant1gravity</span></h2>
+            <h2>Juegos <span className="c-acc">fullpush</span></h2>
             <div style={{ display: 'flex', gap: 6 }}>
               <button className="casino-back-btn" style={{ padding: '4px 10px', height: 'auto', background: 'var(--c-surface2)', color: 'var(--c-text)' }}>Todos</button>
               <button className="casino-back-btn" style={{ padding: '4px 10px', height: 'auto' }}>Más jugados</button>

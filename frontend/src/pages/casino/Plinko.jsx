@@ -10,16 +10,16 @@ const PLINKO_MULTIPLIERS = {
 };
 
 const getBucketColor = (mult) => {
-  if (mult <= 0)  return '#1e1e30';
-  if (mult < 1)   return '#1e1e30';
+  if (mult <= 0)  return '#2a2a2a';
+  if (mult < 1)   return '#2a2a2a';
   if (mult < 2)   return '#1d2855';
   if (mult < 10)  return '#163b28';
   return '#4a3200';
 };
 
 const getBucketTextColor = (mult) => {
-  if (mult <= 0)  return '#4a4b60';
-  if (mult < 1)   return '#6f7088';
+  if (mult <= 0)  return '#5c5c5c';
+  if (mult < 1)   return '#8a8a8a';
   if (mult < 2)   return '#6699ff';
   if (mult < 10)  return '#6fff7d';
   return '#f5c542';

@@ -82,7 +82,7 @@ router.put('/:id/role', requireAdmin, async (req, res) => {
 
 // ─── Albion live stats ────────────────────────────────────────────────────────
 const ALBION_API  = 'https://gameinfo.albiononline.com/api/gameinfo';
-const GUILD_ID    = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
+const GUILD_ID    = process.env.ALBION_GUILD_ID || '_dZi8dpyRVy53Wyksk4oBA';
 const CACHE_TTL_ALBION = 30 * 60 * 1000;
 let albionStatsCache = { data: null, ts: 0 };
 

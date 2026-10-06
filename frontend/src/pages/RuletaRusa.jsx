@@ -32,7 +32,7 @@ function genRuletaRusa(participants, seedStr, winnerName) {
 
   const players = participants.map((p, i) => ({
     name: p.name,
-    color: p.color || '#00d4ff',
+    color: p.color || '#ff7a1a',
     angle: (i / n) * Math.PI * 2 - Math.PI / 2,
     isWinner: p.name === winnerName,
     index: i,
@@ -473,7 +473,7 @@ export default function RuletaRusa() {
         <span style={{ fontSize: '2.2rem' }}>🔫</span>
         <div>
           <h1 style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#cc2222', margin: 0, letterSpacing: '0.08em' }}>RULETA RUSA</h1>
-          <p style={{ color: '#6a6a8a', margin: 0, fontSize: '0.88rem' }}>La aguja gira y elimina uno a uno — ~30 segundos</p>
+          <p style={{ color: '#8a8a8a', margin: 0, fontSize: '0.88rem' }}>La aguja gira y elimina uno a uno — ~30 segundos</p>
         </div>
       </div>
 
@@ -483,12 +483,12 @@ export default function RuletaRusa() {
             style={{ display: 'block', borderRadius: 12, border: '1px solid #2a1a1a', background: '#06060d', maxWidth: '100%' }} />
           {!isRacing && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,6,13,0.88)', borderRadius: 12 }}>
-              <div style={{ textAlign: 'center', color: '#9090b0' }}>
+              <div style={{ textAlign: 'center', color: '#b0b0b0' }}>
                 <div style={{ fontSize: '3.5rem', marginBottom: 10 }}>🔫</div>
                 <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: '#cc2222', letterSpacing: '0.1em' }}>
                   {isWaiting ? 'MESA EN ESPERA' : 'SIN SESIÓN'}
                 </div>
-                <div style={{ fontSize: '0.85rem', marginTop: 8, color: '#6a6a8a' }}>
+                <div style={{ fontSize: '0.85rem', marginTop: 8, color: '#8a8a8a' }}>
                   {isWaiting ? `${participants.length} jugador${participants.length !== 1 ? 'es' : ''} en la mesa` : 'El admin debe abrir la mesa'}
                 </div>
               </div>
@@ -498,7 +498,7 @@ export default function RuletaRusa() {
 
         <div style={{ flex: '1 1 260px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {isAdmin && (
-            <div style={{ background: '#0f0f1a', border: '1px solid #2a1a1a', borderRadius: 10, padding: 16 }}>
+            <div style={{ background: '#121212', border: '1px solid #2a1a1a', borderRadius: 10, padding: 16 }}>
               <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', color: '#cc2222', marginBottom: 12, letterSpacing: '0.12em' }}>CONTROLES ADMIN</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button onClick={() => adminAction('create')} disabled={adminLoading} className="btn btn-secondary btn-sm">+ Crear sesión nueva</button>
@@ -514,11 +514,11 @@ export default function RuletaRusa() {
           )}
 
           {isWaiting && !joined && (
-            <div style={{ background: '#0f0f1a', border: '1px solid #2a1a1a', borderRadius: 10, padding: 16 }}>
+            <div style={{ background: '#121212', border: '1px solid #2a1a1a', borderRadius: 10, padding: 16 }}>
               <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', color: '#cc2222', marginBottom: 12, letterSpacing: '0.12em' }}>UNIRSE A LA MESA</div>
               <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" maxLength={20}
-                  style={{ background: '#1a1a2a', border: '1px solid #2a1a1a', borderRadius: 6, padding: '8px 12px', color: 'white', fontFamily: 'Rajdhani', fontSize: '0.95rem', outline: 'none' }} />
+                  style={{ background: '#1e1e1e', border: '1px solid #2a1a1a', borderRadius: 6, padding: '8px 12px', color: 'white', fontFamily: 'Rajdhani', fontSize: '0.95rem', outline: 'none' }} />
                 {joinError && <div style={{ color: '#ff6688', fontSize: '0.82rem' }}>{joinError}</div>}
                 <button type="submit" disabled={joinLoading || !name.trim()} className="btn btn-primary btn-sm">
                   {joinLoading ? 'Entrando...' : '🔫 Sentarse a la mesa'}
@@ -543,13 +543,13 @@ export default function RuletaRusa() {
           )}
 
           {participants.length > 0 && (
-            <div style={{ background: '#0f0f1a', border: '1px solid #1e1e30', borderRadius: 10, padding: 16 }}>
-              <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', color: '#6a6a8a', marginBottom: 10, letterSpacing: '0.12em' }}>
+            <div style={{ background: '#121212', border: '1px solid #2a2a2a', borderRadius: 10, padding: 16 }}>
+              <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.82rem', color: '#8a8a8a', marginBottom: 10, letterSpacing: '0.12em' }}>
                 EN LA MESA ({participants.length})
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 280, overflowY: 'auto' }}>
                 {participants.map((p, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', borderBottom: '1px solid #1a1a28' }}>
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', borderBottom: '1px solid #1c1c1c' }}>
                     <div style={{ width: 10, height: 10, borderRadius: '50%', background: p.color, flexShrink: 0, boxShadow: `0 0 6px ${p.color}88` }} />
                     <span style={{ fontFamily: 'Rajdhani', color: '#c0c0d8', fontSize: '0.88rem', flex: 1 }}>{p.name}</span>
                   </div>
@@ -559,9 +559,9 @@ export default function RuletaRusa() {
           )}
 
           {!session && (
-            <div style={{ textAlign: 'center', color: '#4a4a6a', padding: 24, fontSize: '0.85rem', background: '#0a0a14', borderRadius: 10, border: '1px solid #1a1a28' }}>
+            <div style={{ textAlign: 'center', color: '#5c5c5c', padding: 24, fontSize: '0.85rem', background: '#0c0c0c', borderRadius: 10, border: '1px solid #1c1c1c' }}>
               No hay sesión activa.<br />
-              <span style={{ color: '#3a3a5a' }}>{isAdmin ? 'Crea una sesión para comenzar.' : 'Espera que el admin abra la mesa.'}</span>
+              <span style={{ color: '#444444' }}>{isAdmin ? 'Crea una sesión para comenzar.' : 'Espera que el admin abra la mesa.'}</span>
             </div>
           )}
         </div>

@@ -231,7 +231,7 @@ function PokerTable({ players, myUserId, myCards, community, pot, phase, current
           color: 'rgba(255,255,255,0.09)', textTransform: 'uppercase',
           whiteSpace: 'nowrap', userSelect: 'none', pointerEvents: 'none'
         }}>
-          ANT1GRAVITY POKER
+          FULLPUSH POKER
         </div>
 
         {/* Center Community Cards */}
@@ -385,7 +385,7 @@ function RoomList({ onJoin }) {
             <span style={{ color: '#fff' }}>Texas </span>
             <span style={{ color: '#ff2d7a' }}>Hold'em</span>
           </h1>
-          <div style={{ fontSize: '0.78rem', color: '#6f7088', marginTop: 6, fontFamily: 'Inter, system-ui' }}>
+          <div style={{ fontSize: '0.78rem', color: '#8a8a8a', marginTop: 6, fontFamily: 'Inter, system-ui' }}>
             Multijugador • Tiempo real • No Limit
           </div>
         </div>
@@ -416,7 +416,7 @@ function RoomList({ onJoin }) {
             <input className="input" placeholder="Nombre de la sala..." value={name} onChange={e => setName(e.target.value)} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }} />
             <div style={{ display: 'flex', gap: 8 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Buy-in (chips)</label>
+                <label style={{ fontSize: '0.72rem', color: '#8a8a8a', display: 'block', marginBottom: 4 }}>Buy-in (chips)</label>
                 <select className="input" value={buyIn} onChange={e => setBuyIn(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
                   {[100, 500, 1000, 5000, 10000, 25000, 50000, 100000].map(v => (
                     <option key={v} value={v}>{v >= 1000 ? `${(v/1000).toLocaleString('es-AR')}k` : v}</option>
@@ -424,7 +424,7 @@ function RoomList({ onJoin }) {
                 </select>
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Big blind</label>
+                <label style={{ fontSize: '0.72rem', color: '#8a8a8a', display: 'block', marginBottom: 4 }}>Big blind</label>
                 <select className="input" value={bigBlind} onChange={e => setBigBlind(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
                   <option value={0}>Auto (100 BB stack)</option>
                   {(() => {
@@ -444,7 +444,7 @@ function RoomList({ onJoin }) {
                 </select>
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: '0.72rem', color: '#6f7088', display: 'block', marginBottom: 4 }}>Máx. jugadores</label>
+                <label style={{ fontSize: '0.72rem', color: '#8a8a8a', display: 'block', marginBottom: 4 }}>Máx. jugadores</label>
                 <select className="input" value={maxP} onChange={e => setMaxP(Number(e.target.value))} style={{ background: 'var(--c-bg1)', border: '1px solid var(--c-line2)', color: '#fff' }}>
                   {[2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -473,7 +473,7 @@ function RoomList({ onJoin }) {
             <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, border: '1px solid rgba(255,45,122,0.08)', background: 'var(--c-surface)', padding: '16px 20px', borderRadius: 12 }}>
               <div>
                 <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.98rem', color: 'white' }}>{r.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 4, fontFamily: 'Inter, system-ui' }}>
+                <div style={{ fontSize: '0.75rem', color: '#8a8a8a', marginTop: 4, fontFamily: 'Inter, system-ui' }}>
                   Buy-in: {(s.buyIn || 100).toLocaleString('es-AR')} chips · {playerCount}/{s.maxPlayers || 6} jugadores
                   <span style={{ marginLeft: 8, color: isPlaying ? '#ffd700' : '#00cc66' }}>● {isPlaying ? 'En juego' : 'Esperando'}</span>
                 </div>
@@ -1176,7 +1176,7 @@ export default function Poker({ user }) {
               <div style={{ display: 'flex', gap: 18, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {state.showdown.players.map(p => (
                   <div key={p.userId} style={{ textAlign: 'center', background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ fontSize: '0.72rem', color: '#a5a6b8', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>{p.username}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#b8b8b8', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>{p.username}</div>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 5 }}>
                       <Card card={p.holeCards?.[0]} faceDown={!p.holeCards?.[0]} size="sm" />
                       <Card card={p.holeCards?.[1]} faceDown={!p.holeCards?.[1]} size="sm" />

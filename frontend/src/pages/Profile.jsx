@@ -140,7 +140,7 @@ export default function Profile() {
         width: size, 
         height: size, 
         borderRadius: '50%', 
-        background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+        background: 'linear-gradient(135deg, #e05f00, #8a3300)', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
@@ -149,9 +149,9 @@ export default function Profile() {
         fontSize: size > 40 ? '3rem' : '1.5rem', 
         color: 'white', 
         overflow: 'hidden', 
-        border: '3px solid rgba(0,212,255,0.3)', 
+        border: '3px solid rgba(255, 122, 26,0.3)', 
         margin: '0 auto', 
-        boxShadow: '0 0 25px rgba(0,212,255,0.2)', 
+        boxShadow: '0 0 25px rgba(255, 122, 26,0.2)', 
         cursor: 'pointer' 
       }}
         onClick={() => fileRef.current.click()}>
@@ -226,7 +226,7 @@ export default function Profile() {
 
   if (!user) return null;
 
-  const ROLE_COLORS = { admin: '#ff3366', officer: '#ffaa00', member: '#00d4ff' };
+  const ROLE_COLORS = { admin: '#ff3366', officer: '#ffaa00', member: '#ff7a1a' };
   const ROLE_LABELS = { admin: 'Administrador', officer: 'Officer', member: 'Miembro' };
 
   return (
@@ -242,7 +242,7 @@ export default function Profile() {
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
             {renderUserAvatar(160)}
             {!user.albion_avatar && (
-              <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#00d4ff', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.8rem', zIndex: 10 }} onClick={() => fileRef.current.click()}>
+              <div style={{ position: 'absolute', bottom: 4, right: 4, background: '#ff7a1a', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.8rem', zIndex: 10 }} onClick={() => fileRef.current.click()}>
                 📷
               </div>
             )}
@@ -251,7 +251,7 @@ export default function Profile() {
 
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: 'white', letterSpacing: '0.05em' }}>{user.username}</div>
           <div style={{ color: ROLE_COLORS[user.role], fontSize: '0.85rem', fontFamily: 'Rajdhani', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: 4 }}>{ROLE_LABELS[user.role]}</div>
-          {uploading && <div style={{ marginTop: 8, color: '#6a6a8a', fontSize: '0.8rem' }}>Subiendo foto...</div>}
+          {uploading && <div style={{ marginTop: 8, color: '#8a8a8a', fontSize: '0.8rem' }}>Subiendo foto...</div>}
           {msg && <div style={{ marginTop: 8, color: '#00cc66', fontSize: '0.8rem' }}>{msg}</div>}
           
           <button 
@@ -262,17 +262,17 @@ export default function Profile() {
             🎨 Personalizar Avatar
           </button>
 
-          <div style={{ marginTop: 20, padding: '16px 0', borderTop: '1px solid #1e1e30' }}>
+          <div style={{ marginTop: 20, padding: '16px 0', borderTop: '1px solid #2a2a2a' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffd700' }}>⚡ {Number(user.coins).toLocaleString('es-AR')}</div>
-            <div style={{ fontSize: '0.78rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Coins Disponibles</div>
+            <div style={{ fontSize: '0.78rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Coins Disponibles</div>
           </div>
 
-          <div style={{ fontSize: '0.78rem', color: '#4a4a6a', marginTop: 8 }}>
+          <div style={{ fontSize: '0.78rem', color: '#5c5c5c', marginTop: 8 }}>
             Miembro desde {new Date(user.created_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
           </div>
 
           {/* Seccion de vinculación de Albion Online */}
-          <div style={{ marginTop: 18, padding: '12px 10px', background: '#0b0b14', borderRadius: 8, border: '1px solid #1a1a2a', textAlign: 'center' }}>
+          <div style={{ marginTop: 18, padding: '12px 10px', background: '#0b0b14', borderRadius: 8, border: '1px solid #1e1e1e', textAlign: 'center' }}>
             {editChar ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ fontSize: '0.75rem', color: '#8a8ab0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personaje Albion</div>
@@ -307,12 +307,12 @@ export default function Profile() {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                 {user.albion_character ? (
                   <>
-                    <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personaje Albion</div>
-                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#00d4ff' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Personaje Albion</div>
+                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#ff7a1a' }}>
                       {user.albion_character}
                     </div>
                     <button 
-                      style={{ background: 'none', border: 'none', color: '#6a6a8a', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.72rem', padding: 0, marginTop: 4 }}
+                      style={{ background: 'none', border: 'none', color: '#8a8a8a', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.72rem', padding: 0, marginTop: 4 }}
                       onClick={() => setEditChar(true)}
                     >
                       Cambiar personaje
@@ -320,10 +320,10 @@ export default function Profile() {
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: '0.72rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>¿No vinculaste tu personaje?</div>
+                    <div style={{ fontSize: '0.72rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>¿No vinculaste tu personaje?</div>
                     <button 
                       className="btn btn-secondary btn-sm" 
-                      style={{ fontSize: '0.75rem', padding: '4px 12px', borderColor: '#00d4ff33', color: '#00d4ff' }}
+                      style={{ fontSize: '0.75rem', padding: '4px 12px', borderColor: '#ff7a1a33', color: '#ff7a1a' }}
                       onClick={() => setEditChar(true)}
                     >
                       Vincular Personaje
@@ -342,7 +342,7 @@ export default function Profile() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
               <div className="card-title" style={{ margin: 0 }}>Estadísticas Semanal de Usuario</div>
               {weeklyStats && (
-                <span style={{ fontSize: '0.72rem', color: '#4a4a6a' }}>📄 Datos del ranking semanal</span>
+                <span style={{ fontSize: '0.72rem', color: '#5c5c5c' }}>📄 Datos del ranking semanal</span>
               )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12 }}>
@@ -353,15 +353,15 @@ export default function Profile() {
                 const farmEntry  = find(weeklyStats?.byKills);
                 const fmt = v => v != null ? Number(v).toLocaleString('es-AR') : '—';
                 return [
-                  { label: 'PvP Fame',   value: fmt(pvpEntry?.value),  color: '#00d4ff', icon: '⚔️',  found: !!pvpEntry },
+                  { label: 'PvP Fame',   value: fmt(pvpEntry?.value),  color: '#ff7a1a', icon: '⚔️',  found: !!pvpEntry },
                   { label: 'PvE Fame',   value: fmt(pveEntry?.value),  color: '#00cc66', icon: '⭐',  found: !!pveEntry },
                   { label: 'Fame Farm',  value: fmt(farmEntry?.value), color: '#cd7f32', icon: '🪵',  found: !!farmEntry },
                   { label: 'Asistencias', value: user.cta_attendance || '0', color: '#ff8844', icon: '🛡️', found: true },
                 ].map((s, i) => (
-                  <div key={i} style={{ background: '#0f0f18', border: `1px solid ${s.found && s.value !== '—' ? '#1e1e30' : '#1e1e30'}`, borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                  <div key={i} style={{ background: '#111111', border: `1px solid ${s.found && s.value !== '—' ? '#2a2a2a' : '#2a2a2a'}`, borderRadius: 8, padding: 16, textAlign: 'center' }}>
                     <div style={{ fontSize: '1.5rem', marginBottom: 6 }}>{s.icon}</div>
-                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: s.value === '—' ? '#3a3a5a' : s.color }}>{s.value}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>{s.label}</div>
+                    <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: s.value === '—' ? '#444444' : s.color }}>{s.value}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>{s.label}</div>
                   </div>
                 ));
               })()}
@@ -385,18 +385,18 @@ export default function Profile() {
             </form>
             {transferHistory.length > 0 && (
               <div style={{ marginTop: 14 }}>
-                <button onClick={() => setShowHistory(h => !h)} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani', padding: 0 }}>
+                <button onClick={() => setShowHistory(h => !h)} style={{ background: 'none', border: 'none', color: '#8a8a8a', cursor: 'pointer', fontSize: '0.78rem', fontFamily: 'Rajdhani', padding: 0 }}>
                   {showHistory ? '▲ Ocultar' : '▼ Ver historial'} ({transferHistory.length})
                 </button>
                 {showHistory && (
                   <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
                     {transferHistory.map(t => (
-                      <div key={t.id} style={{ background: '#0f0f18', border: '1px solid #1e1e30', borderRadius: 6, padding: '6px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <div key={t.id} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 6, padding: '6px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: t.amount > 0 ? '#00cc66' : '#ff4466', fontSize: '0.88rem' }}>
                           {t.amount > 0 ? '+' : ''}{t.amount.toLocaleString('es-AR')}
                         </span>
-                        <span style={{ flex: 1, fontSize: '0.75rem', color: '#9090b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.reason}</span>
-                        <span style={{ fontSize: '0.72rem', color: '#4a4a6a', flexShrink: 0 }}>{new Date(t.created_at).toLocaleDateString('es-ES')}</span>
+                        <span style={{ flex: 1, fontSize: '0.75rem', color: '#b0b0b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.reason}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#5c5c5c', flexShrink: 0 }}>{new Date(t.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
                     ))}
                   </div>
@@ -416,7 +416,7 @@ export default function Profile() {
               <button type="submit" className="btn btn-primary" disabled={pwBusy || !pwCurrent || !pwNew || !pwNew2}>
                 {pwBusy ? 'Guardando...' : 'Cambiar contraseña'}
               </button>
-              <div style={{ fontSize: '0.72rem', color: '#6a6a8a', marginTop: 4 }}>
+              <div style={{ fontSize: '0.72rem', color: '#8a8a8a', marginTop: 4 }}>
                 ¿La olvidaste? Pedile a un admin del gremio por Discord que te genere una contraseña temporal.
               </div>
             </form>
@@ -444,12 +444,12 @@ export default function Profile() {
 
             {myRequests.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.82rem', fontFamily: 'Rajdhani', fontWeight: 600, color: '#9090b0', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Historial de Canjes</div>
+                <div style={{ fontSize: '0.82rem', fontFamily: 'Rajdhani', fontWeight: 600, color: '#b0b0b0', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Historial de Canjes</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {myRequests.map(r => (
-                    <div key={r.id} style={{ background: '#0f0f18', border: '1px solid #1e1e30', borderRadius: 6, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <div key={r.id} style={{ background: '#111111', border: '1px solid #2a2a2a', borderRadius: 6, padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {Number(r.coins).toLocaleString('es-AR')}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#6a6a8a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#8a8a8a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
                       <span style={{ fontSize: '0.75rem', color: r.status === 'pending' ? '#ffaa00' : r.status === 'completed' ? '#00cc66' : '#ff6688' }}>
                         {r.status === 'pending' ? '⏳ Pendiente' : r.status === 'completed' ? '✅ Entregado' : '❌ Rechazado'}
                       </span>
@@ -482,7 +482,7 @@ export default function Profile() {
               justifyContent: 'center',
               gap: '12px',
               position: 'relative',
-              boxShadow: 'inset 0 0 20px rgba(0, 212, 255, 0.05)'
+              boxShadow: 'inset 0 0 20px rgba(255, 122, 26, 0.05)'
             }}>
               <div style={{ position: 'relative', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {selectedAvatar ? (
@@ -497,7 +497,7 @@ export default function Profile() {
                     width: 120, 
                     height: 120, 
                     borderRadius: '50%', 
-                    background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+                    background: 'linear-gradient(135deg, #e05f00, #8a3300)', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
@@ -506,8 +506,8 @@ export default function Profile() {
                     fontSize: '2.5rem', 
                     color: 'white', 
                     overflow: 'hidden', 
-                    border: '3px solid rgba(0,212,255,0.3)', 
-                    boxShadow: '0 0 25px rgba(0,212,255,0.2)', 
+                    border: '3px solid rgba(255, 122, 26,0.3)', 
+                    boxShadow: '0 0 25px rgba(255, 122, 26,0.2)', 
                   }}>
                     {user.avatar ? (
                       <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

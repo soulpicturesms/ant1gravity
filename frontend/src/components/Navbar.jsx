@@ -53,7 +53,7 @@ export default function Navbar() {
       <div className="avatar" style={{ 
         width: size, 
         height: size, 
-        background: 'linear-gradient(135deg, #00aacc, #0044aa)', 
+        background: 'linear-gradient(135deg, #e05f00, #8a3300)', 
         borderRadius: '50%', 
         display: 'flex', 
         alignItems: 'center', 
@@ -62,7 +62,7 @@ export default function Navbar() {
         fontWeight: 700, 
         color: 'white', 
         overflow: 'hidden', 
-        border: '2px solid rgba(0,212,255,0.3)', 
+        border: '2px solid rgba(255, 122, 26,0.3)', 
         flexShrink: 0,
         fontSize: size > 35 ? '0.9rem' : '0.8rem'
       }}>
@@ -77,8 +77,8 @@ export default function Navbar() {
 
   return (
     <nav style={{
-      background: 'linear-gradient(to bottom, #0a0a12, #0f0f1a)',
-      borderBottom: '1px solid #1e1e30',
+      background: 'linear-gradient(to bottom, #0c0c0c, #121212)',
+      borderBottom: '1px solid #2a2a2a',
       position: 'sticky',
       top: 0,
       zIndex: 100,
@@ -88,9 +88,9 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <img
-            src="/logo-icon.png"
-            alt="ANT1GRAVITY"
-            style={{ width: 42, height: 42, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(0,212,255,0.5))' }}
+            src="/logo-fullpush-128.png"
+            alt="FULLPUSH"
+            style={{ width: 36, height: 44, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(255, 122, 26,0.5))' }}
             onError={e => {
               e.target.style.display = 'none';
               e.target.nextSibling.style.display = 'flex';
@@ -98,13 +98,13 @@ export default function Navbar() {
           />
           <div style={{
             display: 'none', width: 42, height: 42,
-            background: 'linear-gradient(135deg, #00aacc, #0044aa)',
+            background: 'linear-gradient(135deg, #e05f00, #8a3300)',
             borderRadius: '50%', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', color: 'white',
-            border: '2px solid #00d4ff44', boxShadow: '0 0 15px rgba(0,212,255,0.3)'
-          }}>AG</div>
+            border: '2px solid #ff7a1a44', boxShadow: '0 0 15px rgba(255, 122, 26,0.3)'
+          }}>FP</div>
           <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.3rem', color: 'white', letterSpacing: '0.1em' }}>
-            ANT<span style={{ color: '#00d4ff' }}>1</span>GRAVITY
+            FULL<span style={{ color: '#ff7a1a' }}>PUSH</span>
           </span>
         </Link>
 
@@ -123,14 +123,14 @@ export default function Navbar() {
                   fontSize: '0.9rem',
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
-                  color: isActive ? '#00d4ff' : '#9090b0',
-                  background: isActive ? 'rgba(0,212,255,0.08)' : 'transparent',
-                  border: isActive ? '1px solid rgba(0,212,255,0.2)' : '1px solid transparent',
+                  color: isActive ? '#ff7a1a' : '#b0b0b0',
+                  background: isActive ? 'rgba(255, 122, 26,0.08)' : 'transparent',
+                  border: isActive ? '1px solid rgba(255, 122, 26,0.2)' : '1px solid transparent',
                   transition: 'all 0.2s',
                   textDecoration: 'none',
                   position: 'relative',
                 })}
-                onMouseEnter={e => { if (!e.currentTarget.style.background.includes('0.08')) { e.currentTarget.style.color = '#e0e0f0'; } }}
+                onMouseEnter={e => { if (!e.currentTarget.style.background.includes('0.08')) { e.currentTarget.style.color = '#ededed'; } }}
                 onMouseLeave={e => { }}
               >
                 {link.label}
@@ -176,7 +176,7 @@ export default function Navbar() {
           if (link.admin && !isAdmin) return null;
           return (
             <NavLink key={link.to} to={link.to} end={link.to === '/'}
-              style={({ isActive }) => ({ color: isActive ? '#00d4ff' : '#9090b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'block', textDecoration: 'none', position: 'relative' })}
+              style={({ isActive }) => ({ color: isActive ? '#ff7a1a' : '#b0b0b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'block', textDecoration: 'none', position: 'relative' })}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
@@ -189,7 +189,7 @@ export default function Navbar() {
         <div className="mobile-divider" />
         {user ? (
           <>
-            <NavLink to="/profile" style={{ color: '#9090b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+            <NavLink to="/profile" style={{ color: '#b0b0b0', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
               {renderUserAvatar(44)}
               <div>
                 <div style={{ color: 'white', lineHeight: 1 }}>{user.username}</div>
@@ -199,7 +199,7 @@ export default function Navbar() {
             <button className="mobile-link" onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#ff6688', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', textAlign: 'left', width: '100%', cursor: 'pointer' }}>Salir</button>
           </>
         ) : (
-          <NavLink to="/login" style={{ color: '#00d4ff', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'block', textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>Ingresar</NavLink>
+          <NavLink to="/login" style={{ color: '#ff7a1a', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.05em', textTransform: 'uppercase', padding: '12px 24px', display: 'block', textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>Ingresar</NavLink>
         )}
       </div>
     </nav>

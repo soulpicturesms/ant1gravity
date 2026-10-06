@@ -1,17 +1,17 @@
 :root {
-  --bg-primary: #08080e;
-  --bg-secondary: #0f0f18;
-  --bg-card: #13131f;
-  --bg-card-hover: #1a1a2a;
-  --border: #1e1e30;
-  --border-accent: #00d4ff33;
-  --accent: #00d4ff;
-  --accent-dim: #0099bb;
-  --accent-glow: rgba(0, 212, 255, 0.15);
-  --accent2: #0066ff;
-  --text: #e0e0f0;
-  --text-muted: #6a6a8a;
-  --text-dim: #9090b0;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #161616;
+  --bg-card-hover: #1e1e1e;
+  --border: #2a2a2a;
+  --border-accent: #ff7a1a33;
+  --accent: #ff7a1a;
+  --accent-dim: #cc5500;
+  --accent-glow: rgba(255, 122, 26, 0.15);
+  --accent2: #ff4d00;
+  --text: #ededed;
+  --text-muted: #8a8a8a;
+  --text-dim: #b0b0b0;
   --danger: #ff3355;
   --danger-dim: #cc2244;
   --success: #00cc66;
@@ -88,11 +88,11 @@ a:hover { color: white; }
   transition: all 0.2s;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #00aacc, #0066ff);
+  background: linear-gradient(135deg, #e05f00, #ff4d00);
   color: white;
-  box-shadow: 0 0 15px rgba(0, 170, 204, 0.3);
+  box-shadow: 0 0 15px rgba(224,95,0, 0.3);
 }
-.btn-primary:hover { box-shadow: 0 0 25px rgba(0, 170, 204, 0.6); transform: translateY(-1px); }
+.btn-primary:hover { box-shadow: 0 0 25px rgba(224,95,0, 0.6); transform: translateY(-1px); }
 .btn-secondary {
   background: var(--bg-card-hover);
   color: var(--text);
@@ -162,7 +162,7 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .badge-admin { background: #ff336622; color: #ff3366; border: 1px solid #ff336644; }
 .badge-officer { background: #ffaa0022; color: #ffaa00; border: 1px solid #ffaa0044; }
-.badge-member { background: #00d4ff22; color: #00d4ff; border: 1px solid #00d4ff44; }
+.badge-member { background: #ff7a1a22; color: #ff7a1a; border: 1px solid #ff7a1a44; }
 .badge-pending { background: #ffaa0022; color: #ffaa00; border: 1px solid #ffaa0044; }
 .badge-approved { background: #00cc6622; color: #00cc66; border: 1px solid #00cc6644; }
 .badge-rejected { background: #ff335522; color: #ff3355; border: 1px solid #ff335544; }
@@ -200,14 +200,14 @@ tbody tr:last-child td { border-bottom: none; }
 .alert { padding: 12px 16px; border-radius: 6px; font-size: 0.9rem; margin-bottom: 16px; }
 .alert-error { background: #ff335522; border: 1px solid #ff335544; color: #ff6688; }
 .alert-success { background: #00cc6622; border: 1px solid #00cc6644; color: #00dd88; }
-.alert-info { background: #00d4ff22; border: 1px solid #00d4ff44; color: #00d4ff; }
+.alert-info { background: #ff7a1a22; border: 1px solid #ff7a1a44; color: #ff7a1a; }
 
 /* Avatar */
 .avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00aacc, #0044aa);
+  background: linear-gradient(135deg, #e05f00, #8a3300);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -316,7 +316,7 @@ tbody tr:last-child td { border-bottom: none; }
 .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
 
 /* Glow text */
-.glow-text { color: var(--accent); text-shadow: 0 0 20px var(--accent), 0 0 40px rgba(0, 212, 255, 0.3); }
+.glow-text { color: var(--accent); text-shadow: 0 0 20px var(--accent), 0 0 40px rgba(255, 122, 26, 0.3); }
 
 /* News card */
 .news-card { display: flex; flex-direction: column; gap: 12px; }
@@ -439,7 +439,7 @@ tbody tr:last-child td { border-bottom: none; }
   display: block;
   width: 24px;
   height: 2px;
-  background: #9090b0;
+  background: #b0b0b0;
   border-radius: 2px;
   transition: all 0.3s;
 }
@@ -448,8 +448,8 @@ tbody tr:last-child td { border-bottom: none; }
 .mobile-nav {
   display: none;
   flex-direction: column;
-  background: #0a0a12;
-  border-top: 1px solid #1e1e30;
+  background: #0c0c0c;
+  border-top: 1px solid #2a2a2a;
   padding: 12px 0;
 }
 .mobile-nav a, .mobile-nav button.mobile-link {
@@ -460,7 +460,7 @@ tbody tr:last-child td { border-bottom: none; }
   font-size: 1rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #9090b0;
+  color: #b0b0b0;
   text-decoration: none;
   border: none;
   background: none;
@@ -469,9 +469,9 @@ tbody tr:last-child td { border-bottom: none; }
   width: 100%;
   transition: color 0.2s;
 }
-.mobile-nav a:hover, .mobile-nav button.mobile-link:hover { color: #00d4ff; }
-.mobile-nav a.active-link { color: #00d4ff; }
-.mobile-nav .mobile-divider { height: 1px; background: #1e1e30; margin: 8px 16px; }
+.mobile-nav a:hover, .mobile-nav button.mobile-link:hover { color: #ff7a1a; }
+.mobile-nav a.active-link { color: #ff7a1a; }
+.mobile-nav .mobile-divider { height: 1px; background: #2a2a2a; margin: 8px 16px; }
 
 /* Stats bar */
 .stats-bar {
@@ -556,7 +556,7 @@ tbody tr:last-child td { border-bottom: none; }
   .input, .select, .textarea { padding: 8px 10px; font-size: 0.88rem; }
 }
 
-/* 🎰 ANT1GRAVITY Casino - Zynga Animations */
+/* 🎰 FULLPUSH Casino - Zynga Animations */
 @keyframes card-deal-anim {
   from {
     transform: translate(180px, -220px) rotate(-25deg) scale(0.6);

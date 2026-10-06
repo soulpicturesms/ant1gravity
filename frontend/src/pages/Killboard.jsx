@@ -67,35 +67,35 @@ function KillCard({ event, tab }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+      background: 'linear-gradient(135deg, #0d0d0d, #101010)',
       border: `1px solid ${accent}22`, borderLeft: `3px solid ${accent}`,
       borderRadius: 10, padding: '14px 18px',
       display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center',
     }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.05rem', color: isKill ? '#00cc66' : '#9090b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.05rem', color: isKill ? '#00cc66' : '#b0b0b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           ⚔️ {Killer?.Name || '—'}
         </div>
-        {Killer?.GuildName && <div style={{ fontSize: '0.75rem', color: '#5a5a7a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{Killer.GuildName}</div>}
+        {Killer?.GuildName && <div style={{ fontSize: '0.75rem', color: '#6e6e6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{Killer.GuildName}</div>}
         <Equipment eq={Killer?.Equipment} align="left" />
-        {Killer?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#4a4a6a', marginTop: 4 }}>IP {Math.round(Killer.AverageItemPower)}</div>}
+        {Killer?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#5c5c5c', marginTop: 4 }}>IP {Math.round(Killer.AverageItemPower)}</div>}
       </div>
 
       <div style={{ textAlign: 'center', minWidth: 60 }}>
         <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#ffd700', lineHeight: 1 }}>{formatFame(TotalVictimKillFame)}</div>
-        <div style={{ fontSize: '0.6rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>fame</div>
+        <div style={{ fontSize: '0.6rem', color: '#5c5c5c', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>fame</div>
         <div style={{ fontSize: '0.8rem', fontFamily: 'Rajdhani', fontWeight: 700, color: accent, letterSpacing: '0.05em' }}>VS</div>
-        <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 8 }}>{timeAgo(TimeStamp)}</div>
-        {numberOfParticipants > 1 && <div style={{ fontSize: '0.65rem', color: '#4a4a6a', marginTop: 3 }}>👥 {numberOfParticipants}</div>}
+        <div style={{ fontSize: '0.7rem', color: '#6e6e6e', marginTop: 8 }}>{timeAgo(TimeStamp)}</div>
+        {numberOfParticipants > 1 && <div style={{ fontSize: '0.65rem', color: '#5c5c5c', marginTop: 3 }}>👥 {numberOfParticipants}</div>}
       </div>
 
       <div style={{ textAlign: 'right', minWidth: 0 }}>
-        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.05rem', color: isKill ? '#9090b0' : '#ff4466', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.05rem', color: isKill ? '#b0b0b0' : '#ff4466', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {Victim?.Name || '—'} 💀
         </div>
-        {Victim?.GuildName && <div style={{ fontSize: '0.75rem', color: '#5a5a7a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{Victim.GuildName}</div>}
+        {Victim?.GuildName && <div style={{ fontSize: '0.75rem', color: '#6e6e6e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 6 }}>{Victim.GuildName}</div>}
         <Equipment eq={Victim?.Equipment} align="right" />
-        {Victim?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#4a4a6a', marginTop: 4 }}>IP {Math.round(Victim.AverageItemPower)}</div>}
+        {Victim?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#5c5c5c', marginTop: 4 }}>IP {Math.round(Victim.AverageItemPower)}</div>}
       </div>
     </div>
   );
@@ -122,28 +122,28 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+      background: 'linear-gradient(135deg, #0d0d0d, #101010)',
       border: '1px solid #ff446622', borderLeft: '3px solid #ff4466',
       borderRadius: 10, padding: '14px 18px',
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center' }}>
         {/* Killer */}
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#9090b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#b0b0b0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             ⚔️ {Killer?.Name || '—'}
           </div>
-          {Killer?.GuildName && <div style={{ fontSize: '0.75rem', color: '#5a5a7a', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Killer.GuildName}</div>}
+          {Killer?.GuildName && <div style={{ fontSize: '0.75rem', color: '#6e6e6e', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Killer.GuildName}</div>}
           <Equipment eq={Killer?.Equipment} align="left" />
-          {Killer?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#4a4a6a', marginTop: 4 }}>IP {Math.round(Killer.AverageItemPower)}</div>}
+          {Killer?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#5c5c5c', marginTop: 4 }}>IP {Math.round(Killer.AverageItemPower)}</div>}
         </div>
 
         {/* Center */}
         <div style={{ textAlign: 'center', minWidth: 60 }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#ffd700', lineHeight: 1 }}>{formatFame(TotalVictimKillFame)}</div>
-          <div style={{ fontSize: '0.6rem', color: '#4a4a6a', textTransform: 'uppercase', marginBottom: 8 }}>fame</div>
+          <div style={{ fontSize: '0.6rem', color: '#5c5c5c', textTransform: 'uppercase', marginBottom: 8 }}>fame</div>
           <div style={{ fontSize: '0.8rem', fontFamily: 'Rajdhani', fontWeight: 700, color: '#ff4466' }}>VS</div>
-          <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 8 }}>{timeAgo(TimeStamp)}</div>
-          {numberOfParticipants > 1 && <div style={{ fontSize: '0.65rem', color: '#4a4a6a', marginTop: 3 }}>👥 {numberOfParticipants}</div>}
+          <div style={{ fontSize: '0.7rem', color: '#6e6e6e', marginTop: 8 }}>{timeAgo(TimeStamp)}</div>
+          {numberOfParticipants > 1 && <div style={{ fontSize: '0.65rem', color: '#5c5c5c', marginTop: 3 }}>👥 {numberOfParticipants}</div>}
         </div>
 
         {/* Victim (user) */}
@@ -151,9 +151,9 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: '#ff4466', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {Victim?.Name || '—'} 💀
           </div>
-          {Victim?.GuildName && <div style={{ fontSize: '0.75rem', color: '#5a5a7a', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Victim.GuildName}</div>}
+          {Victim?.GuildName && <div style={{ fontSize: '0.75rem', color: '#6e6e6e', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{Victim.GuildName}</div>}
           <Equipment eq={Victim?.Equipment} align="right" />
-          {Victim?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#4a4a6a', marginTop: 4 }}>IP {Math.round(Victim.AverageItemPower)}</div>}
+          {Victim?.AverageItemPower > 0 && <div style={{ fontSize: '0.7rem', color: '#5c5c5c', marginTop: 4 }}>IP {Math.round(Victim.AverageItemPower)}</div>}
         </div>
       </div>
 
@@ -167,9 +167,9 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
             padding: '7px 18px', borderRadius: 6,
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem',
             cursor: (loading || done) ? 'default' : 'pointer',
-            border: `1px solid ${done ? '#00cc6644' : '#00d4ff44'}`,
-            background: done ? 'rgba(0,204,102,0.1)' : 'rgba(0,212,255,0.1)',
-            color: done ? '#00cc66' : '#00d4ff',
+            border: `1px solid ${done ? '#00cc6644' : '#ff7a1a44'}`,
+            background: done ? 'rgba(0,204,102,0.1)' : 'rgba(255, 122, 26,0.1)',
+            color: done ? '#00cc66' : '#ff7a1a',
             transition: 'all 0.2s',
           }}
         >
@@ -182,7 +182,7 @@ function MyDeathCard({ event, alreadyRequested, requesting, onRequest }) {
 
 // ─── Battles ──────────────────────────────────────────────────────────────────
 
-const GUILD_NAME = 'ANT1GRAVITY';
+const GUILD_NAME = 'FULLPUSH';
 
 function LiveDot() {
   return (
@@ -242,7 +242,7 @@ function BattleCard({ battle, guildId, live }) {
       style={{
         background: live
           ? 'linear-gradient(135deg, #110a0a, #160d0d)'
-          : 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+          : 'linear-gradient(135deg, #0d0d0d, #101010)',
         border: `1px solid ${live ? '#ff333333' : kdColor + '22'}`,
         borderLeft: `3px solid ${live ? '#ff3333' : kdColor}`,
         borderRadius: 10,
@@ -252,7 +252,7 @@ function BattleCard({ battle, guildId, live }) {
         userSelect: 'none',
       }}
       onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, #0c0c1a, #0f0f22)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, #0a0a16, #0d0d1e)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, #0d0d0d, #101010)'}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         {/* Title + meta */}
@@ -260,15 +260,15 @@ function BattleCard({ battle, guildId, live }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
             {live && <LiveDot />}
             {live && <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.72rem', color: '#ff3333', letterSpacing: '0.1em', flexShrink: 0 }}>LIVE</span>}
-            <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#e0e0f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', color: '#ededed', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               ⚔️ {titleVs}
             </span>
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#5a5a7a', marginTop: 2 }}>
+          <div style={{ fontSize: '0.7rem', color: '#6e6e6e', marginTop: 2 }}>
             {timeAgo(battle.startTime)}
-            {duration && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {duration}</span>}
-            {location && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• {location}</span>}
-            {totalPlayers && <span style={{ marginLeft: 8, color: '#4a4a6a' }}>• 👥 {totalPlayers} jugadores</span>}
+            {duration && <span style={{ marginLeft: 8, color: '#5c5c5c' }}>• {duration}</span>}
+            {location && <span style={{ marginLeft: 8, color: '#5c5c5c' }}>• {location}</span>}
+            {totalPlayers && <span style={{ marginLeft: 8, color: '#5c5c5c' }}>• 👥 {totalPlayers} jugadores</span>}
           </div>
         </div>
 
@@ -276,23 +276,23 @@ function BattleCard({ battle, guildId, live }) {
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexShrink: 0 }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#00cc66', lineHeight: 1 }}>{ourKills}</div>
-            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kills</div>
+            <div style={{ fontSize: '0.58rem', color: '#5c5c5c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Kills</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: '#ff4466', lineHeight: 1 }}>{ourDeaths}</div>
-            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Muertes</div>
+            <div style={{ fontSize: '0.58rem', color: '#5c5c5c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Muertes</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: kdColor, lineHeight: 1 }}>{kd}</div>
-            <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>K/D</div>
+            <div style={{ fontSize: '0.58rem', color: '#5c5c5c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>K/D</div>
           </div>
           {ours?.killFame > 0 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#ffd700', lineHeight: 1 }}>{formatFameShort(ours.killFame)}</div>
-              <div style={{ fontSize: '0.58rem', color: '#4a4a6a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fame</div>
+              <div style={{ fontSize: '0.58rem', color: '#5c5c5c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fame</div>
             </div>
           )}
-          <div style={{ color: '#4a4a6a', fontSize: '0.8rem', marginLeft: 4 }}>→</div>
+          <div style={{ color: '#5c5c5c', fontSize: '0.8rem', marginLeft: 4 }}>→</div>
         </div>
       </div>
     </div>
@@ -313,15 +313,15 @@ function BattleStatsBar({ battles, guildId }) {
   return (
     <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
       {[
-        { label: 'Batallas',  value: battles.length, color: '#00d4ff' },
+        { label: 'Batallas',  value: battles.length, color: '#ff7a1a' },
         { label: 'Victorias', value: wins,            color: '#00cc66' },
         { label: 'K/D total', value: kd,              color: '#ffd700' },
         { label: 'Kills tot.', value: totalK,         color: '#00cc66' },
         { label: 'Muertes',   value: totalD,          color: '#ff4466' },
       ].map(s => (
-        <div key={s.label} style={{ flex: '1 1 90px', background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)', border: '1px solid #1e1e30', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
+        <div key={s.label} style={{ flex: '1 1 90px', background: 'linear-gradient(135deg, #0d0d0d, #101010)', border: '1px solid #2a2a2a', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-          <div style={{ fontSize: '0.65rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
+          <div style={{ fontSize: '0.65rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -389,12 +389,12 @@ function BattlesTab({ guildId }) {
             </div>
           )}
           {lastUpdate && (
-            <span style={{ fontSize: '0.7rem', color: '#4a4a6a' }}>
+            <span style={{ fontSize: '0.7rem', color: '#5c5c5c' }}>
               Actualizado {lastUpdate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           )}
         </div>
-        <button onClick={() => load()} style={{ background: 'none', border: '1px solid #1e1e30', borderRadius: 6, color: '#6a6a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.82rem', padding: '5px 12px' }}>
+        <button onClick={() => load()} style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 6, color: '#8a8a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.82rem', padding: '5px 12px' }}>
           ↻ Actualizar
         </button>
       </div>
@@ -415,19 +415,19 @@ function StatsBar({ kills, deaths }) {
       {[
         { label: 'Kills',   value: kills.length,          color: '#00cc66' },
         { label: 'Muertes', value: deaths.length,         color: '#ff4466' },
-        { label: 'K/D',     value: kd,                    color: '#00d4ff' },
+        { label: 'K/D',     value: kd,                    color: '#ff7a1a' },
         { label: 'Fame',    value: formatFame(totalFame), color: '#ffd700' },
       ].map(s => (
-        <div key={s.label} style={{ flex: '1 1 90px', background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)', border: '1px solid #1e1e30', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
+        <div key={s.label} style={{ flex: '1 1 90px', background: 'linear-gradient(135deg, #0d0d0d, #101010)', border: '1px solid #2a2a2a', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-          <div style={{ fontSize: '0.68rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
+          <div style={{ fontSize: '0.68rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4 }}>{s.label}</div>
         </div>
       ))}
     </div>
   );
 }
 
-const ALBION_GUILD_ID = 'Azsds8YiRyi6aGL1rOZRLg';
+const ALBION_GUILD_ID = '_dZi8dpyRVy53Wyksk4oBA';
 
 export default function Killboard() {
   const { user } = useAuth();
@@ -504,7 +504,7 @@ export default function Killboard() {
     { key: 'kills',    label: `Kills (${kills.length})`,    color: '#00cc66' },
     { key: 'deaths',   label: `Muertes (${deaths.length})`, color: '#ff4466' },
     { key: 'battles',  label: '⚔️ Batallas',                color: '#a78bfa' },
-    ...(user ? [{ key: 'mine', label: '⚙️ Mis Muertes',    color: '#00d4ff' }] : []),
+    ...(user ? [{ key: 'mine', label: '⚙️ Mis Muertes',    color: '#ff7a1a' }] : []),
   ];
 
   return (
@@ -525,7 +525,7 @@ export default function Killboard() {
             onChange={e => setSearch(e.target.value)}
             style={{ maxWidth: 320, fontSize: '0.9rem' }}
           />
-          {q && <span style={{ marginLeft: 10, fontSize: '0.78rem', color: '#6a6a8a' }}>{events.length} resultado{events.length !== 1 ? 's' : ''} para "{q}"</span>}
+          {q && <span style={{ marginLeft: 10, fontSize: '0.78rem', color: '#8a8a8a' }}>{events.length} resultado{events.length !== 1 ? 's' : ''} para "{q}"</span>}
         </div>
       )}
 
@@ -535,9 +535,9 @@ export default function Killboard() {
             padding: '7px 20px', borderRadius: 6,
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.05em',
             cursor: 'pointer',
-            border: `1px solid ${tab === t.key ? t.color + '55' : '#1e1e30'}`,
+            border: `1px solid ${tab === t.key ? t.color + '55' : '#2a2a2a'}`,
             background: tab === t.key ? t.color + '18' : 'transparent',
-            color: tab === t.key ? t.color : '#6a6a8a',
+            color: tab === t.key ? t.color : '#8a8a8a',
             transition: 'all 0.2s',
           }}>
             {t.label}
@@ -545,8 +545,8 @@ export default function Killboard() {
         ))}
         {(tab === 'kills' || tab === 'deaths') && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
-            {lastUpdate && <span style={{ fontSize: '0.72rem', color: '#4a4a6a' }}>{lastUpdate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>}
-            <button onClick={load} disabled={loading} style={{ padding: '7px 14px', borderRadius: 6, fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', cursor: loading ? 'default' : 'pointer', border: '1px solid #1e1e30', background: 'transparent', color: '#6a6a8a' }}>
+            {lastUpdate && <span style={{ fontSize: '0.72rem', color: '#5c5c5c' }}>{lastUpdate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>}
+            <button onClick={load} disabled={loading} style={{ padding: '7px 14px', borderRadius: 6, fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', cursor: loading ? 'default' : 'pointer', border: '1px solid #2a2a2a', background: 'transparent', color: '#8a8a8a' }}>
               ↻ Actualizar
             </button>
           </div>
@@ -584,9 +584,9 @@ export default function Killboard() {
       {tab === 'mine' && (
         <div>
           {myCharacter && (
-            <div style={{ marginBottom: 16, fontSize: '0.82rem', color: '#6a6a8a' }}>
-              Mostrando muertes de <strong style={{ color: '#00d4ff' }}>{myCharacter}</strong>
-              <button onClick={loadMyDeaths} style={{ marginLeft: 10, background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>↻</button>
+            <div style={{ marginBottom: 16, fontSize: '0.82rem', color: '#8a8a8a' }}>
+              Mostrando muertes de <strong style={{ color: '#ff7a1a' }}>{myCharacter}</strong>
+              <button onClick={loadMyDeaths} style={{ marginLeft: 10, background: 'none', border: 'none', color: '#8a8a8a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600 }}>↻</button>
             </div>
           )}
           {myDeathsLoading && <div className="loading"><div className="spinner" /> Cargando muertes...</div>}

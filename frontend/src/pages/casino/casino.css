@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    Casino shell — scoped to .casino-shell so it never
-   bleeds into the rest of the ant1gravity app.
+   bleeds into the rest of the fullpush app.
    ═══════════════════════════════════════════════════════ */
 
 .casino-shell {
@@ -14,9 +14,9 @@
   --c-line2:     rgba(255,255,255,0.10);
   --c-line3:     rgba(255,255,255,0.16);
   --c-text:      #ecedf4;
-  --c-text2:     #a5a6b8;
-  --c-text3:     #6f7088;
-  --c-text4:     #4a4b60;
+  --c-text2:     #b8b8b8;
+  --c-text3:     #8a8a8a;
+  --c-text4:     #5c5c5c;
   --c-accent:    #ff2d7a;
   --c-accent2:   #6fff7d;
   --c-acsoft:    rgba(255,45,122,0.18);

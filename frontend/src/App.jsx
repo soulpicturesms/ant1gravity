@@ -29,14 +29,14 @@ function PendingScreen() {
         <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ffaa00', letterSpacing: '0.1em', marginBottom: 12 }}>
           CUENTA PENDIENTE
         </div>
-        <div style={{ color: '#9090b0', fontSize: '1rem', lineHeight: 1.7, marginBottom: 24 }}>
+        <div style={{ color: '#b0b0b0', fontSize: '1rem', lineHeight: 1.7, marginBottom: 24 }}>
           Tu cuenta está esperando aprobación de un administrador.<br />
           Una vez aprobada podrás acceder a todas las funciones del portal.
         </div>
         <div style={{ background: 'rgba(255,170,0,0.08)', border: '1px solid rgba(255,170,0,0.25)', borderRadius: 10, padding: '14px 20px', marginBottom: 24, fontSize: '0.88rem', color: '#ffaa00' }}>
           💬 Avisale a un admin en el servidor de Discord para que te apruebe.
         </div>
-        <button onClick={logout} style={{ background: 'transparent', border: '1px solid #1e1e30', color: '#6a6a8a', borderRadius: 6, padding: '8px 20px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.9rem' }}>
+        <button onClick={logout} style={{ background: 'transparent', border: '1px solid #2a2a2a', color: '#8a8a8a', borderRadius: 6, padding: '8px 20px', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.9rem' }}>
           Cerrar sesión
         </button>
       </div>
@@ -76,8 +76,8 @@ function AppRoutes() {
         <Route path="/meteoros" element={<Meteoros />} />
         <Route path="/ruleta-rusa" element={<RuletaRusa />} />
       </Routes>
-      <footer style={{ borderTop: '1px solid #1e1e30', padding: '20px', textAlign: 'center', color: '#4a4a6a', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
-        ANT1GRAVITY © 2026
+      <footer style={{ borderTop: '1px solid #2a2a2a', padding: '20px', textAlign: 'center', color: '#5c5c5c', fontSize: '0.82rem', fontFamily: 'Rajdhani', letterSpacing: '0.05em' }}>
+        FULLPUSH © 2026
       </footer>
     </>
   );

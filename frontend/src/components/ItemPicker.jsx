@@ -25,7 +25,7 @@ function buildCode(id, tier, enchant) {
 }
 
 const SLOT_CFG = {
-  Q:      { color: '#00d4ff', bg: 'rgba(0,212,255,0.12)',  border: 'rgba(0,212,255,0.35)',  label: 'Q' },
+  Q:      { color: '#ff7a1a', bg: 'rgba(255, 122, 26,0.12)',  border: 'rgba(255, 122, 26,0.35)',  label: 'Q' },
   W:      { color: '#00e8c0', bg: 'rgba(0,232,192,0.12)',  border: 'rgba(0,232,192,0.35)',  label: 'W' },
   E:      { color: '#ff8c00', bg: 'rgba(255,140,0,0.12)',  border: 'rgba(255,140,0,0.35)',  label: 'E' },
   Pasiva: { color: '#ffaa00', bg: 'rgba(255,170,0,0.12)',  border: 'rgba(255,170,0,0.35)',  label: '★' },
@@ -36,13 +36,13 @@ const ENCHANT_COLORS = ['', '#4aee4a', '#5a5aff', '#cc44cc', '#ee8800'];
 function SkillsPanel({ baseId }) {
   const skills = ITEM_SKILLS[baseId];
   if (!skills) return (
-    <div style={{ fontSize: '0.72rem', color: '#4a4a6a', textAlign: 'center', padding: '8px 0', lineHeight: 1.6 }}>
+    <div style={{ fontSize: '0.72rem', color: '#5c5c5c', textAlign: 'center', padding: '8px 0', lineHeight: 1.6 }}>
       Skills no disponibles.{' '}
       <a
         href={`https://albiononline2d.com/en/item/id/${baseId}`}
         target="_blank"
         rel="noreferrer"
-        style={{ color: '#00d4ff88', textDecoration: 'none' }}
+        style={{ color: '#ff7a1a88', textDecoration: 'none' }}
       >
         Ver en albiononline2d.com ↗
       </a>
@@ -103,7 +103,7 @@ function SpellSlotPicker({ options, selected, onChange, itemSlot }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {slots.map(k => (
         <div key={k}>
-          <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+          <div style={{ fontSize: '0.6rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
             {label(k)}
           </div>
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
@@ -117,9 +117,9 @@ function SpellSlotPicker({ options, selected, onChange, itemSlot }) {
                     cursor: 'pointer',
                     borderRadius: 7,
                     padding: 2,
-                    border: `2px solid ${isActive ? '#00d4ff' : 'transparent'}`,
-                    background: isActive ? 'rgba(0,212,255,0.1)' : 'transparent',
-                    boxShadow: isActive ? '0 0 8px rgba(0,212,255,0.4)' : 'none',
+                    border: `2px solid ${isActive ? '#ff7a1a' : 'transparent'}`,
+                    background: isActive ? 'rgba(255, 122, 26,0.1)' : 'transparent',
+                    boxShadow: isActive ? '0 0 8px rgba(255, 122, 26,0.4)' : 'none',
                     transition: 'all 0.15s',
                   }}
                 >
@@ -142,14 +142,14 @@ function ItemPreview({ item, tier, enchant = 0 }) {
   useEffect(() => setOk(true), [url]);
 
   if (!item) return (
-    <div style={{ width: 76, height: 76, background: 'rgba(255,255,255,0.03)', border: '1px dashed #2a2a3a', borderRadius: 10 }} />
+    <div style={{ width: 76, height: 76, background: 'rgba(255,255,255,0.03)', border: '1px dashed #303030', borderRadius: 10 }} />
   );
 
   return (
     <div style={{
       width: 76, height: 76,
-      background: '#0a0a14',
-      border: `2px solid ${glowColor || '#00d4ff44'}`,
+      background: '#0c0c0c',
+      border: `2px solid ${glowColor || '#ff7a1a44'}`,
       borderRadius: 10, overflow: 'hidden',
       boxShadow: glowColor
         ? `0 0 14px 4px ${glowColor}66, 0 0 32px 8px ${glowColor}22`
@@ -158,7 +158,7 @@ function ItemPreview({ item, tier, enchant = 0 }) {
     }}>
       {ok
         ? <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={() => setOk(false)} />
-        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a4a6a', fontSize: '1.2rem' }}>?</div>
+        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5c5c5c', fontSize: '1.2rem' }}>?</div>
       }
     </div>
   );
@@ -243,7 +243,7 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
         onClick={e => e.stopPropagation()}
         style={{
           background: '#0f0f1e',
-          border: '1px solid #00d4ff33',
+          border: '1px solid #ff7a1a33',
           borderRadius: 14,
           width: '94vw',
           maxWidth: 820,
@@ -251,26 +251,26 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 0 60px rgba(0,212,255,0.08)',
+          boxShadow: '0 0 60px rgba(255, 122, 26,0.08)',
         }}
       >
         {/* Header */}
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid #1a1a28', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid #1c1c1c', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: 'white', letterSpacing: '0.05em' }}>
-              Seleccionar — <span style={{ color: '#00d4ff' }}>{slotLabel}</span>
+              Seleccionar — <span style={{ color: '#ff7a1a' }}>{slotLabel}</span>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#6a6a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8a8a8a', cursor: 'pointer', fontSize: '1.1rem', padding: '4px 8px' }}>✕</button>
         </div>
 
         {/* Body */}
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
           {/* Left — search + list */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #1a1a28', minWidth: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid #1c1c1c', minWidth: 0 }}>
             {/* Search */}
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #1a1a28', flexShrink: 0 }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid #1c1c1c', flexShrink: 0 }}>
               <input
                 ref={inputRef}
                 value={query}
@@ -278,11 +278,11 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                 placeholder={`Buscar ${slotLabel.toLowerCase()}...`}
                 style={{
                   width: '100%',
-                  background: '#0a0a14',
-                  border: '1px solid #00d4ff44',
+                  background: '#0c0c0c',
+                  border: '1px solid #ff7a1a44',
                   borderRadius: 8,
                   padding: '9px 14px',
-                  color: '#e0e0f0',
+                  color: '#ededed',
                   fontSize: '0.9rem',
                   outline: 'none',
                 }}
@@ -292,13 +292,13 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
             {/* Item list */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
               {loading && (
-                <div style={{ textAlign: 'center', padding: '24px', color: '#5a5a7a', fontSize: '0.85rem' }}>
+                <div style={{ textAlign: 'center', padding: '24px', color: '#6e6e6e', fontSize: '0.85rem' }}>
                   <div className="spinner" style={{ margin: '0 auto 8px', width: 20, height: 20 }} />
                   Cargando items...
                 </div>
               )}
               {!loading && items.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '24px', color: '#4a4a6a', fontSize: '0.85rem' }}>
+                <div style={{ textAlign: 'center', padding: '24px', color: '#5c5c5c', fontSize: '0.85rem' }}>
                   Sin resultados para "{query}"
                 </div>
               )}
@@ -311,15 +311,15 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
-                      background: isSelected ? 'rgba(0,212,255,0.1)' : 'transparent',
-                      border: `1px solid ${isSelected ? 'rgba(0,212,255,0.3)' : 'transparent'}`,
+                      background: isSelected ? 'rgba(255, 122, 26,0.1)' : 'transparent',
+                      border: `1px solid ${isSelected ? 'rgba(255, 122, 26,0.3)' : 'transparent'}`,
                       marginBottom: 3, transition: 'all 0.1s',
                     }}
                     onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
                     onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                   >
                     {/* Icon preview at lowest available tier */}
-                    <div style={{ width: 38, height: 38, background: '#0a0a14', borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid #1e1e30' }}>
+                    <div style={{ width: 38, height: 38, background: '#0c0c0c', borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid #2a2a2a' }}>
                       <img
                         src={itemUrl(item.id, item.tiers?.length ? Math.min(...item.tiers) : 4)}
                         alt=""
@@ -328,12 +328,12 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                       />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.85rem', color: isSelected ? '#00d4ff' : '#e0e0f0', fontWeight: isSelected ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '0.85rem', color: isSelected ? '#ff7a1a' : '#ededed', fontWeight: isSelected ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.name}
                       </div>
-                      <div style={{ fontSize: '0.65rem', color: '#4a4a6a', fontFamily: 'monospace' }}>{item.id}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#5c5c5c', fontFamily: 'monospace' }}>{item.id}</div>
                     </div>
-                    {isSelected && <div style={{ marginLeft: 'auto', color: '#00d4ff', flexShrink: 0 }}>✓</div>}
+                    {isSelected && <div style={{ marginLeft: 'auto', color: '#ff7a1a', flexShrink: 0 }}>✓</div>}
                   </div>
                 );
               })}
@@ -348,13 +348,13 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
               {selected && (
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem', color: 'white' }}>{selected.name}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'monospace', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'monospace', marginTop: 2 }}>
                     {buildCode(selected.id, tier, enchant)}
                   </div>
                 </div>
               )}
               {!selected && (
-                <div style={{ fontFamily: 'Rajdhani', fontSize: '0.85rem', color: '#4a4a6a', textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Rajdhani', fontSize: '0.85rem', color: '#5c5c5c', textAlign: 'center' }}>
                   Seleccioná un item
                 </div>
               )}
@@ -362,7 +362,7 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
 
             {/* Tier */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Tier</div>
+              <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Tier</div>
               <div style={{ display: 'flex', gap: 5 }}>
                 {TIERS.map(t => {
                   const exists = availTiers.includes(t);
@@ -378,9 +378,9 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                         transition: 'all 0.1s',
                         cursor: exists ? 'pointer' : 'not-allowed',
                         opacity: exists ? 1 : 0.25,
-                        border: `1px solid ${active ? '#00d4ff66' : '#1e1e30'}`,
-                        background: active ? 'rgba(0,212,255,0.15)' : 'transparent',
-                        color: active ? '#00d4ff' : '#6a6a8a',
+                        border: `1px solid ${active ? '#ff7a1a66' : '#2a2a2a'}`,
+                        background: active ? 'rgba(255, 122, 26,0.15)' : 'transparent',
+                        color: active ? '#ff7a1a' : '#8a8a8a',
                       }}>T{t}</button>
                   );
                 })}
@@ -390,10 +390,10 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
             {/* Enchant */}
             {!noEnchant && (
               <div style={{ marginBottom: 18 }}>
-                <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Encantamiento</div>
+                <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Encantamiento</div>
                 <div style={{ display: 'flex', gap: 5 }}>
                   {ENCHANTS.map(e => {
-                    const colors = ['#6a6a8a', '#4aee4a', '#5a5aff', '#cc44cc', '#ee8800'];
+                    const colors = ['#8a8a8a', '#4aee4a', '#5a5aff', '#cc44cc', '#ee8800'];
                     const col = colors[e];
                     const active = enchant === e;
                     // .0 always exists; .1-.4 only if item has them in its enchants array
@@ -409,9 +409,9 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                           transition: 'all 0.15s',
                           cursor: exists ? 'pointer' : 'not-allowed',
                           opacity: exists ? 1 : 0.2,
-                          border: `1px solid ${active ? col : '#1e1e30'}`,
+                          border: `1px solid ${active ? col : '#2a2a2a'}`,
                           background: active ? col + '28' : 'transparent',
-                          color: active ? col : '#4a4a6a',
+                          color: active ? col : '#5c5c5c',
                           boxShadow: active && e > 0 ? `0 0 8px 2px ${col}55` : 'none',
                         }}>.{e}</button>
                     );
@@ -423,8 +423,8 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
             {/* Skills selector */}
             {selected && (
               <div style={{ flex: 1, overflowY: 'auto', marginBottom: 16 }}>
-                <div style={{ fontSize: '0.65rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-                  Skills {spellsLoading && <span style={{ color: '#3a3a5a' }}>···</span>}
+                <div style={{ fontSize: '0.65rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                  Skills {spellsLoading && <span style={{ color: '#444444' }}>···</span>}
                 </div>
                 {spellOptions
                   ? <SpellSlotPicker options={spellOptions} selected={selectedSpells} onChange={setSelectedSpells} itemSlot={slot} />
@@ -441,9 +441,9 @@ export default function ItemPicker({ slot, slotLabel, onSelect, onClose }) {
                 width: '100%', padding: '10px', borderRadius: 8,
                 fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.08em',
                 cursor: selected ? 'pointer' : 'default',
-                border: `1px solid ${selected ? '#00d4ff66' : '#1e1e30'}`,
-                background: selected ? 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(0,100,180,0.15))' : 'transparent',
-                color: selected ? '#00d4ff' : '#3a3a5a',
+                border: `1px solid ${selected ? '#ff7a1a66' : '#2a2a2a'}`,
+                background: selected ? 'linear-gradient(135deg, rgba(255, 122, 26,0.2), rgba(255,77,0,0.15))' : 'transparent',
+                color: selected ? '#ff7a1a' : '#444444',
                 transition: 'all 0.2s',
                 marginTop: 'auto',
               }}

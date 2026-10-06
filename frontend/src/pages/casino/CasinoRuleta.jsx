@@ -63,7 +63,7 @@ function RouletteWheelSVG() {
       <circle cx={cx} cy={cy} r={r * 0.52} fill="#140c08" stroke="#111" strokeWidth="2"/>
       <circle cx={cx} cy={cy} r={r * 0.38} fill="#24150d" stroke="#d4af37" strokeWidth="1" opacity="0.3"/>
       <circle cx={cx} cy={cy} r={r * 0.18} fill="url(#rw-wood)"/>
-      <text x={cx} y={cy} fill="rgba(255,255,255,0.08)" fontSize="5" fontWeight="900" fontFamily="Unbounded" textAnchor="middle" dominantBaseline="central">ANT1GRAVITY</text>
+      <text x={cx} y={cy} fill="rgba(255,255,255,0.08)" fontSize="5" fontWeight="900" fontFamily="Unbounded" textAnchor="middle" dominantBaseline="central">FULLPUSH</text>
     </svg>
   );
 }
@@ -131,7 +131,7 @@ function BetChip({ value, active, onClick }) {
   let color = '#ff2d7a';
   if      (value >= 1000) color = '#f5c542'; // Gold
   else if (value >= 500)  color = '#a78bfa'; // Purple
-  else if (value >= 100)  color = '#00d4ff'; // Blue
+  else if (value >= 100)  color = '#ff7a1a'; // Blue
   else if (value >= 50)   color = '#00aa66'; // Green
 
   return (
@@ -202,7 +202,7 @@ function BettingGrid({ bets, onBet }) {
     let color = '#ff2d7a';
     if      (amount >= 1000) color = '#f5c542';
     else if (amount >= 500)  color = '#a78bfa';
-    else if (amount >= 100)  color = '#00d4ff';
+    else if (amount >= 100)  color = '#ff7a1a';
     else if (amount >= 50)   color = '#00aa66';
     for (let i = 0; i < stack; i++) {
       const cy = y - i*3;
@@ -340,7 +340,7 @@ function BettingGrid({ bets, onBet }) {
       ctx.strokeStyle = hovered ? '#ff2d7a' : 'rgba(212, 175, 55, 0.22)';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(630 + 1, r * 48 + 1, 52, 46);
-      ctx.fillStyle = '#a5a6b8';
+      ctx.fillStyle = '#b8b8b8';
       ctx.font = "bold 10px 'Unbounded', system-ui, sans-serif";
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('2to1', 630 + 27, r * 48 + 24);
@@ -370,7 +370,7 @@ function BettingGrid({ bets, onBet }) {
     let chipColor = '#ff2d7a';
     if      (myBet >= 1000) chipColor = '#f5c542';
     else if (myBet >= 500)  chipColor = '#a78bfa';
-    else if (myBet >= 100)  chipColor = '#00d4ff';
+    else if (myBet >= 100)  chipColor = '#ff7a1a';
     else if (myBet >= 50)   chipColor = '#00aa66';
 
     const isRed = value === 'red';
@@ -391,7 +391,7 @@ function BettingGrid({ bets, onBet }) {
     } else if (isBlack) {
       bg = 'linear-gradient(135deg, rgba(27,28,36,0.5), rgba(10,10,12,0.4))';
       border = '1px solid rgba(255,255,255,0.08)';
-      color = '#a5a6b8';
+      color = '#b8b8b8';
     }
 
     return (

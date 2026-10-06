@@ -257,7 +257,7 @@ export default function Marble() {
       <div className="section-header">
         <h2>🔮 Marble Race</h2>
         <div className="accent-line" />
-        <p style={{ color: '#9090b0', marginTop: 8, fontSize: '0.88rem' }}>
+        <p style={{ color: '#b0b0b0', marginTop: 8, fontSize: '0.88rem' }}>
           Inscribite con tu nick y competí en la carrera de canicas en vivo.
         </p>
       </div>
@@ -271,7 +271,7 @@ export default function Marble() {
       {/* Admin controls */}
       {isAdmin && (
         <div className="card" style={{ marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', padding: '12px 18px' }}>
-          <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#6a6a8a', fontSize: '0.8rem', letterSpacing: 1 }}>ADMIN</span>
+          <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#8a8a8a', fontSize: '0.8rem', letterSpacing: 1 }}>ADMIN</span>
           <button className="btn btn-primary btn-sm" onClick={async () => {
             try { await api.createMarble(); await fetchSession(); notify(true, 'Carrera creada — inscripciones abiertas'); }
             catch (e) { notify(false, e.message); }
@@ -305,7 +305,7 @@ export default function Marble() {
       {session?.status === 'waiting' && !joined && (
         <div className="card" style={{ maxWidth: 420, marginBottom: 16 }}>
           <div className="card-title">🏁 Inscribite a la carrera</div>
-          <p style={{ color: '#9090b0', fontSize: '0.85rem', marginBottom: 14 }}>
+          <p style={{ color: '#b0b0b0', fontSize: '0.85rem', marginBottom: 14 }}>
             Ingresá tu nick de Twitch o Albion para participar:
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -329,7 +329,7 @@ export default function Marble() {
       {/* Participant chips */}
       {session?.status === 'waiting' && n > 0 && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#6a6a8a', fontSize: '0.8rem', letterSpacing: 1, marginBottom: 10 }}>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#8a8a8a', fontSize: '0.8rem', letterSpacing: 1, marginBottom: 10 }}>
             PARTICIPANTES ({n})
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -352,7 +352,7 @@ export default function Marble() {
             </div>
           )}
           <canvas ref={canvasRef} width={900} height={canvasH}
-            style={{ width: '100%', borderRadius: 10, border: '1px solid rgba(0,212,255,0.12)', display: 'block' }} />
+            style={{ width: '100%', borderRadius: 10, border: '1px solid rgba(255, 122, 26,0.12)', display: 'block' }} />
         </div>
       )}
 
@@ -363,7 +363,7 @@ export default function Marble() {
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2.2rem', color: '#ffd700' }}>
             {session.winner_name}
           </div>
-          <div style={{ color: '#9090b0', marginTop: 6 }}>¡Ganador de la Marble Race!</div>
+          <div style={{ color: '#b0b0b0', marginTop: 6 }}>¡Ganador de la Marble Race!</div>
         </div>
       )}
     </div>

@@ -65,16 +65,16 @@ function ScoreBar({ scores, trickWins, players, myUserId }) {
 
   const ScoreRow = ({ score, label, isMe, tricks }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-      <div style={{ width: 80, fontSize: '0.7rem', color: isMe ? '#ffd700' : '#a5a6b8', fontFamily: 'Inter, system-ui', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <div style={{ width: 80, fontSize: '0.7rem', color: isMe ? '#ffd700' : '#b8b8b8', fontFamily: 'Inter, system-ui', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {isMe ? '👤 Vos' : '🔴 ' + label}
       </div>
       <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ width: `${(score / 15) * 100}%`, height: '100%', background: isMe ? '#ffd700' : '#6f7088', borderRadius: 3, transition: 'width 0.5s' }} />
+        <div style={{ width: `${(score / 15) * 100}%`, height: '100%', background: isMe ? '#ffd700' : '#8a8a8a', borderRadius: 3, transition: 'width 0.5s' }} />
       </div>
-      <div style={{ width: 32, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: isMe ? '#ffd700' : '#a5a6b8', fontSize: '0.78rem' }}>{score}/15</div>
+      <div style={{ width: 32, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: isMe ? '#ffd700' : '#b8b8b8', fontSize: '0.78rem' }}>{score}/15</div>
       <div style={{ display: 'flex', gap: 3 }}>
         {[0, 1, 2].map(i => (
-          <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: tricks > i ? (isMe ? '#ffd700' : '#6f7088') : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }} />
+          <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: tricks > i ? (isMe ? '#ffd700' : '#8a8a8a') : 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }} />
         ))}
       </div>
     </div>
@@ -111,7 +111,7 @@ function OfferBanner({ offer, type, onAccept, onReject, myUserId }) {
           📣 {offer.byUsername} canta {label}
         </div>
         {type === 'truco' && (
-          <div style={{ fontSize: '0.75rem', color: '#a5a6b8', marginTop: 2 }}>
+          <div style={{ fontSize: '0.75rem', color: '#b8b8b8', marginTop: 2 }}>
             La mano valdría {offer.offeredPts} {offer.offeredPts === 1 ? 'punto' : 'puntos'}
           </div>
         )}
@@ -126,7 +126,7 @@ function OfferBanner({ offer, type, onAccept, onReject, myUserId }) {
           </button>
         </div>
       ) : (
-        <div style={{ fontSize: '0.8rem', color: '#6f7088', fontFamily: 'Inter, system-ui' }}>Esperando respuesta...</div>
+        <div style={{ fontSize: '0.8rem', color: '#8a8a8a', fontFamily: 'Inter, system-ui' }}>Esperando respuesta...</div>
       )}
     </div>
   );
@@ -154,7 +154,7 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
         />
       )}
       <div style={{ minWidth: 90 }}>
-        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.78rem', color: isCurrent ? '#fbbf24' : '#a5a6b8' }}>
+        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '0.78rem', color: isCurrent ? '#fbbf24' : '#b8b8b8' }}>
           {isCurrent ? '⏳ ' : ''}{player.username}
           {player.team === 0 ? ' 🔵' : ' 🔴'}
         </div>
@@ -166,7 +166,7 @@ function PlayerArea({ player, isCurrent, isMe, small }) {
       </div>
       {played.length > 0 && (
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.62rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>Jugó:</span>
+          <span style={{ fontSize: '0.62rem', color: '#5c5c5c', fontFamily: 'Inter, system-ui' }}>Jugó:</span>
           {played.map((c, i) => <SpanishCard key={i} num={c.num} palo={c.palo} size="sm" />)}
         </div>
       )}
@@ -182,12 +182,12 @@ function TrickArea({ trick, lastTrick }) {
     <div style={{ textAlign: 'center', minHeight: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
       {display ? (
         <>
-          <div style={{ fontSize: '0.62rem', color: '#4a4b60', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
+          <div style={{ fontSize: '0.62rem', color: '#5c5c5c', fontFamily: 'Inter, system-ui', letterSpacing: '0.1em' }}>BAZA EN JUEGO</div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', alignItems: 'flex-end' }}>
             {display.map((t, i) => (
               <div key={i} style={{ textAlign: 'center' }}>
                 <SpanishCard num={t.card.num} palo={t.card.palo} size="md" />
-                <div style={{ fontFamily: 'Inter, system-ui', fontSize: '0.62rem', color: '#6f7088', marginTop: 3 }}>{t.username}</div>
+                <div style={{ fontFamily: 'Inter, system-ui', fontSize: '0.62rem', color: '#8a8a8a', marginTop: 3 }}>{t.username}</div>
               </div>
             ))}
           </div>
@@ -199,7 +199,7 @@ function TrickArea({ trick, lastTrick }) {
           ))}
         </div>
       ) : (
-        <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>Mesa vacía</div>
+        <div style={{ color: '#303030', fontFamily: 'Inter, system-ui', fontSize: '0.85rem' }}>Mesa vacía</div>
       )}
     </div>
   );
@@ -220,11 +220,11 @@ function HandEndBanner({ result, players, myUserId, countdown }) {
       <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.2rem', color: won ? '#22c55e' : '#ef4444' }}>
         {result.mazo ? `🏳️ ${result.byUsername} se fue al mazo` : won ? '🏆 Ganaste la mano!' : '💔 Perdiste la mano'}
       </div>
-      <div style={{ color: '#a5a6b8', fontFamily: 'Inter, system-ui', marginTop: 4, fontSize: '0.82rem' }}>
+      <div style={{ color: '#b8b8b8', fontFamily: 'Inter, system-ui', marginTop: 4, fontSize: '0.82rem' }}>
         +{result.trucoPoints} {result.trucoPoints === 1 ? 'punto' : 'puntos'} para {won ? 'tu equipo' : 'el equipo rival'}
       </div>
       {countdown > 0 && (
-        <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ marginTop: 6, fontSize: '0.75rem', color: '#5c5c5c', fontFamily: 'Inter, system-ui' }}>
           Próxima mano en {countdown}s...
         </div>
       )}
@@ -245,22 +245,22 @@ function GameOverBanner({ gameOver, players, myUserId, onRematch, onLeave }) {
     }}>
       <div style={{
         background: 'linear-gradient(135deg,#0a0a18,#0f0f22)',
-        border: `2px solid ${won ? '#ffd700' : '#6f7088'}`,
+        border: `2px solid ${won ? '#ffd700' : '#8a8a8a'}`,
         borderRadius: 20, padding: '40px 48px', textAlign: 'center', maxWidth: 400,
         boxShadow: `0 0 60px ${won ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.5)'}`,
       }}>
         <div style={{ fontSize: '4rem', marginBottom: 12 }}>{won ? '🏆' : '💀'}</div>
-        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#a5a6b8', letterSpacing: '0.08em', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: won ? '#ffd700' : '#b8b8b8', letterSpacing: '0.08em', marginBottom: 8 }}>
           {won ? '¡GANASTE!' : '¡PERDISTE!'}
         </div>
-        <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '1rem', marginBottom: 24 }}>
+        <div style={{ color: '#8a8a8a', fontFamily: 'Inter, system-ui', fontSize: '1rem', marginBottom: 24 }}>
           {gameOver.scores[0]} — {gameOver.scores[1]}
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
           <button onClick={onRematch} style={{ background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', color: '#ffd700', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem' }}>
             🔄 Revancha
           </button>
-          <button onClick={onLeave} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#a5a6b8', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem' }}>
+          <button onClick={onLeave} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#b8b8b8', borderRadius: 8, padding: '12px 28px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1rem' }}>
             Salir
           </button>
         </div>
@@ -275,7 +275,7 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '2rem', color: '#ff2d7a', letterSpacing: '0.1em' }}>🀄 TRUCO ARGENTINO</div>
-        <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 · 2v2 · 3v3 · Primero a 15</div>
+        <div style={{ color: '#8a8a8a', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 4 }}>Mazo español · 1v1 · 2v2 · 3v3 · Primero a 15</div>
       </div>
 
       {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
@@ -293,7 +293,7 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
       </div>
 
       {rooms.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#5c5c5c', fontFamily: 'Inter, system-ui' }}>
           No hay salas disponibles — ¡creá la primera!
         </div>
       ) : (
@@ -306,7 +306,7 @@ function RoomList({ rooms, onCreate, onJoin, err, loading }) {
             }}>
               <div>
                 <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: '#ff2d7a', fontSize: '1rem' }}>{r.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6f7088', marginTop: 2 }}>
+                <div style={{ fontSize: '0.75rem', color: '#8a8a8a', marginTop: 2 }}>
                   {r.mode} · {r.playerCount}/{r.maxPlayers} jugadores · {r.status === 'playing' ? '🟡 En curso' : '🟢 Esperando'}
                 </div>
               </div>
@@ -330,9 +330,9 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
 
   return (
     <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'center' }}>
-      <div className="card" style={{ border: '1px solid rgba(255,45,122,0.18)', background: 'linear-gradient(135deg,rgba(255,45,122,0.04),#0a0a14)' }}>
+      <div className="card" style={{ border: '1px solid rgba(255,45,122,0.18)', background: 'linear-gradient(135deg,rgba(255,45,122,0.04),#0c0c0c)' }}>
         <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, fontSize: '1.4rem', color: '#ff2d7a', marginBottom: 4 }}>{room.name}</div>
-        <div style={{ fontSize: '0.8rem', color: '#6f7088', marginBottom: 24 }}>Modo: {room.mode} · Primero en llegar a 15 puntos</div>
+        <div style={{ fontSize: '0.8rem', color: '#8a8a8a', marginBottom: 24 }}>Modo: {room.mode} · Primero en llegar a 15 puntos</div>
 
         {err && <div className="alert alert-error" style={{ marginBottom: 14 }}>{err}</div>}
 
@@ -354,15 +354,15 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
                     characterName={p.username} 
                   />
                 ) : (
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1a1a2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: p ? (i % 2 === 0 ? '#1a4a8a' : '#4a1a2a') : '#1e1e1e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', flexShrink: 0 }}>
                     {p ? (i % 2 === 0 ? '🔵' : '🔴') : '⏳'}
                   </div>
                 )}
-                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: p ? '#e0e0f0' : '#4a4b60' }}>
+                <div style={{ fontFamily: 'Inter, system-ui', fontWeight: 700, color: p ? '#ededed' : '#5c5c5c' }}>
                   {p ? p.username : 'Esperando...'}
                 </div>
                 {p?.userId === myUserId && <span style={{ fontSize: '0.7rem', color: '#ffd700', fontFamily: 'Inter, system-ui' }}>(vos)</span>}
-                <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#6f7088' }}>
+                <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#8a8a8a' }}>
                   {i % 2 === 0 ? 'Equipo 🔵' : 'Equipo 🔴'}
                 </div>
               </div>
@@ -377,18 +377,18 @@ function WaitingRoom({ room, myUserId, onStart, onLeave, err }) {
             </button>
           )}
           {needed > 0 && (
-            <div style={{ color: '#6f7088', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 8 }}>
+            <div style={{ color: '#8a8a8a', fontFamily: 'Inter, system-ui', fontSize: '0.85rem', marginTop: 8 }}>
               Faltan {needed} jugador{needed !== 1 ? 'es' : ''}...
             </div>
           )}
-          <button onClick={onLeave} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#6f7088', borderRadius: 8, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>
+          <button onClick={onLeave} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#8a8a8a', borderRadius: 8, padding: '12px 24px', cursor: 'pointer', fontFamily: 'Inter, system-ui', fontWeight: 600 }}>
             Salir
           </button>
         </div>
       </div>
 
       <div style={{ marginTop: 16, textAlign: 'center' }}>
-        <div style={{ fontSize: '0.75rem', color: '#4a4b60', fontFamily: 'Inter, system-ui' }}>
+        <div style={{ fontSize: '0.75rem', color: '#5c5c5c', fontFamily: 'Inter, system-ui' }}>
           Compartí la sala: <code style={{ color: '#ff2d7a' }}>{room.id}</code>
         </div>
       </div>
@@ -467,7 +467,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
               background: 'rgba(111,255,125,0.08)', border: '1px solid rgba(111,255,125,0.25)',
               borderRadius: 8, padding: '7px 12px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: '0.6rem', color: '#4a4b60', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Tu turno</div>
+              <div style={{ fontSize: '0.6rem', color: '#5c5c5c', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Tu turno</div>
               {selCard
                 ? <div style={{ fontSize: '0.75rem', color: '#ffd700', fontFamily: 'Inter, system-ui' }}>Clickeá de nuevo para jugar</div>
                 : <div style={{ fontSize: '0.75rem', color: '#6fff7d', fontFamily: 'Inter, system-ui' }}>Seleccioná una carta</div>
@@ -478,7 +478,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
               background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.18)',
               borderRadius: 8, padding: '7px 12px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: '0.6rem', color: '#4a4b60', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Turno de</div>
+              <div style={{ fontSize: '0.6rem', color: '#5c5c5c', fontFamily: "'Unbounded', system-ui", letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>Turno de</div>
               <div style={{ fontSize: '0.85rem', color: '#ffd700', fontWeight: 700, fontFamily: 'Inter, system-ui' }}>{currentOpponent.username}</div>
             </div>
           ) : null}
@@ -511,7 +511,7 @@ function GameBoard({ room, myUserId, onPlayCard, onCallTruco, onRespondTruco, on
                   ))}
                 </div>
               ) : (
-                <div style={{ color: '#2a2a3a', fontFamily: 'Inter, system-ui', fontSize: '0.82rem', textAlign: 'center', padding: '10px 0' }}>Sin cartas</div>
+                <div style={{ color: '#303030', fontFamily: 'Inter, system-ui', fontSize: '0.82rem', textAlign: 'center', padding: '10px 0' }}>Sin cartas</div>
               )}
             </div>
           )}
@@ -782,7 +782,7 @@ export default function Truco({ user }) {
     return <RoomList rooms={rooms} onCreate={createRoom} onJoin={joinRoom} err={err} loading={loading} />;
   }
 
-  if (!room) return <div style={{ textAlign: 'center', padding: 40, color: '#6f7088', fontFamily: 'Inter, system-ui' }}>Cargando sala...</div>;
+  if (!room) return <div style={{ textAlign: 'center', padding: 40, color: '#8a8a8a', fontFamily: 'Inter, system-ui' }}>Cargando sala...</div>;
 
   if (room.status === 'waiting' || (room.status === 'playing' && !room.myCards?.length && room.phase === 'waiting')) {
     return (

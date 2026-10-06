@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/api';
 
 const RENDER = 'https://render.albiononline.com/v1/item';
-const GUILD_ID = 'Azsds8YiRyi6aGL1rOZRLg';
+const GUILD_ID = '_dZi8dpyRVy53Wyksk4oBA';
 
 function fmt(n) {
   if (!n) return '0';
@@ -46,8 +46,8 @@ function SectionTitle({ children }) {
   return (
     <div style={{
       fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1rem',
-      color: '#00d4ff', letterSpacing: '0.1em', textTransform: 'uppercase',
-      marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid #1a1a28',
+      color: '#ff7a1a', letterSpacing: '0.1em', textTransform: 'uppercase',
+      marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid #1c1c1c',
     }}>
       {children}
     </div>
@@ -56,7 +56,7 @@ function SectionTitle({ children }) {
 
 function TableWrap({ children }) {
   return (
-    <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid #1a1a28', marginBottom: 28 }}>
+    <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid #1c1c1c', marginBottom: 28 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
         {children}
       </table>
@@ -69,8 +69,8 @@ const TH = ({ children, right }) => (
     padding: '8px 12px', textAlign: right ? 'right' : 'left',
     fontSize: '0.65rem', fontFamily: 'Rajdhani', fontWeight: 700,
     letterSpacing: '0.1em', textTransform: 'uppercase',
-    color: '#5a5a7a', borderBottom: '1px solid #1a1a28',
-    background: '#0a0a14', whiteSpace: 'nowrap',
+    color: '#6e6e6e', borderBottom: '1px solid #1c1c1c',
+    background: '#0c0c0c', whiteSpace: 'nowrap',
   }}>
     {children}
   </th>
@@ -78,7 +78,7 @@ const TH = ({ children, right }) => (
 
 const TR = ({ children, highlight, accent }) => (
   <tr style={{
-    background: highlight ? 'rgba(0,212,255,0.05)' : accent ? `${accent}0d` : 'transparent',
+    background: highlight ? 'rgba(255, 122, 26,0.05)' : accent ? `${accent}0d` : 'transparent',
     borderBottom: '1px solid #12121e',
     borderLeft: accent ? `3px solid ${accent}88` : '3px solid transparent',
   }}>
@@ -87,9 +87,9 @@ const TR = ({ children, highlight, accent }) => (
 );
 
 function PlayerAvatar({ type }) {
-  if (!type) return <div style={{ width: 28, height: 28, background: '#1a1a28', borderRadius: 4, flexShrink: 0 }} />;
+  if (!type) return <div style={{ width: 28, height: 28, background: '#1c1c1c', borderRadius: 4, flexShrink: 0 }} />;
   return (
-    <div style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 4, overflow: 'hidden', background: '#0a0a14' }}>
+    <div style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 4, overflow: 'hidden', background: '#0c0c0c' }}>
       <img src={`${RENDER}/${type}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => { e.target.style.display = 'none'; }} />
     </div>
   );
@@ -116,8 +116,8 @@ function AllianceTable({ alliances, guildId }) {
         <tbody>
           {rows.map(([id, a]) => (
             <TR key={id}>
-              <td style={{ padding: '9px 12px', color: '#e0e0f0', fontFamily: 'Rajdhani', fontWeight: 700 }}>{a.name || id}</td>
-              <StatCell value={a.numberOfMembers ?? '—'} color="#00d4ff" />
+              <td style={{ padding: '9px 12px', color: '#ededed', fontFamily: 'Rajdhani', fontWeight: 700 }}>{a.name || id}</td>
+              <StatCell value={a.numberOfMembers ?? '—'} color="#ff7a1a" />
               <StatCell value={a.kills ?? 0} color="#00cc66" />
               <StatCell value={a.deaths ?? 0} color="#ff4466" />
               <StatCell value={a.averageItemPower ? Math.round(a.averageItemPower) : '—'} />
@@ -151,8 +151,8 @@ function GuildTable({ guilds, guildId }) {
         <tbody>
           {rows.map(([id, g]) => (
             <TR key={id} highlight={id === guildId}>
-              <td style={{ padding: '9px 12px', fontFamily: 'Rajdhani', fontWeight: 700, color: id === guildId ? '#00d4ff' : '#e0e0f0' }}>
-                {id === guildId && <span style={{ marginRight: 6, color: '#00d4ff' }}>★</span>}
+              <td style={{ padding: '9px 12px', fontFamily: 'Rajdhani', fontWeight: 700, color: id === guildId ? '#ff7a1a' : '#ededed' }}>
+                {id === guildId && <span style={{ marginRight: 6, color: '#ff7a1a' }}>★</span>}
                 {g.name || id}
               </td>
               <StatCell value={g.numberOfMembers ?? '—'} color="#a78bfa" />
@@ -183,7 +183,7 @@ function PlayersTable({ members, guildId, guilds }) {
 
   const col = (key, label) => (
     <TH right>
-      <span onClick={() => setSortKey(key)} style={{ cursor: 'pointer', color: sortKey === key ? '#00d4ff' : undefined }}>
+      <span onClick={() => setSortKey(key)} style={{ cursor: 'pointer', color: sortKey === key ? '#ff7a1a' : undefined }}>
         {label}{sortKey === key ? ' ▼' : ''}
       </span>
     </TH>
@@ -197,7 +197,7 @@ function PlayersTable({ members, guildId, guilds }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar jugador..."
-          style={{ background: '#0a0a14', border: '1px solid #1e1e30', borderRadius: 6, padding: '5px 10px', color: '#e0e0f0', fontSize: '0.8rem', outline: 'none' }}
+          style={{ background: '#0c0c0c', border: '1px solid #2a2a2a', borderRadius: 6, padding: '5px 10px', color: '#ededed', fontSize: '0.8rem', outline: 'none' }}
         />
       </div>
       <TableWrap>
@@ -222,7 +222,7 @@ function PlayersTable({ members, guildId, guilds }) {
                 <td style={{ padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <PlayerAvatar type={weapon} />
-                    <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: isOurs ? '#00d4ff' : '#e0e0f0', whiteSpace: 'nowrap' }}>{m.Name}</span>
+                    <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: isOurs ? '#ff7a1a' : '#ededed', whiteSpace: 'nowrap' }}>{m.Name}</span>
                   </div>
                 </td>
                 <td style={{ padding: '8px 12px', color: '#7a7a9a', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
@@ -263,7 +263,7 @@ function KillsTable({ events, startTime, guildId }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar por nombre..."
-          style={{ background: '#0a0a14', border: '1px solid #1e1e30', borderRadius: 6, padding: '5px 10px', color: '#e0e0f0', fontSize: '0.8rem', outline: 'none' }}
+          style={{ background: '#0c0c0c', border: '1px solid #2a2a2a', borderRadius: 6, padding: '5px 10px', color: '#ededed', fontSize: '0.8rem', outline: 'none' }}
         />
       </div>
       <TableWrap>
@@ -285,13 +285,13 @@ function KillsTable({ events, startTime, guildId }) {
             const ts = startTime ? fmtTs(startTime, ev.TimeStamp) : timeAgo(ev.TimeStamp);
             return (
               <TR key={ev.EventId} accent={accent}>
-                <td style={{ padding: '8px 12px', color: '#5a5a7a', fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{ts}</td>
+                <td style={{ padding: '8px 12px', color: '#6e6e6e', fontFamily: 'monospace', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>{ts}</td>
                 <td style={{ padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <PlayerAvatar type={ev.Killer?.Equipment?.MainHand?.Type} />
                     <div>
-                      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: killerOurs ? '#00d4ff' : '#e0e0f0', whiteSpace: 'nowrap' }}>{ev.Killer?.Name || '—'}</div>
-                      {ev.Killer?.GuildName && <div style={{ fontSize: '0.68rem', color: '#5a5a7a' }}>{ev.Killer.GuildName}</div>}
+                      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: killerOurs ? '#ff7a1a' : '#ededed', whiteSpace: 'nowrap' }}>{ev.Killer?.Name || '—'}</div>
+                      {ev.Killer?.GuildName && <div style={{ fontSize: '0.68rem', color: '#6e6e6e' }}>{ev.Killer.GuildName}</div>}
                     </div>
                   </div>
                 </td>
@@ -299,12 +299,12 @@ function KillsTable({ events, startTime, guildId }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <PlayerAvatar type={ev.Victim?.Equipment?.MainHand?.Type} />
                     <div>
-                      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: victimOurs ? '#ff4466' : '#9090b0', whiteSpace: 'nowrap' }}>{ev.Victim?.Name || '—'}</div>
-                      {ev.Victim?.GuildName && <div style={{ fontSize: '0.68rem', color: '#5a5a7a' }}>{ev.Victim.GuildName}</div>}
+                      <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '0.88rem', color: victimOurs ? '#ff4466' : '#b0b0b0', whiteSpace: 'nowrap' }}>{ev.Victim?.Name || '—'}</div>
+                      {ev.Victim?.GuildName && <div style={{ fontSize: '0.68rem', color: '#6e6e6e' }}>{ev.Victim.GuildName}</div>}
                     </div>
                   </div>
                 </td>
-                <StatCell value={ev.Killer?.AverageItemPower ? Math.round(ev.Killer.AverageItemPower) : '—'} color="#00d4ff" />
+                <StatCell value={ev.Killer?.AverageItemPower ? Math.round(ev.Killer.AverageItemPower) : '—'} color="#ff7a1a" />
                 <StatCell value={ev.Victim?.AverageItemPower ? Math.round(ev.Victim.AverageItemPower) : '—'} />
                 <StatCell value={fmt(ev.TotalVictimKillFame)} color="#ffd700" />
               </TR>
@@ -341,14 +341,14 @@ function TopCards({ events }) {
       {cards.map(c => (
         <div key={c.label} style={{
           flex: '1 1 180px',
-          background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)',
+          background: 'linear-gradient(135deg, #0d0d0d, #101010)',
           border: `1px solid ${c.color}33`,
           borderLeft: `3px solid ${c.color}`,
           borderRadius: 8, padding: '12px 18px',
         }}>
-          <div style={{ fontSize: '0.6rem', color: '#5a5a7a', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{c.label}</div>
-          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#e0e0f0' }}>{c.name}</div>
-          {c.guild && <div style={{ fontSize: '0.72rem', color: '#5a5a7a', marginBottom: 4 }}>{c.guild}</div>}
+          <div style={{ fontSize: '0.6rem', color: '#6e6e6e', fontFamily: 'Rajdhani', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{c.label}</div>
+          <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: '#ededed' }}>{c.name}</div>
+          {c.guild && <div style={{ fontSize: '0.72rem', color: '#6e6e6e', marginBottom: 4 }}>{c.guild}</div>}
           <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: c.color, lineHeight: 1 }}>{c.value}</div>
         </div>
       ))}
@@ -395,7 +395,7 @@ export default function BattleDetail() {
   const enemies  = Object.values(guilds).filter((_, i) => Object.keys(guilds)[i] !== GUILD_ID);
   const enemyNames = enemies.slice(0, 3).map(g => g.name).filter(Boolean).join(', ');
   const titleVs = ourGuild
-    ? `${ourGuild.name || 'ANT1GRAVITY'} vs ${enemyNames || 'Enemigos'}`
+    ? `${ourGuild.name || 'FULLPUSH'} vs ${enemyNames || 'Enemigos'}`
     : Object.values(guilds).map(g => g.name).join(' vs ');
 
   const location = battle.clusterName || battle.cluster || null;
@@ -416,7 +416,7 @@ export default function BattleDetail() {
       {/* Back button */}
       <button
         onClick={() => navigate('/killboard?tab=battles')}
-        style={{ background: 'none', border: 'none', color: '#5a5a7a', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', padding: 0, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}
+        style={{ background: 'none', border: 'none', color: '#6e6e6e', cursor: 'pointer', fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '0.85rem', padding: 0, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}
       >
         ← Volver al Killboard
       </button>
@@ -426,7 +426,7 @@ export default function BattleDetail() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: '#e0e0f0', lineHeight: 1.2 }}>
+              <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.5rem', color: '#ededed', lineHeight: 1.2 }}>
                 ⚔️ {titleVs}
               </span>
               {isLive && (
@@ -436,7 +436,7 @@ export default function BattleDetail() {
                 </div>
               )}
             </div>
-            <div style={{ fontSize: '0.78rem', color: '#5a5a7a', marginTop: 6, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: '0.78rem', color: '#6e6e6e', marginTop: 6, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {location && <span>📍 {location}</span>}
               <span>🕐 {date}</span>
               {battle.startTime && battle.endTime && <span>⏱ {battleTime(battle.startTime, battle.endTime)}</span>}
@@ -452,9 +452,9 @@ export default function BattleDetail() {
                 { label: 'K/D',     value: kd,        color: kdColor   },
                 { label: 'Fame',    value: fmt(ourGuild.killFame), color: '#ffd700' },
               ].map(s => (
-                <div key={s.label} style={{ textAlign: 'center', background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)', border: '1px solid #1e1e30', borderRadius: 8, padding: '10px 16px', minWidth: 60 }}>
+                <div key={s.label} style={{ textAlign: 'center', background: 'linear-gradient(135deg, #0d0d0d, #101010)', border: '1px solid #2a2a2a', borderRadius: 8, padding: '10px 16px', minWidth: 60 }}>
                   <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.4rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-                  <div style={{ fontSize: '0.6rem', color: '#5a5a7a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{s.label}</div>
+                  <div style={{ fontSize: '0.6rem', color: '#6e6e6e', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{s.label}</div>
                 </div>
               ))}
             </div>

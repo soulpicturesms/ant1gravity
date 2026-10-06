@@ -125,13 +125,13 @@ const StatsPage = ({ onNavigate }) => (
       <div className="stat-strip__cell">
         <span className="stat-strip__label">Mejor multi</span>
         <span className="stat-strip__val" style={{ color: "var(--accent)" }}>820×</span>
-        <span className="stat-strip__delta">Anti-Gravity Slots</span>
+        <span className="stat-strip__delta">Fullpush Slots</span>
       </div>
     </div>
     <div className="section-head"><h2>Por juego</h2></div>
     <div className="card" style={{ padding: 0 }}>
       {[
-        { name: "Anti-Gravity Slots", plays: 4218, profit: 18420, rtp: 102.3 },
+        { name: "Fullpush Slots", plays: 4218, profit: 18420, rtp: 102.3 },
         { name: "Ruleta Europea",     plays: 1820, profit: -3240, rtp: 94.8 },
         { name: "Blackjack Pro",      plays: 1480, profit: 12800, rtp: 101.2 },
         { name: "Plinko Zero-G",      plays: 612,  profit: 4200,  rtp: 99.8 },

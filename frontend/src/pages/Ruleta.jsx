@@ -49,7 +49,7 @@ function drawWheel(ctx, prizes, rot) {
     ctx.closePath();
     ctx.fillStyle = COLORS[i % COLORS.length];
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,212,255,0.25)';
+    ctx.strokeStyle = 'rgba(255, 122, 26,0.25)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -58,7 +58,7 @@ function drawWheel(ctx, prizes, rot) {
     ctx.rotate(mid);
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e0e0f0';
+    ctx.fillStyle = '#ededed';
     ctx.shadowColor = 'rgba(0,0,0,0.9)';
     ctx.shadowBlur = 4;
 
@@ -80,14 +80,14 @@ function drawWheel(ctx, prizes, rot) {
 
   ctx.beginPath();
   ctx.arc(CX, CY, R, 0, 2 * Math.PI);
-  ctx.strokeStyle = '#00d4ff';
+  ctx.strokeStyle = '#ff7a1a';
   ctx.lineWidth = 3;
   ctx.stroke();
 
   ctx.beginPath();
   ctx.arc(CX, CY, 22, 0, 2 * Math.PI);
   const grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, 22);
-  grad.addColorStop(0, '#00d4ff');
+  grad.addColorStop(0, '#ff7a1a');
   grad.addColorStop(1, '#003388');
   ctx.fillStyle = grad;
   ctx.fill();
@@ -248,21 +248,21 @@ export default function Ruleta() {
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         gap: 12, paddingBottom: 28, marginBottom: 4,
-        borderBottom: '1px solid #1e1e30',
+        borderBottom: '1px solid #2a2a2a',
       }}>
         {/* Logo */}
         <div style={{ position: 'relative' }}>
           <div style={{
             position: 'absolute', inset: -12, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(0,212,255,0.18) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(255, 122, 26,0.18) 0%, transparent 70%)',
             animation: 'pulse 3s ease-in-out infinite',
           }} />
           <img
-            src="/logo-icon.png"
-            alt="ANT1GRAVITY"
+            src="/logo-fullpush-128.png"
+            alt="FULLPUSH"
             style={{
               width: 90, height: 90, objectFit: 'contain',
-              filter: 'drop-shadow(0 0 18px rgba(0,212,255,0.7))',
+              filter: 'drop-shadow(0 0 18px rgba(255, 122, 26,0.7))',
               position: 'relative', zIndex: 1,
             }}
             onError={e => {
@@ -272,10 +272,10 @@ export default function Ruleta() {
           />
           <div style={{
             display: 'none', width: 90, height: 90, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #00aacc, #0044aa)',
+            background: 'linear-gradient(135deg, #e05f00, #8a3300)',
             alignItems: 'center', justifyContent: 'center',
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.6rem', color: 'white',
-            border: '3px solid #00d4ff44', boxShadow: '0 0 24px rgba(0,212,255,0.4)',
+            border: '3px solid #ff7a1a44', boxShadow: '0 0 24px rgba(255, 122, 26,0.4)',
           }}>AG</div>
         </div>
 
@@ -285,11 +285,11 @@ export default function Ruleta() {
             fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2.2rem',
             letterSpacing: '0.18em', color: 'white', lineHeight: 1,
           }}>
-            ANT<span style={{ color: '#00d4ff' }}>1</span>GRAVITY
+            FULL<span style={{ color: '#ff7a1a' }}>PUSH</span>
           </div>
           <div style={{
             fontFamily: 'Rajdhani', fontWeight: 600, fontSize: '1rem',
-            letterSpacing: '0.35em', color: '#6a6a8a', marginTop: 4,
+            letterSpacing: '0.35em', color: '#8a8a8a', marginTop: 4,
             textTransform: 'uppercase',
           }}>
             Ruleta de Monturas
@@ -305,16 +305,16 @@ export default function Ruleta() {
         <div style={{ minHeight: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: 520 }}>
           {showWinner && (
             <div style={{
-              background: 'linear-gradient(135deg, rgba(0,212,255,0.12), rgba(0,68,170,0.12))',
-              border: '1px solid rgba(0,212,255,0.5)',
+              background: 'linear-gradient(135deg, rgba(255, 122, 26,0.12), rgba(138,51,0,0.12))',
+              border: '1px solid rgba(255, 122, 26,0.5)',
               borderRadius: 12,
               padding: '14px 36px',
               textAlign: 'center',
               width: '100%',
-              boxShadow: '0 0 30px rgba(0,212,255,0.15)',
+              boxShadow: '0 0 30px rgba(255, 122, 26,0.15)',
             }}>
-              <div style={{ fontSize: '0.78rem', color: '#6a6a8a', letterSpacing: '0.15em', marginBottom: 4 }}>GANADOR</div>
-              <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#00d4ff', letterSpacing: '0.05em' }}>
+              <div style={{ fontSize: '0.78rem', color: '#8a8a8a', letterSpacing: '0.15em', marginBottom: 4 }}>GANADOR</div>
+              <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2rem', color: '#ff7a1a', letterSpacing: '0.05em' }}>
                 🏆 {winner}
               </div>
             </div>
@@ -327,8 +327,8 @@ export default function Ruleta() {
             position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
             width: 0, height: 0,
             borderLeft: '14px solid transparent', borderRight: '14px solid transparent',
-            borderTop: '24px solid #00d4ff',
-            filter: 'drop-shadow(0 0 8px rgba(0,212,255,0.9))', zIndex: 2,
+            borderTop: '24px solid #ff7a1a',
+            filter: 'drop-shadow(0 0 8px rgba(255, 122, 26,0.9))', zIndex: 2,
           }} />
           <canvas
             ref={canvasRef}
@@ -338,7 +338,7 @@ export default function Ruleta() {
             style={{
               width: '100%', height: 'auto', display: 'block',
               cursor: spinning ? 'not-allowed' : 'pointer',
-              filter: 'drop-shadow(0 0 24px rgba(0,212,255,0.25))',
+              filter: 'drop-shadow(0 0 24px rgba(255, 122, 26,0.25))',
               borderRadius: '50%',
             }}
           />
@@ -354,7 +354,7 @@ export default function Ruleta() {
             letterSpacing: '0.12em', padding: '13px 56px',
             opacity: spinning ? 0.55 : 1,
             cursor: spinning ? 'not-allowed' : 'pointer',
-            boxShadow: spinning ? 'none' : '0 0 20px rgba(0,212,255,0.3)',
+            boxShadow: spinning ? 'none' : '0 0 20px rgba(255, 122, 26,0.3)',
           }}
         >
           {spinning ? '⏳ GIRANDO...' : '🎰 GIRAR'}
@@ -371,8 +371,8 @@ export default function Ruleta() {
                 <div key={i} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '7px 10px', borderRadius: 6,
-                  background: isWinner ? 'rgba(0,212,255,0.1)' : 'transparent',
-                  border: `1px solid ${isWinner ? 'rgba(0,212,255,0.35)' : 'transparent'}`,
+                  background: isWinner ? 'rgba(255, 122, 26,0.1)' : 'transparent',
+                  border: `1px solid ${isWinner ? 'rgba(255, 122, 26,0.35)' : 'transparent'}`,
                   transition: 'all 0.4s',
                 }}>
                   <div style={{
@@ -382,7 +382,7 @@ export default function Ruleta() {
                   }} />
                   <span style={{
                     fontFamily: 'Rajdhani', fontWeight: isWinner ? 700 : 500,
-                    fontSize: '0.88rem', color: isWinner ? '#00d4ff' : '#9090b0',
+                    fontSize: '0.88rem', color: isWinner ? '#ff7a1a' : '#b0b0b0',
                     flex: 1, transition: 'color 0.4s',
                   }}>{p.name}</span>
                   {isWinner && <span style={{ fontSize: '0.75rem' }}>🏆</span>}
@@ -402,8 +402,8 @@ export default function Ruleta() {
                       onKeyDown={e => e.key === 'Enter' && e.target.blur()}
                       style={{
                         width: 56, background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid #2a2a40', borderRadius: 4,
-                        color: '#9090b0', fontSize: '0.78rem', padding: '3px 6px',
+                        border: '1px solid #333333', borderRadius: 4,
+                        color: '#b0b0b0', fontSize: '0.78rem', padding: '3px 6px',
                         flexShrink: 0,
                       }}
                     />
@@ -428,8 +428,8 @@ export default function Ruleta() {
             })}
           </div>
           {isAdmin && (
-            <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#4a4a6a', lineHeight: 1.6 }}>
-              El número junto a cada premio es su <b style={{ color: '#6a6a8a' }}>peso</b>: a mayor peso, más probable que salga.
+            <div style={{ marginTop: 10, fontSize: '0.78rem', color: '#5c5c5c', lineHeight: 1.6 }}>
+              El número junto a cada premio es su <b style={{ color: '#8a8a8a' }}>peso</b>: a mayor peso, más probable que salga.
               Un peso de 1 = probabilidad base; 0.5 = la mitad de probable; 2 = el doble. El % se recalcula solo.
             </div>
           )}
@@ -463,7 +463,7 @@ export default function Ruleta() {
                 {saving ? '...' : '＋ Agregar'}
               </button>
             </div>
-            <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#4a4a6a' }}>
+            <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#5c5c5c' }}>
               Los cambios se guardan automáticamente y aplican en la próxima partida.
             </div>
           </div>

@@ -30,7 +30,7 @@ export default function Games() {
         <h1 style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '2.4rem', color: 'white', margin: 0, letterSpacing: '0.1em' }}>
           JUEGOS INTERACTIVOS
         </h1>
-        <p style={{ color: '#6a6a8a', marginTop: 10, fontSize: '0.95rem' }}>
+        <p style={{ color: '#8a8a8a', marginTop: 10, fontSize: '0.95rem' }}>
           Para Twitch — los espectadores se inscriben, el admin larga el juego, todos miran en vivo quién gana
         </p>
       </div>
@@ -64,7 +64,7 @@ export default function Games() {
         ))}
       </div>
 
-      <div style={{ marginTop: 36, padding: '16px 20px', background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.12)', borderRadius: 10, fontSize: '0.85rem', color: '#5a5a7a', lineHeight: 1.7 }}>
+      <div style={{ marginTop: 36, padding: '16px 20px', background: 'rgba(255, 122, 26,0.04)', border: '1px solid rgba(255, 122, 26,0.12)', borderRadius: 10, fontSize: '0.85rem', color: '#6e6e6e', lineHeight: 1.7 }}>
         <span style={{ color: '#4a8a9a', fontFamily: 'Rajdhani', fontWeight: 600 }}>¿Cómo funciona?</span>
         {' '}El admin crea una sesión, los espectadores de Twitch entran con su nombre, el admin inicia el juego y todos ven en tiempo real quién gana. El ganador se determina al azar al momento de iniciar.
       </div>

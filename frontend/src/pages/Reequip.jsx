@@ -119,7 +119,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
         <div className="modal-header">
           <div>
             <div className="modal-title">⚔️ Solicitud — {request.username}</div>
-            <div style={{ fontSize: '0.8rem', color: '#6a6a8a', marginTop: 4 }}>
+            <div style={{ fontSize: '0.8rem', color: '#8a8a8a', marginTop: 4 }}>
               {request.albion_character} · {new Date(request.created_at).toLocaleString('es-ES')}
             </div>
           </div>
@@ -129,21 +129,21 @@ function DeathRequestModal({ request, onSave, onClose }) {
         {error && <div className="alert alert-error">{error}</div>}
 
         {/* Death summary */}
-        <div style={{ marginBottom: 16, padding: 12, background: '#0a0a16', borderRadius: 8, border: '1px solid #1e1e30', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ marginBottom: 16, padding: 12, background: '#0d0d0d', borderRadius: 8, border: '1px solid #2a2a2a', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontSize: '0.72rem', color: '#6a6a8a', marginBottom: 2 }}>Killer</div>
-            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#9090b0' }}>⚔️ {killer.Name || '—'}</div>
-            {killer.GuildName && <div style={{ fontSize: '0.75rem', color: '#5a5a7a' }}>{killer.GuildName}</div>}
+            <div style={{ fontSize: '0.72rem', color: '#8a8a8a', marginBottom: 2 }}>Killer</div>
+            <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#b0b0b0' }}>⚔️ {killer.Name || '—'}</div>
+            {killer.GuildName && <div style={{ fontSize: '0.75rem', color: '#6e6e6e' }}>{killer.GuildName}</div>}
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '0.72rem', color: '#6a6a8a', marginBottom: 2 }}>Fame / Tiempo</div>
+            <div style={{ fontSize: '0.72rem', color: '#8a8a8a', marginBottom: 2 }}>Fame / Tiempo</div>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>{formatSilver(event.TotalVictimKillFame)}</div>
-            <div style={{ fontSize: '0.72rem', color: '#5a5a7a' }}>{timeAgoStr(event.TimeStamp)}</div>
+            <div style={{ fontSize: '0.72rem', color: '#6e6e6e' }}>{timeAgoStr(event.TimeStamp)}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.72rem', color: '#6a6a8a', marginBottom: 2 }}>Víctima</div>
+            <div style={{ fontSize: '0.72rem', color: '#8a8a8a', marginBottom: 2 }}>Víctima</div>
             <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ff4466' }}>💀 {victim.Name || '—'}</div>
-            {victim.AverageItemPower > 0 && <div style={{ fontSize: '0.75rem', color: '#5a5a7a' }}>IP {Math.round(victim.AverageItemPower)}</div>}
+            {victim.AverageItemPower > 0 && <div style={{ fontSize: '0.75rem', color: '#6e6e6e' }}>IP {Math.round(victim.AverageItemPower)}</div>}
           </div>
         </div>
 
@@ -165,37 +165,37 @@ function DeathRequestModal({ request, onSave, onClose }) {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', marginBottom: 16 }}>
             <thead>
-              <tr style={{ color: '#6a6a8a', fontSize: '0.72rem', textTransform: 'uppercase' }}>
-                <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Slot / Item</th>
-                <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Código</th>
-                <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Silver (promedio)</th>
-                <th style={{ textAlign: 'center', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>✓</th>
+              <tr style={{ color: '#8a8a8a', fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Slot / Item</th>
+                <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Código</th>
+                <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Silver (promedio)</th>
+                <th style={{ textAlign: 'center', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>✓</th>
               </tr>
             </thead>
             <tbody>
               {items.map(item => (
-                <tr key={item.key} style={{ borderBottom: '1px solid #0d0d1e', opacity: selectedKeys.has(item.key) ? 1 : 0.4, transition: 'opacity 0.15s' }}>
+                <tr key={item.key} style={{ borderBottom: '1px solid #101010', opacity: selectedKeys.has(item.key) ? 1 : 0.4, transition: 'opacity 0.15s' }}>
                   <td style={{ padding: '8px 8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <img src={`${RENDER}/${item.type}.png`} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} onError={e => { e.target.style.display = 'none'; }} />
                       <div>
-                        <div style={{ color: '#9090b0', fontSize: '0.85rem' }}>{item.label}</div>
-                        <div style={{ color: '#4a4a6a', fontSize: '0.7rem' }}>Q{item.quality}</div>
+                        <div style={{ color: '#b0b0b0', fontSize: '0.85rem' }}>{item.label}</div>
+                        <div style={{ color: '#5c5c5c', fontSize: '0.7rem' }}>Q{item.quality}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '8px 8px', color: '#4a4a6a', fontFamily: 'monospace', fontSize: '0.75rem' }}>{item.type}</td>
+                  <td style={{ padding: '8px 8px', color: '#5c5c5c', fontFamily: 'monospace', fontSize: '0.75rem' }}>{item.type}</td>
                   <td style={{ padding: '8px 8px', textAlign: 'right' }}>
                     {prices[item.type] > 0 ? (
                       <div>
                         <div style={{ color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>{formatSilver(prices[item.type])}</div>
-                        <div style={{ fontSize: '0.68rem', color: '#4a4a6a' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#5c5c5c' }}>
                           {cityCounts[item.type]}c ·{' '}
                           {freshness[item.type] < 60 ? `${freshness[item.type]}m` : `${Math.round(freshness[item.type] / 60)}h`} ago
                         </div>
                       </div>
                     ) : (
-                      <span style={{ color: '#4a4a6a' }}>{Object.keys(prices).length > 0 ? 'sin datos' : '—'}</span>
+                      <span style={{ color: '#5c5c5c' }}>{Object.keys(prices).length > 0 ? 'sin datos' : '—'}</span>
                     )}
                   </td>
                   <td style={{ padding: '8px 8px', textAlign: 'center' }}>
@@ -208,11 +208,11 @@ function DeathRequestModal({ request, onSave, onClose }) {
         )}
 
         {/* Total */}
-        <div style={{ background: '#1a1a2a', border: '1px solid #252535', borderRadius: 8, padding: 16, textAlign: 'center', marginBottom: 14 }}>
-          <div style={{ fontSize: '0.75rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Total Silver = Coins (1:1)</div>
+        <div style={{ background: '#1e1e1e', border: '1px solid #252535', borderRadius: 8, padding: 16, textAlign: 'center', marginBottom: 14 }}>
+          <div style={{ fontSize: '0.75rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Total Silver = Coins (1:1)</div>
           <div style={{ fontFamily: 'Rajdhani', fontSize: '2rem', fontWeight: 700, color: '#ffd700' }}>⚡ {formatSilver(silverTotal)}</div>
           {silverTotal === 0 && Object.keys(prices).length === 0 && (
-            <div style={{ fontSize: '0.75rem', color: '#5a5a7a', marginTop: 4 }}>Consultá los precios para calcular el total</div>
+            <div style={{ fontSize: '0.75rem', color: '#6e6e6e', marginTop: 4 }}>Consultá los precios para calcular el total</div>
           )}
         </div>
 
@@ -284,8 +284,8 @@ export default function Reequip() {
       <div className="section-header">
         <h2>Sistema de Reequipo</h2>
         <div className="accent-line" />
-        <div style={{ background: '#1a1a2a', border: '1px solid #252535', borderRadius: 8, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '0.8rem', color: '#6a6a8a' }}>Tus Coins</span>
+        <div style={{ background: '#1e1e1e', border: '1px solid #252535', borderRadius: 8, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: '0.8rem', color: '#8a8a8a' }}>Tus Coins</span>
           <span style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.2rem', color: '#ffd700' }}>⚡ {(user?.coins || 0).toLocaleString()}</span>
         </div>
       </div>
@@ -319,17 +319,17 @@ export default function Reequip() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
                         <span className={`badge ${STATUS_BADGE[r.status]}`}>{STATUS_LABEL[r.status]}</span>
-                        <span style={{ fontFamily: 'Rajdhani', fontWeight: 600, color: '#9090b0', fontSize: '0.9rem' }}>
+                        <span style={{ fontFamily: 'Rajdhani', fontWeight: 600, color: '#b0b0b0', fontSize: '0.9rem' }}>
                           Muerto por <strong style={{ color: '#ff8888' }}>{ev.Killer?.Name || '—'}</strong>
                         </span>
-                        <span style={{ fontSize: '0.78rem', color: '#6a6a8a' }}>{timeAgoStr(ev.TimeStamp)}</span>
-                        <span style={{ fontSize: '0.72rem', color: '#4a4a6a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
+                        <span style={{ fontSize: '0.78rem', color: '#8a8a8a' }}>{timeAgoStr(ev.TimeStamp)}</span>
+                        <span style={{ fontSize: '0.72rem', color: '#5c5c5c' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
                       {r.selected_items?.length > 0 && (
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
                           {r.selected_items.map(item => (
                             <img key={item.slot} src={`${RENDER}/${item.type}.png`} alt={item.label} title={`${item.label} — ${formatSilver(item.silver)} silver`}
-                              style={{ width: 28, height: 28, objectFit: 'contain', background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid #1e1e30' }}
+                              style={{ width: 28, height: 28, objectFit: 'contain', background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid #2a2a2a' }}
                               onError={e => { e.target.style.display = 'none'; }}
                             />
                           ))}
@@ -340,7 +340,7 @@ export default function Reequip() {
                           ⚡ {formatSilver(r.coins_awarded)} coins {r.claimed && <span style={{ color: '#00cc66', fontSize: '0.8rem' }}>✓ Reclamado</span>}
                         </div>
                       )}
-                      {r.admin_notes && <div style={{ fontSize: '0.82rem', color: '#6a6a8a', fontStyle: 'italic', marginTop: 4 }}>{r.admin_notes}</div>}
+                      {r.admin_notes && <div style={{ fontSize: '0.82rem', color: '#8a8a8a', fontStyle: 'italic', marginTop: 4 }}>{r.admin_notes}</div>}
                     </div>
                     {r.status === 'approved' && !r.claimed && (
                       <button className="btn btn-success btn-sm" onClick={() => handleClaimDeath(r.id)}>✓ Marcar Reclamado</button>
@@ -374,18 +374,18 @@ export default function Reequip() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
                         <strong style={{ fontFamily: 'Rajdhani', fontWeight: 700 }}>{r.username}</strong>
-                        <span style={{ fontSize: '0.82rem', color: '#00d4ff' }}>{r.albion_character}</span>
+                        <span style={{ fontSize: '0.82rem', color: '#ff7a1a' }}>{r.albion_character}</span>
                         <span className={`badge ${STATUS_BADGE[r.status]}`}>{STATUS_LABEL[r.status]}</span>
-                        <span style={{ fontSize: '0.78rem', color: '#6a6a8a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
+                        <span style={{ fontSize: '0.78rem', color: '#8a8a8a' }}>{new Date(r.created_at).toLocaleDateString('es-ES')}</span>
                       </div>
-                      <div style={{ fontSize: '0.82rem', color: '#9090b0', marginBottom: 6 }}>
+                      <div style={{ fontSize: '0.82rem', color: '#b0b0b0', marginBottom: 6 }}>
                         Muerto por <strong style={{ color: '#ff8888' }}>{ev.Killer?.Name || '—'}</strong>
                         {ev.Killer?.GuildName ? ` (${ev.Killer.GuildName})` : ''} · {timeAgoStr(ev.TimeStamp)}
                       </div>
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                         {EQ_SLOTS.filter(s => ev.Victim?.Equipment?.[s.key]?.Type).map(s => (
                           <img key={s.key} src={`${RENDER}/${ev.Victim.Equipment[s.key].Type}.png`} alt={s.label} title={s.label}
-                            style={{ width: 28, height: 28, objectFit: 'contain', background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid #1e1e30' }}
+                            style={{ width: 28, height: 28, objectFit: 'contain', background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid #2a2a2a' }}
                             onError={e => { e.target.style.display = 'none'; }}
                           />
                         ))}
@@ -416,9 +416,9 @@ export default function Reequip() {
                   { label: 'Pendientes', value: stats.counts.pending  || 0,  color: '#ffaa00' },
                   { label: 'Rechazados', value: stats.counts.rejected || 0,  color: '#ff4466' },
                 ].map(s => (
-                  <div key={s.label} style={{ background: 'linear-gradient(135deg, #0a0a16, #0d0d1e)', border: '1px solid #1e1e30', borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                  <div key={s.label} style={{ background: 'linear-gradient(135deg, #0d0d0d, #101010)', border: '1px solid #2a2a2a', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                     <div style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.8rem', color: s.color, lineHeight: 1 }}>{s.value}</div>
-                    <div style={{ fontSize: '0.72rem', color: '#6a6a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 6 }}>{s.label}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 6 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -428,20 +428,20 @@ export default function Reequip() {
                   <div className="card-title">Top Usuarios por Silver Recibido</div>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr style={{ color: '#6a6a8a', fontSize: '0.72rem', textTransform: 'uppercase' }}>
-                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>#</th>
-                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Usuario</th>
-                        <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Silver Total</th>
-                        <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Solicitudes</th>
+                      <tr style={{ color: '#8a8a8a', fontSize: '0.72rem', textTransform: 'uppercase' }}>
+                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>#</th>
+                        <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Usuario</th>
+                        <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Silver Total</th>
+                        <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #2a2a2a' }}>Solicitudes</th>
                       </tr>
                     </thead>
                     <tbody>
                       {stats.topUsers.map((u, i) => (
-                        <tr key={u.username} style={{ borderBottom: '1px solid #0d0d1e' }}>
-                          <td style={{ padding: '8px 8px', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#6a6a8a', fontFamily: 'Rajdhani', fontWeight: 700 }}>{i + 1}</td>
-                          <td style={{ padding: '8px 8px', fontFamily: 'Rajdhani', fontWeight: 600, color: '#e0e0f0' }}>{u.username}</td>
+                        <tr key={u.username} style={{ borderBottom: '1px solid #101010' }}>
+                          <td style={{ padding: '8px 8px', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#8a8a8a', fontFamily: 'Rajdhani', fontWeight: 700 }}>{i + 1}</td>
+                          <td style={{ padding: '8px 8px', fontFamily: 'Rajdhani', fontWeight: 600, color: '#ededed' }}>{u.username}</td>
                           <td style={{ padding: '8px 8px', textAlign: 'right', color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>{formatSilver(u.total_silver)}</td>
-                          <td style={{ padding: '8px 8px', textAlign: 'right', color: '#6a6a8a' }}>{u.count}</td>
+                          <td style={{ padding: '8px 8px', textAlign: 'right', color: '#8a8a8a' }}>{u.count}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -455,12 +455,12 @@ export default function Reequip() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {stats.timeline.slice(-15).map(day => (
                       <div key={day.date} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.78rem', color: '#6a6a8a', minWidth: 80 }}>{day.date}</span>
-                        <div style={{ flex: 1, height: 8, background: '#1e1e30', borderRadius: 4, overflow: 'hidden' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#8a8a8a', minWidth: 80 }}>{day.date}</span>
+                        <div style={{ flex: 1, height: 8, background: '#2a2a2a', borderRadius: 4, overflow: 'hidden' }}>
                           <div style={{ height: '100%', borderRadius: 4, background: 'linear-gradient(to right, #ffd700, #ff8800)', width: `${Math.min(100, (day.silver / (stats.totalSilver || 1)) * 100 * 5)}%` }} />
                         </div>
                         <span style={{ fontSize: '0.78rem', color: '#ffd700', minWidth: 70, textAlign: 'right', fontFamily: 'Rajdhani', fontWeight: 700 }}>{formatSilver(day.silver)}</span>
-                        <span style={{ fontSize: '0.72rem', color: '#6a6a8a', minWidth: 30 }}>{day.count}x</span>
+                        <span style={{ fontSize: '0.72rem', color: '#8a8a8a', minWidth: 30 }}>{day.count}x</span>
                       </div>
                     ))}
                   </div>

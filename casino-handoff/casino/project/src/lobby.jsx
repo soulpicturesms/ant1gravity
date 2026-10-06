@@ -1,14 +1,14 @@
 // Lobby page — hero, stats, game cards
 const LobbyPage = ({ onNavigate, mode }) => {
   const games = [
-    { id: "blackjack", name: "Blackjack Pro", provider: "ant1gravity originals", live: 2412, emoji: "🂡", tag: "live", bg: "linear-gradient(135deg, #1a3024, #0a1810)" },
-    { id: "roulette",  name: "Ruleta Europea", provider: "ant1gravity originals", live: 1186, emoji: "⊙", tag: "hot", bg: "linear-gradient(135deg, #3a1a1a, #1a0808)" },
-    { id: "slots",     name: "Anti-Gravity Slots", provider: "ant1gravity originals", live: 8240, emoji: "★", tag: "new", bg: "linear-gradient(135deg, #2a1a3a, #14081f)" },
-    { id: "plinko",    name: "Plinko Zero-G", provider: "ant1gravity originals", live: 1820, emoji: "●", tag: null, bg: "linear-gradient(135deg, #1a2a3a, #08141f)" },
-    { id: "poker",     name: "Texas Hold'em", provider: "ant1gravity originals", live: 412, emoji: "♠", tag: "live", bg: "linear-gradient(135deg, #1a3024, #0a1810)" },
-    { id: "slots",     name: "Neon Reels", provider: "ant1gravity originals", live: 920, emoji: "✦", tag: null, bg: "linear-gradient(135deg, #1a1a3a, #0a0a1f)" },
-    { id: "slots",     name: "Diamond Drop", provider: "ant1gravity originals", live: 1432, emoji: "◆", tag: null, bg: "linear-gradient(135deg, #1a3a3a, #0a1f1f)" },
-    { id: "slots",     name: "Pyramid Rush", provider: "ant1gravity originals", live: 832, emoji: "▲", tag: "hot", bg: "linear-gradient(135deg, #3a2a1a, #1f1408)" },
+    { id: "blackjack", name: "Blackjack Pro", provider: "fullpush originals", live: 2412, emoji: "🂡", tag: "live", bg: "linear-gradient(135deg, #1a3024, #0a1810)" },
+    { id: "roulette",  name: "Ruleta Europea", provider: "fullpush originals", live: 1186, emoji: "⊙", tag: "hot", bg: "linear-gradient(135deg, #3a1a1a, #1a0808)" },
+    { id: "slots",     name: "Fullpush Slots", provider: "fullpush originals", live: 8240, emoji: "★", tag: "new", bg: "linear-gradient(135deg, #2a1a3a, #14081f)" },
+    { id: "plinko",    name: "Plinko Zero-G", provider: "fullpush originals", live: 1820, emoji: "●", tag: null, bg: "linear-gradient(135deg, #1a2a3a, #08141f)" },
+    { id: "poker",     name: "Texas Hold'em", provider: "fullpush originals", live: 412, emoji: "♠", tag: "live", bg: "linear-gradient(135deg, #1a3024, #0a1810)" },
+    { id: "slots",     name: "Neon Reels", provider: "fullpush originals", live: 920, emoji: "✦", tag: null, bg: "linear-gradient(135deg, #1a1a3a, #0a0a1f)" },
+    { id: "slots",     name: "Diamond Drop", provider: "fullpush originals", live: 1432, emoji: "◆", tag: null, bg: "linear-gradient(135deg, #1a3a3a, #0a1f1f)" },
+    { id: "slots",     name: "Pyramid Rush", provider: "fullpush originals", live: 832, emoji: "▲", tag: "hot", bg: "linear-gradient(135deg, #3a2a1a, #1f1408)" },
   ];
 
   return (
@@ -71,7 +71,7 @@ const LobbyPage = ({ onNavigate, mode }) => {
 
       {/* games — originales */}
       <div className="section-head">
-        <h2>Originales <span className="acc">ant1gravity</span></h2>
+        <h2>Originales <span className="acc">fullpush</span></h2>
         <div style={{ display: "flex", gap: 6 }}>
           <button className="btn" style={{ height: 32, padding: "0 12px", fontSize: 12 }}>Todos</button>
           <button className="btn btn--ghost" style={{ height: 32, padding: "0 12px", fontSize: 12 }}>Más jugados</button>
@@ -114,12 +114,12 @@ const GameCard = ({ game, onClick }) => (
 
 const LiveWinsTicker = () => {
   const wins = [
-    { user: "neoplayer_2024", game: "Anti-Gravity Slots", bet: 200, win: 24800, mult: "124x" },
+    { user: "neoplayer_2024", game: "Fullpush Slots", bet: 200, win: 24800, mult: "124x" },
     { user: "x_kira_99",      game: "Plinko Zero-G",     bet: 1000, win: 18400, mult: "18.4x" },
     { user: "mr_pixel",       game: "Ruleta Europea",    bet: 500, win: 17500, mult: "35x" },
     { user: "lunarsh",        game: "Blackjack Pro",     bet: 2400, win: 4800, mult: "2x" },
     { user: "vortex_22",      game: "Neon Reels",        bet: 100, win: 12000, mult: "120x" },
-    { user: "anonymous",      game: "Anti-Gravity Slots", bet: 300, win: 9200, mult: "30.6x" },
+    { user: "anonymous",      game: "Fullpush Slots", bet: 300, win: 9200, mult: "30.6x" },
   ];
   return (
     <div className="card" style={{ overflow: "hidden" }}>

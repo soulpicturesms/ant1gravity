@@ -5,8 +5,8 @@ const ROLE_LABELS = { admin: 'Admin', officer: 'Officer', member: 'Member' };
 const ROLE_BADGES = { admin: 'badge-admin', officer: 'badge-officer', member: 'badge-member' };
 
 const SortIcon = ({ field, sortBy, sortDir }) => {
-  if (sortBy !== field) return <span style={{ color: '#2a2a3a', marginLeft: 4 }}>⇅</span>;
-  return <span style={{ color: '#00d4ff', marginLeft: 4 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  if (sortBy !== field) return <span style={{ color: '#303030', marginLeft: 4 }}>⇅</span>;
+  return <span style={{ color: '#ff7a1a', marginLeft: 4 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>;
 };
 
 export default function Members() {
@@ -63,11 +63,11 @@ export default function Members() {
 
   const thStyle = (field) => ({
     cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
-    color: sortBy === field ? '#00d4ff' : undefined,
+    color: sortBy === field ? '#ff7a1a' : undefined,
   });
 
   const Avatar = ({ m }) => (
-    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #00aacc, #0044aa)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '1px solid rgba(0,212,255,0.2)', flexShrink: 0 }}>
+    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #e05f00, #8a3300)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '1px solid rgba(255, 122, 26,0.2)', flexShrink: 0 }}>
       {m.avatar ? <img src={m.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : m.username[0].toUpperCase()}
     </div>
   );
@@ -123,7 +123,7 @@ export default function Members() {
           <button className="btn btn-secondary btn-sm" onClick={clearFilters}>✕ Limpiar</button>
         )}
 
-        <span style={{ fontSize: '0.8rem', color: '#4a4a6a', marginLeft: 4 }}>{data.length} resultado{data.length !== 1 ? 's' : ''}</span>
+        <span style={{ fontSize: '0.8rem', color: '#5c5c5c', marginLeft: 4 }}>{data.length} resultado{data.length !== 1 ? 's' : ''}</span>
       </div>
 
       {tab === 'all' ? (
@@ -145,7 +145,7 @@ export default function Members() {
             <tbody>
               {data.map((m, i) => (
                 <tr key={m.id}>
-                  <td style={{ color: '#4a4a6a', fontFamily: 'Rajdhani', fontSize: '0.85rem' }}>{i + 1}</td>
+                  <td style={{ color: '#5c5c5c', fontFamily: 'Rajdhani', fontSize: '0.85rem' }}>{i + 1}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <Avatar m={m} />
@@ -153,11 +153,11 @@ export default function Members() {
                     </div>
                   </td>
                   <td><span className={`badge ${ROLE_BADGES[m.role]}`}>{ROLE_LABELS[m.role]}</span></td>
-                  <td style={{ color: '#9090b0' }}>{m.total_activities}</td>
+                  <td style={{ color: '#b0b0b0' }}>{m.total_activities}</td>
                   <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#ffd700' }}>⚡ {Number(m.coins).toLocaleString('es-AR')}</td>
                 </tr>
               ))}
-              {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#4a4a6a', padding: 32 }}>Sin resultados</td></tr>}
+              {data.length === 0 && <tr><td colSpan={5} style={{ textAlign: 'center', color: '#5c5c5c', padding: 32 }}>Sin resultados</td></tr>}
             </tbody>
           </table>
         </div>
@@ -177,7 +177,7 @@ export default function Members() {
             <tbody>
               {data.map((m, i) => (
                 <tr key={m.id}>
-                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#4a4a6a', width: 40 }}>
+                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, fontSize: '1.1rem', color: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#5c5c5c', width: 40 }}>
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                   </td>
                   <td>
@@ -187,10 +187,10 @@ export default function Members() {
                     </div>
                   </td>
                   <td><span className={`badge ${ROLE_BADGES[m.role]}`}>{ROLE_LABELS[m.role]}</span></td>
-                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#9090b0' }}>{m.total_activities}</td>
+                  <td style={{ fontFamily: 'Rajdhani', fontWeight: 700, color: '#b0b0b0' }}>{m.total_activities}</td>
                 </tr>
               ))}
-              {data.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#4a4a6a', padding: 32 }}>Sin resultados</td></tr>}
+              {data.length === 0 && <tr><td colSpan={4} style={{ textAlign: 'center', color: '#5c5c5c', padding: 32 }}>Sin resultados</td></tr>}
             </tbody>
           </table>
         </div>

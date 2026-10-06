@@ -1,5 +1,5 @@
 -- =============================================
--- ANT1GRAVITY Guild Portal — Supabase Schema
+-- FULLPUSH Guild Portal — Supabase Schema
 -- Ejecutar en: Supabase Dashboard > SQL Editor
 -- =============================================
 
@@ -204,8 +204,8 @@ on conflict do nothing;
 -- ── SEED: NOTICIA BIENVENIDA ───────────────
 insert into news (title, content, category, pinned, author_name)
 values (
-  'Bienvenidos a ANT1GRAVITY',
-  '¡Este es el portal oficial del gremio ANT1GRAVITY en Albion Online! Aquí encontrarán toda la información sobre actividades, builds, rankings y el sistema de reequipo. ¡Que comience la batalla!',
+  'Bienvenidos a FULLPUSH',
+  '¡Este es el portal oficial del gremio FULLPUSH en Albion Online! Aquí encontrarán toda la información sobre actividades, builds, rankings y el sistema de reequipo. ¡Que comience la batalla!',
   'announcement', true, 'Sistema'
 ) on conflict do nothing;
 

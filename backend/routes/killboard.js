@@ -3,7 +3,7 @@ const router = express.Router();
 const { supabase } = require('../supabase');
 const { requireAuth } = require('../middleware/auth');
 
-const GUILD_ID   = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
+const GUILD_ID   = process.env.ALBION_GUILD_ID || '_dZi8dpyRVy53Wyksk4oBA';
 const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
 
 const CACHE_TTL_EVENTS  = 2 * 60 * 1000;

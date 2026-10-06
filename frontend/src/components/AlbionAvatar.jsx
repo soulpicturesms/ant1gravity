@@ -16,22 +16,22 @@ import React, { useState, useEffect } from 'react';
 // Mapeo de colores según el tipo de avatar (para el fallback generado)
 const AVATAR_COLORS = {
   'AVATAR_FAMERANK': ['#ffd700', '#ff8c00'],     // Dorado - por fama
-  'AVATAR_SEASON': ['#00d4ff', '#0066ff'],        // Azul - de temporada
+  'AVATAR_SEASON': ['#ff7a1a', '#ff4d00'],        // Azul - de temporada
   'AVATAR_PREMIUM': ['#ff3366', '#cc0044'],       // Rojo premium
   'AVATAR_HALLOWEEN': ['#ff6600', '#8b0000'],     // Naranja halloween
   'AVATAR_CHRISTMAS': ['#ff0000', '#006400'],      // Navidad
   'AVATAR_VANITY': ['#9b59b6', '#6c3483'],        // Púrpura vanity
-  'DEFAULT': ['#00aacc', '#0044aa'],              // Default azul
+  'DEFAULT': ['#e05f00', '#8a3300'],              // Default azul
 };
 
 const RING_BORDER_COLORS = {
   'RING_FAMERANK': '#ffd700',
-  'RING_SEASON': '#00d4ff',
+  'RING_SEASON': '#ff7a1a',
   'RING_PREMIUM': '#ff3366',
   'RING1': '#c0c0c0',
   'RING2': '#ffd700',
-  'RING3': '#00d4ff',
-  'DEFAULT': 'rgba(0,212,255,0.3)',
+  'RING3': '#ff7a1a',
+  'DEFAULT': 'rgba(255, 122, 26,0.3)',
 };
 
 function getAvatarColors(avatarId) {
@@ -198,13 +198,13 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
             100% { filter: drop-shadow(0 0 2px rgba(255,215,0,0.4)) brightness(1); }
           }
           @keyframes albion-crystal-glow {
-            0% { filter: drop-shadow(0 0 2px rgba(0,212,255,0.4)) brightness(1); }
-            50% { filter: drop-shadow(0 0 10px rgba(0,212,255,0.9)) brightness(1.3); }
-            100% { filter: drop-shadow(0 0 2px rgba(0,212,255,0.4)) brightness(1); }
+            0% { filter: drop-shadow(0 0 2px rgba(255, 122, 26,0.4)) brightness(1); }
+            50% { filter: drop-shadow(0 0 10px rgba(255, 122, 26,0.9)) brightness(1.3); }
+            100% { filter: drop-shadow(0 0 2px rgba(255, 122, 26,0.4)) brightness(1); }
           }
           @keyframes albion-rainbow-glow {
-            0% { filter: hue-rotate(0deg) drop-shadow(0 0 6px rgba(0,212,255,0.7)); }
-            100% { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(0,212,255,0.7)); }
+            0% { filter: hue-rotate(0deg) drop-shadow(0 0 6px rgba(255, 122, 26,0.7)); }
+            100% { filter: hue-rotate(360deg) drop-shadow(0 0 6px rgba(255, 122, 26,0.7)); }
           }
         `}} />
         
@@ -213,7 +213,7 @@ export default function AlbionAvatar({ avatarId, ringId, size = 80, characterNam
           width: '100%', 
           height: '100%', 
           borderRadius: '50%', 
-          background: '#0f0f18', 
+          background: '#111111', 
           overflow: 'hidden',
           position: 'relative',
           border: ringBorder,
