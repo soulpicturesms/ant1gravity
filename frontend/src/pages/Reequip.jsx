@@ -17,6 +17,10 @@ const EQ_SLOTS = [
   { key: 'Potion',   label: '⚗️ Poción' },
 ];
 
+// Slots que se pagan en un reequipo: armas, casco, pecho y botas
+const REEQUIP_ALLOWED = new Set(['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes']);
+const REEQUIP_SLOTS = EQ_SLOTS.filter(s => REEQUIP_ALLOWED.has(s.key));
+
 function formatSilver(n) {
   if (!n) return '0';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
@@ -40,7 +44,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
   const killer  = event.Killer || {};
   const eq      = victim.Equipment || {};
 
-  const items = EQ_SLOTS.filter(s => eq[s.key]?.Type).map(s => ({
+  const items = REEQUIP_SLOTS.filter(s => eq[s.key]?.Type).map(s => ({
     key: s.key, label: s.label, type: eq[s.key].Type, quality: eq[s.key].Quality || 1,
   }));
 
@@ -78,7 +82,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
 
         priceMap[item.type] = Math.round(matching.reduce((s, e) => s + e.sell_price_min, 0) / matching.length);
         cityCountMap[item.type] = matching.length;
-        const latest = matching.map(e => new Date(e.sell_price_min_date)).reduce((a, b) => a > b ? a : b);
+        const latest = matching.map(e => new Date(/Z$|[+-]\d\d:?\d\d$/.test(e.sell_price_min_date) ? e.sell_price_min_date : e.sell_price_min_date + 'Z')).reduce((a, b) => a > b ? a : b);
         freshnessMap[item.type] = Math.round((Date.now() - latest) / 60000);
       }
       setPrices(priceMap);
@@ -412,7 +416,7 @@ export default function Reequip() {
                         {ev.Killer?.GuildName ? ` (${ev.Killer.GuildName})` : ''} · {timeAgoStr(ev.TimeStamp)}
                       </div>
                       <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                        {EQ_SLOTS.filter(s => ev.Victim?.Equipment?.[s.key]?.Type).map(s => (
+                        {REEQUIP_SLOTS.filter(s => ev.Victim?.Equipment?.[s.key]?.Type).map(s => (
                           <img key={s.key} src={`${RENDER}/${ev.Victim.Equipment[s.key].Type}.png`} alt={s.label} title={s.label}
                             style={{ width: 28, height: 28, objectFit: 'contain', background: 'rgba(255,255,255,0.05)', borderRadius: 3, border: '1px solid #2a2a2a' }}
                             onError={e => { e.target.style.display = 'none'; }}

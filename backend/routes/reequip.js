@@ -6,6 +6,8 @@ const router = express.Router();
 // ── DEATH-BASED REEQUIP (killboard integration) ─────────────────────────────
 
 const AMERICAS_CITIES = 'Bridgewatch,Martlock,Thetford,Lymhurst,FortSterling,BlackMarket';
+// Solo se reponen armas, casco, pecho y botas
+const REEQUIP_ALLOWED = new Set(['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes']);
 
 router.get('/prices', requireAuth, async (req, res) => {
   const { items } = req.query;
@@ -68,7 +70,9 @@ router.post('/admin/death-requests/:id/approve', requireAdmin, async (req, res) 
   if (rq.status !== 'pending') return res.status(400).json({ error: 'Esta solicitud ya fue revisada' });
 
   const toSilver = v => Math.max(0, Math.round(Number(v) || 0));
-  const selected_items = (req.body.selected_items || []).map(i => ({ ...i, silver: toSilver(i.silver) }));
+  const selected_items = (req.body.selected_items || [])
+    .filter(i => REEQUIP_ALLOWED.has(i.slot))
+    .map(i => ({ ...i, silver: toSilver(i.silver) }));
   // Monto manual que el admin agrega para items sin precio de mercado
   const extra_silver = toSilver(req.body.extra_silver);
   if (extra_silver > 0) selected_items.push({ slot: 'extra', label: 'Extra manual', type: null, silver: extra_silver, manual: true });
