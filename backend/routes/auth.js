@@ -61,12 +61,28 @@ async function fetchAlbionPlayerDetails(characterName) {
   }
 }
 
+// Cuentas importadas desde el gremio de Albion que aún no tienen contraseña
+const UNCLAIMED = '!unclaimed';
+const likeExact = s => s.trim().replace(/[\\%_]/g, '\\$&');
+
 router.post('/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Faltan campos' });
   if (password.length < 6) return res.status(400).json({ error: 'Mínimo 6 caracteres' });
   try {
     const hash = bcrypt.hashSync(password, 10);
+
+    // Si el jugador ya fue importado desde el gremio, reclama su cuenta
+    const { data: existing } = await supabase.from('users').select('*').ilike('username', likeExact(username)).maybeSingle();
+    if (existing) {
+      if (existing.password !== UNCLAIMED) return res.status(400).json({ error: 'Usuario ya existe' });
+      const { data: claimed, error: claimErr } = await supabase.from('users')
+        .update({ password: hash }).eq('id', existing.id).eq('password', UNCLAIMED).select().single();
+      if (claimErr || !claimed) return res.status(400).json({ error: 'Usuario ya existe' });
+      const token = jwt.sign({ id: claimed.id, username: claimed.username, role: claimed.role }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token, user: safe(claimed) });
+    }
+
     const { data: user, error } = await supabase.from('users').insert({
       username, password: hash, role: 'pending',
       coins: 0, pvp_fame: 0, pvp_kills: 0, cta_attendance: 0, total_activities: 0,
@@ -84,7 +100,11 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const { data: user } = await supabase.from('users').select('*').ilike('username', username?.trim()).maybeSingle();
+  if (!username || !password) return res.status(400).json({ error: 'Faltan campos' });
+  const { data: user } = await supabase.from('users').select('*').ilike('username', likeExact(username)).maybeSingle();
+  if (user?.password === UNCLAIMED) {
+    return res.status(401).json({ error: 'Tu cuenta del gremio aún no está activada. Ve a "Registrarse" con tu nombre de Albion para crear tu contraseña.' });
+  }
   if (!user || !bcrypt.compareSync(password, user.password)) return res.status(401).json({ error: 'Credenciales incorrectas' });
   const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
   res.json({ token, user: safe(user) });

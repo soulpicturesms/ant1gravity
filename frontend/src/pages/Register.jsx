@@ -35,6 +35,7 @@ export default function Register() {
             FULL<span style={{ color: '#ff7a1a' }}>PUSH</span>
           </div>
           <p style={{ color: '#8a8a8a', marginTop: 8 }}>Únete al portal del gremio</p>
+          <p style={{ color: '#ff7a1a', marginTop: 6, fontSize: '0.85rem' }}>¿Eres de FULLPUSH? Usa tu nombre exacto de Albion: tu cuenta ya existe y se activa al crear tu contraseña.</p>
         </div>
 
         <div className="card" style={{ boxShadow: '0 0 40px rgba(255, 122, 26,0.08)' }}>

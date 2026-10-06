@@ -23,3 +23,4 @@ backend/temp_items_check.json
 tools/
 *.zip
 test_prod.js
+backup-*.json
