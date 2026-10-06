@@ -72,12 +72,12 @@ router.post('/register', async (req, res) => {
   try {
     const hash = bcrypt.hashSync(password, 10);
 
-    // Si el jugador ya fue importado desde el gremio, reclama su cuenta
+    // Si el jugador ya fue importado desde el gremio, reclama su cuenta (igual queda pendiente de aprobación)
     const { data: existing } = await supabase.from('users').select('*').ilike('username', likeExact(username)).maybeSingle();
     if (existing) {
       if (existing.password !== UNCLAIMED) return res.status(400).json({ error: 'Usuario ya existe' });
       const { data: claimed, error: claimErr } = await supabase.from('users')
-        .update({ password: hash }).eq('id', existing.id).eq('password', UNCLAIMED).select().single();
+        .update({ password: hash, role: 'pending' }).eq('id', existing.id).eq('password', UNCLAIMED).select().single();
       if (claimErr || !claimed) return res.status(400).json({ error: 'Usuario ya existe' });
       const token = jwt.sign({ id: claimed.id, username: claimed.username, role: claimed.role }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ token, user: safe(claimed) });

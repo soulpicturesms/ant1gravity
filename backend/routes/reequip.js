@@ -62,24 +62,35 @@ router.get('/admin/death-requests', requireAdmin, async (req, res) => {
 });
 
 router.post('/admin/death-requests/:id/approve', requireAdmin, async (req, res) => {
-  const { selected_items, admin_notes } = req.body;
+  const { admin_notes } = req.body;
   const { data: rq } = await supabase.from('reequip_requests').select('*').eq('id', req.params.id).maybeSingle();
   if (!rq) return res.status(404).json({ error: 'No encontrado' });
+  if (rq.status !== 'pending') return res.status(400).json({ error: 'Esta solicitud ya fue revisada' });
 
-  const silver_total = (selected_items || []).reduce((s, i) => s + (i.silver || 0), 0);
+  const toSilver = v => Math.max(0, Math.round(Number(v) || 0));
+  const selected_items = (req.body.selected_items || []).map(i => ({ ...i, silver: toSilver(i.silver) }));
+  // Monto manual que el admin agrega para items sin precio de mercado
+  const extra_silver = toSilver(req.body.extra_silver);
+  if (extra_silver > 0) selected_items.push({ slot: 'extra', label: 'Extra manual', type: null, silver: extra_silver, manual: true });
+
+  const silver_total = selected_items.reduce((s, i) => s + i.silver, 0);
+  if (silver_total <= 0) return res.status(400).json({ error: 'El total debe ser mayor a 0' });
   const coins_awarded = silver_total;
 
-  await supabase.from('reequip_requests').update({
+  // Solo aprueba si sigue pendiente, para no acreditar dos veces
+  const { data: updated, error: updErr } = await supabase.from('reequip_requests').update({
     status: 'approved', selected_items, silver_total, coins_awarded,
     admin_id: req.user.id, admin_notes: admin_notes || null,
     reviewed_at: new Date().toISOString(),
-  }).eq('id', req.params.id);
+  }).eq('id', req.params.id).eq('status', 'pending').select('id');
+  if (updErr) return res.status(500).json({ error: updErr.message });
+  if (!updated?.length) return res.status(400).json({ error: 'Esta solicitud ya fue revisada' });
 
   const { data: u } = await supabase.from('users').select('coins').eq('id', rq.user_id).maybeSingle();
   await supabase.from('users').update({ coins: (u?.coins || 0) + coins_awarded }).eq('id', rq.user_id);
   await supabase.from('coin_transactions').insert({
     user_id: rq.user_id, username: rq.username, amount: coins_awarded,
-    type: 'reequip', reason: `Reequipo killboard — ${(selected_items || []).length} items (${rq.albion_character})`,
+    type: 'reequip', reason: `Reequipo killboard — ${selected_items.filter(i => i.slot !== 'extra').length} items${extra_silver ? ` + extra ${extra_silver}` : ''} (${rq.albion_character})`,
     admin_id: req.user.id,
   });
 

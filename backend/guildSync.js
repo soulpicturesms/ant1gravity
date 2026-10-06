@@ -27,9 +27,9 @@ async function computeGuildSync() {
   const userNames = new Set(users.map(u => u.username.toLowerCase()));
 
   const toAdd = members.filter(p => !userNames.has(p.Name.toLowerCase()));
-  // Solo se dan de baja miembros normales; admins, oficiales y pendientes nunca se borran
+  // Solo se dan de baja miembros normales; admins, oficiales y pendientes nunca se borran.
+  // Los pendientes tampoco se aprueban solos: siempre los aprueba un admin.
   const toRemove = users.filter(u => u.role === 'member' && !byName.has(u.username.toLowerCase()));
-  const toApprove = users.filter(u => u.role === 'pending' && byName.has(u.username.toLowerCase()));
   const toUpdate = [];
   for (const u of users) {
     const p = byName.get(u.username.toLowerCase());
@@ -46,7 +46,7 @@ async function computeGuildSync() {
   const memberCount = users.filter(u => u.role === 'member').length;
   const suspicious = memberCount > 0 && toRemove.length / memberCount > MAX_SAFE_REMOVAL_RATIO;
 
-  return { members, toAdd, toRemove, toApprove, toUpdate, suspicious };
+  return { members, toAdd, toRemove, toUpdate, suspicious };
 }
 
 function summarize(s) {
@@ -55,7 +55,6 @@ function summarize(s) {
     suspicious: s.suspicious,
     add: s.toAdd.map(p => p.Name),
     remove: s.toRemove.map(u => ({ username: u.username, activated: u.password !== UNCLAIMED, coins: u.coins || 0 })),
-    approve: s.toApprove.map(u => u.username),
     updateCount: s.toUpdate.length,
   };
 }
@@ -89,10 +88,6 @@ async function applyGuildSync({ force = false } = {}) {
       const { error } = await supabase.from('users').insert(rows.slice(i, i + 100));
       if (error) throw new Error(`Error al dar de alta: ${error.message}`);
     }
-  }
-  if (s.toApprove.length) {
-    const { error } = await supabase.from('users').update({ role: 'member' }).in('id', s.toApprove.map(u => u.id));
-    if (error) throw new Error(`Error al aprobar: ${error.message}`);
   }
   await inBatches(s.toUpdate, 20, async ({ id, ...fields }) => {
     const { error } = await supabase.from('users').update(fields).eq('id', id);

@@ -33,27 +33,27 @@ export default function GuildSyncCard({ onSynced, notify }) {
 
   const apply = async () => {
     const p = preview;
-    const lines = [`Altas: ${p.add.length}`, `Bajas: ${p.remove.length}`, `Aprobados: ${p.approve.length}`, `Stats actualizados: ${p.updateCount}`];
+    const lines = [`Altas: ${p.add.length}`, `Bajas: ${p.remove.length}`, `Stats actualizados: ${p.updateCount}`];
     if (!confirm(`¿Aplicar la sincronización con Albion?\n\n${lines.join('\n')}`)) return;
     if (p.suspicious && !confirm(`⚠️ Se darían de baja ${p.remove.length} miembros, muchos más de lo normal. Puede ser un fallo de la API de Albion.\n\n¿Seguro que quieres continuar?`)) return;
     setLoading(true);
     try {
       const r = await api.guildSyncApply(p.suspicious);
-      notify(true, `Sincronizado: ${r.add.length} altas, ${r.remove.length} bajas, ${r.approve.length} aprobados, ${r.updateCount} stats actualizados`);
+      notify(true, `Sincronizado: ${r.add.length} altas, ${r.remove.length} bajas, ${r.updateCount} stats actualizados`);
       setPreview(null);
       onSynced?.();
     } catch (e) { notify(false, e.message); }
     finally { setLoading(false); }
   };
 
-  const nothingToDo = preview && !preview.add.length && !preview.remove.length && !preview.approve.length && !preview.updateCount;
+  const nothingToDo = preview && !preview.add.length && !preview.remove.length && !preview.updateCount;
 
   return (
     <div className="card">
       <div className="card-title">🔄 Sincronizar con Albion</div>
       <p style={{ color: '#b0b0b0', fontSize: '0.9rem', marginBottom: 14 }}>
         Compara las cuentas del portal con los miembros reales del gremio FULLPUSH: da de alta a los nuevos,
-        de baja a los que se fueron y actualiza fama y avatar. Admins, oficiales y pendientes que no estén en el gremio no se tocan.
+        de baja a los que se fueron y actualiza fama y avatar. Admins, oficiales y pendientes no se tocan: las aprobaciones siempre son manuales.
       </p>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -73,7 +73,6 @@ export default function GuildSyncCard({ onSynced, notify }) {
             <span>Gremio en Albion: <b style={{ color: '#ff7a1a' }}>{preview.guildCount}</b></span>
             <span>Altas: <b style={{ color: '#00cc66' }}>{preview.add.length}</b></span>
             <span>Bajas: <b style={{ color: '#ff3355' }}>{preview.remove.length}</b></span>
-            <span>Aprobados: <b style={{ color: '#ffaa00' }}>{preview.approve.length}</b></span>
             <span>Stats a actualizar: <b>{preview.updateCount}</b></span>
           </div>
 
@@ -87,7 +86,6 @@ export default function GuildSyncCard({ onSynced, notify }) {
           <NameList title="➕ Nuevos en el gremio" color="#00cc66" items={preview.add} />
           <NameList title="➖ Se fueron del gremio" color="#ff3355" items={preview.remove}
             render={u => `${u.username}${u.activated ? ' · cuenta activa' : ''}${u.coins ? ` · ${u.coins.toLocaleString()} coins` : ''}`} />
-          <NameList title="✔️ Pendientes que están en el gremio (se aprueban)" color="#ffaa00" items={preview.approve} />
         </div>
       )}
     </div>

@@ -50,6 +50,8 @@ function DeathRequestModal({ request, onSave, onClose }) {
   const [fetchingPrices, setFetching]   = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set(items.map(i => i.key)));
   const [adminNotes, setAdminNotes]     = useState('');
+  const [manualPrices, setManualPrices] = useState({});
+  const [extraSilver, setExtraSilver]   = useState('');
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
 
@@ -93,15 +95,19 @@ function DeathRequestModal({ request, onSave, onClose }) {
     setSelectedKeys(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
   };
 
-  const silverTotal = items.filter(i => selectedKeys.has(i.key)).reduce((s, i) => s + (prices[i.type] || 0), 0);
+  const toSilver = v => Math.max(0, Math.round(Number(String(v).replace(/[^d]/g, '')) || 0));
+  const itemSilver = i => prices[i.type] > 0 ? prices[i.type] : toSilver(manualPrices[i.key] || 0);
+  const marketTotal = items.filter(i => selectedKeys.has(i.key)).reduce((s, i) => s + itemSilver(i), 0);
+  const extra = toSilver(extraSilver);
+  const silverTotal = marketTotal + extra;
 
   const handleApprove = async () => {
     setLoading(true); setError('');
     try {
       const selected_items = items
         .filter(i => selectedKeys.has(i.key))
-        .map(i => ({ slot: i.key, label: i.label, type: i.type, silver: prices[i.type] || 0 }));
-      await api.approveDeathRequest(request.id, { selected_items, admin_notes: adminNotes });
+        .map(i => ({ slot: i.key, label: i.label, type: i.type, silver: itemSilver(i), manual: !(prices[i.type] > 0) }));
+      await api.approveDeathRequest(request.id, { selected_items, extra_silver: extra, admin_notes: adminNotes });
       onSave();
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
@@ -194,8 +200,18 @@ function DeathRequestModal({ request, onSave, onClose }) {
                           {freshness[item.type] < 60 ? `${freshness[item.type]}m` : `${Math.round(freshness[item.type] / 60)}h`} ago
                         </div>
                       </div>
+                    ) : Object.keys(prices).length > 0 ? (
+                      <div>
+                        <input className="input" inputMode="numeric" placeholder="Precio a mano"
+                          value={manualPrices[item.key] ?? ''}
+                          onChange={e => setManualPrices(p => ({ ...p, [item.key]: e.target.value.replace(/[^\d]/g, '') }))}
+                          style={{ width: 130, padding: '4px 8px', textAlign: 'right', fontSize: '0.85rem', marginLeft: 'auto', display: 'block', borderColor: manualPrices[item.key] ? '#ff7a1a' : undefined }} />
+                        <div style={{ fontSize: '0.68rem', color: '#5c5c5c', marginTop: 2 }}>
+                          sin datos{manualPrices[item.key] ? ` · ${formatSilver(toSilver(manualPrices[item.key]))}` : ''}
+                        </div>
+                      </div>
                     ) : (
-                      <span style={{ color: '#5c5c5c' }}>{Object.keys(prices).length > 0 ? 'sin datos' : '—'}</span>
+                      <span style={{ color: '#5c5c5c' }}>—</span>
                     )}
                   </td>
                   <td style={{ padding: '8px 8px', textAlign: 'center' }}>
@@ -207,10 +223,23 @@ function DeathRequestModal({ request, onSave, onClose }) {
           </table>
         )}
 
+        {/* Extra manual */}
+        <div className="form-group">
+          <label>➕ Extra manual (silver)</label>
+          <input className="input" inputMode="numeric" value={extraSilver}
+            onChange={e => setExtraSilver(e.target.value.replace(/[^\d]/g, ''))}
+            placeholder="Monto adicional para items sin datos, bolsa, montura, etc." />
+        </div>
+
         {/* Total */}
         <div style={{ background: '#1e1e1e', border: '1px solid #252535', borderRadius: 8, padding: 16, textAlign: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: '0.75rem', color: '#8a8a8a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Total Silver = Coins (1:1)</div>
           <div style={{ fontFamily: 'Rajdhani', fontSize: '2rem', fontWeight: 700, color: '#ffd700' }}>⚡ {formatSilver(silverTotal)}</div>
+          {extra > 0 && (
+            <div style={{ fontSize: '0.78rem', color: '#8a8a8a', marginTop: 4 }}>
+              Items {formatSilver(marketTotal)} + extra manual <span style={{ color: '#ff7a1a' }}>{formatSilver(extra)}</span>
+            </div>
+          )}
           {silverTotal === 0 && Object.keys(prices).length === 0 && (
             <div style={{ fontSize: '0.75rem', color: '#6e6e6e', marginTop: 4 }}>Consultá los precios para calcular el total</div>
           )}
