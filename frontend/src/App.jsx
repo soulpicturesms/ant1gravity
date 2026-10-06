@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/Navbar';
+import IntroSplash from './components/IntroSplash';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -57,6 +58,7 @@ function AppRoutes() {
   const { user } = useAuth();
   return (
     <>
+      <IntroSplash />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
