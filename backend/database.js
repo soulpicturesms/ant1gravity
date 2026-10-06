@@ -7,8 +7,9 @@ async function initDatabase() {
   if (initialized) return;
   initialized = true;
   try {
-    const { data: admin } = await supabase.from('users').select('id').eq('username', 'admin').maybeSingle();
-    if (!admin) {
+    // Solo crea el admin por defecto si no existe ningun admin (base nueva)
+    const { count, error } = await supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'admin');
+    if (!error && count === 0) {
       const hash = bcrypt.hashSync('admin123', 10);
       await supabase.from('users').insert({
         username: 'admin', password: hash, role: 'admin',

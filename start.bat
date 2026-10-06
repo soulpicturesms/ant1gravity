@@ -23,7 +23,7 @@ echo.
 echo  [2/2] Iniciando servidor...
 echo.
 echo  Abre tu navegador en: http://localhost:3000
-echo  Admin: admin / admin123
+echo  Admin por defecto (solo en base nueva): admin / admin123
 echo.
 echo  Presiona Ctrl+C para detener
 echo.

@@ -24,6 +24,6 @@ require('./socket/truco')(io);
 initDatabase().then(() => {
   server.listen(PORT, () => {
     console.log(`\n  FULLPUSH Portal: http://localhost:${PORT}`);
-    console.log(`  Admin: admin / admin123\n`);
+    console.log(`  Admin por defecto (solo en base nueva): admin / admin123\n`);
   });
 }).catch(console.error);
