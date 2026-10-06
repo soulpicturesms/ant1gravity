@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api';
+import AlbionAvatar from '../components/AlbionAvatar';
 
 const ROLE_LABELS = { admin: 'Admin', officer: 'Officer', member: 'Member' };
 const ROLE_BADGES = { admin: 'badge-admin', officer: 'badge-officer', member: 'badge-member' };
@@ -66,7 +67,9 @@ export default function Members() {
     color: sortBy === field ? '#ff7a1a' : undefined,
   });
 
-  const Avatar = ({ m }) => (
+  const Avatar = ({ m }) => (!m.avatar && m.albion_avatar)
+    ? <AlbionAvatar avatarId={m.albion_avatar} ringId={m.albion_ring} size={32} characterName={m.albion_character} />
+    : (
     <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #e05f00, #8a3300)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Rajdhani', fontWeight: 700, color: 'white', overflow: 'hidden', border: '1px solid rgba(255, 122, 26,0.2)', flexShrink: 0 }}>
       {m.avatar ? <img src={m.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : m.username[0].toUpperCase()}
     </div>
