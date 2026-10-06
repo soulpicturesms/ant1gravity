@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import AlbionStatsTab from './AlbionStatsTab';
+import GuildSyncCard from '../components/GuildSyncCard';
 
 function formatDate(str) {
   return new Date(str).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -380,6 +381,8 @@ export default function Admin() {
       {/* Members Management */}
       {tab === 'members' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {isStrictAdmin && <GuildSyncCard notify={notify} onSynced={loadAll} />}
+
           {/* Create user */}
           <div className="card">
             <div className="card-title">➕ Crear Usuario</div>

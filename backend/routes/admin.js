@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { supabase } = require('../supabase');
 const { requireAdmin, requireStrictAdmin } = require('../middleware/auth');
+const { computeGuildSync, applyGuildSync, summarize } = require('../guildSync');
 const router = express.Router();
 
 const safe = u => {
@@ -114,6 +115,18 @@ router.post('/users/:id/reset-password', requireStrictAdmin, async (req, res) =>
   const { error } = await supabase.from('users').update({ password: hashed }).eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+});
+
+
+// ── Sincronizar cuentas con el gremio de Albion ─────────────────────────────
+router.get('/guild-sync/preview', requireStrictAdmin, async (req, res) => {
+  try { res.json(summarize(await computeGuildSync())); }
+  catch (e) { res.status(502).json({ error: e.message }); }
+});
+
+router.post('/guild-sync/apply', requireStrictAdmin, async (req, res) => {
+  try { res.json(await applyGuildSync({ force: req.body?.force === true })); }
+  catch (e) { res.status(e.status || 500).json({ error: e.message }); }
 });
 
 module.exports = router;

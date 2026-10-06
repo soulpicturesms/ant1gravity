@@ -208,6 +208,8 @@ export const api = {
   approveUser: (id, role) => req(`/api/admin/users/${id}/approve`, { method: 'POST', headers: headers(), body: JSON.stringify({ role }) }),
   rejectUser: (id) => req(`/api/admin/users/${id}/reject`, { method: 'DELETE', headers: headers() }),
   editUsername: (id, username) => req(`/api/admin/users/${id}/username`, { method: 'PUT', headers: headers(), body: JSON.stringify({ username }) }),
+  guildSyncPreview: () => req('/api/admin/guild-sync/preview', { headers: headers() }),
+  guildSyncApply: (force = false) => req('/api/admin/guild-sync/apply', { method: 'POST', headers: headers(), body: JSON.stringify({ force }) }),
   adminResetPassword: (id) => req(`/api/admin/users/${id}/reset-password`, { method: 'POST', headers: headers() }),
   changePassword: (body) => req('/api/auth/password', { method: 'PUT', headers: headers(), body: JSON.stringify(body) }),
 };
