@@ -1003,7 +1003,7 @@ export default function Admin() {
           ) : (
             <div className="grid-3">
               {banners.map((b, i) => (
-                <div key={b._id || i} className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div key={b.id || i} className="card" style={{ padding: 0, overflow: 'hidden' }}>
                   <img src={b.url} alt={b.caption || ''} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
                   <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: '0.82rem', color: '#b0b0b0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1012,9 +1012,13 @@ export default function Admin() {
                     <button className="btn-icon" style={{ borderColor: '#ff335544', color: '#ff6688', flexShrink: 0 }}
                       onClick={async () => {
                         if (!confirm('¿Eliminar esta imagen del slideshow?')) return;
-                        await api.deleteBanner(b._id);
-                        setBanners(prev => prev.filter(x => x._id !== b._id));
-                        notify(true, 'Imagen eliminada');
+                        try {
+                          await api.deleteBanner(b.id);
+                          setBanners(prev => prev.filter(x => x.id !== b.id));
+                          notify(true, 'Imagen eliminada');
+                        } catch (e) {
+                          notify(false, e.message || 'No se pudo eliminar la imagen');
+                        }
                       }}>🗑️</button>
                   </div>
                 </div>

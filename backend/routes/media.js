@@ -46,7 +46,9 @@ router.post('/banners', requireAdmin, upload.single('image'), async (req, res) =
 });
 
 router.delete('/banners/:id', requireAdmin, async (req, res) => {
-  await supabase.from('media').delete().eq('id', req.params.id);
+  const { data, error } = await supabase.from('media').delete().eq('id', req.params.id).eq('key', 'banner').select('id');
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data?.length) return res.status(404).json({ error: 'Imagen no encontrada' });
   res.json({ ok: true });
 });
 
