@@ -1,8 +1,8 @@
 @echo off
-title FULLPUSH Guild Portal
+title ANT1GRAVITY Guild Portal
 echo.
 echo  ============================================
-echo    FULLPUSH - ALBION ONLINE GUILD PORTAL
+echo    ANT1GRAVITY - ALBION ONLINE GUILD PORTAL
 echo  ============================================
 echo.
 

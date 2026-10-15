@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 const SEEN_KEY = 'fp_intro_seen';
-const LOGO = '/logo-fullpush-480.png';
+const LOGO = '/logo-ant1gravity-1000.png';
 const IMPACT_MS = 1350;   // momento en que el escudo golpea
 const EXIT_MS = 3900;     // empieza la salida
 const DONE_MS = 4700;     // se desmonta
@@ -34,7 +34,7 @@ function useEmbers(canvasRef, active) {
       x: Math.random() * w, y: h + 10,
       vx: (Math.random() - 0.5) * 0.4, vy: -(0.6 + Math.random() * 1.6),
       r: 0.6 + Math.random() * 2.2, life: 1, decay: 0.003 + Math.random() * 0.006,
-      hue: 18 + Math.random() * 22,
+      hue: 190 + Math.random() * 25,
     });
     for (let i = 0; i < 60; i++) { const e = ember(); e.y = Math.random() * h; parts.push(e); }
 
@@ -49,7 +49,7 @@ function useEmbers(canvasRef, active) {
           const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 9;
           parts.push({ x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5,
             r: 0.8 + Math.random() * 2.4, life: 1, decay: 0.008 + Math.random() * 0.014,
-            hue: 15 + Math.random() * 35, spark: true });
+            hue: 185 + Math.random() * 35, spark: true });
         }
       }
       if (parts.length < 140 && Math.random() < 0.5) parts.push(ember());
@@ -115,18 +115,14 @@ export default function IntroSplash() {
       <div className="fpi-flash" />
 
       <div className="fpi-stage">
-        <div className="fpi-rings">
-          <span className="fpi-ring" /><span className="fpi-ring fpi-ring--2" /><span className="fpi-ring fpi-ring--3" />
-        </div>
         <div className="fpi-logo-wrap">
+          <div className="fpi-rings">
+            <span className="fpi-ring" /><span className="fpi-ring fpi-ring--2" /><span className="fpi-ring fpi-ring--3" />
+          </div>
           <div className="fpi-halo" />
-          <img src={LOGO} alt="FULLPUSH" className="fpi-logo" draggable="false" />
+          <img src={LOGO} alt="ANT1GRAVITY" className="fpi-logo" draggable="false" />
           <div className="fpi-shine" style={{ WebkitMaskImage: `url(${LOGO})`, maskImage: `url(${LOGO})` }} />
         </div>
-
-        <h1 className="fpi-title">
-          <span className="fpi-full">FULL</span><span className="fpi-push">PUSH</span>
-        </h1>
         <div className="fpi-line" />
         <div className="fpi-sub">ALBION ONLINE · GUILD PORTAL</div>
       </div>
@@ -143,23 +139,23 @@ const CSS = `
 .fpi--exit { animation: fpi-iris .8s cubic-bezier(.7,0,.3,1) forwards; }
 .fpi-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .fpi-vignette { position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse at 50% 42%, rgba(255,90,0,.10) 0%, transparent 45%, rgba(0,0,0,.85) 100%); }
+  background: radial-gradient(ellipse at 50% 42%, rgba(0,120,255,.10) 0%, transparent 45%, rgba(0,0,0,.85) 100%); }
 
 .fpi-beam { position: absolute; left: 50%; top: 0; width: 3px; height: 42%; transform: translateX(-50%) scaleY(0);
-  transform-origin: top; background: linear-gradient(to bottom, transparent, #fff 60%, #ff7a1a);
-  box-shadow: 0 0 18px 4px rgba(255,122,26,.8), 0 0 60px 12px rgba(255,90,0,.4);
+  transform-origin: top; background: linear-gradient(to bottom, transparent, #fff 60%, #00d4ff);
+  box-shadow: 0 0 18px 4px rgba(0,212,255,.8), 0 0 60px 12px rgba(0,120,255,.4);
   animation: fpi-beam 1.35s cubic-bezier(.6,0,.4,1) forwards; }
-.fpi-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, #fff 0%, #ffb070 25%, transparent 65%);
+.fpi-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, #fff 0%, #9fe8ff 25%, transparent 65%);
   opacity: 0; pointer-events: none; animation: fpi-flash .9s ease-out 1.33s forwards; }
 
 .fpi-stage { position: relative; display: flex; flex-direction: column; align-items: center; margin-top: -4vh;
   animation: fpi-shake .5s linear 1.35s; }
-.fpi-logo-wrap { position: relative; height: clamp(190px, 34vh, 320px); aspect-ratio: 1149 / 1369; }
+.fpi-logo-wrap { position: relative; width: clamp(300px, 62vw, 680px); aspect-ratio: 1672 / 941; }
 .fpi-logo { position: relative; z-index: 2; height: 100%; width: 100%; object-fit: contain; display: block;
   opacity: 0; transform: scale(2.6) translateY(-30%); filter: blur(14px) brightness(3);
   animation: fpi-drop .55s cubic-bezier(.55,0,.9,.45) .8s forwards, fpi-float 3s ease-in-out 2.2s infinite; }
 .fpi-halo { position: absolute; inset: -30%; z-index: 1; border-radius: 50%; opacity: 0;
-  background: radial-gradient(circle, rgba(255,122,26,.55) 0%, rgba(255,77,0,.18) 35%, transparent 65%);
+  background: radial-gradient(circle, rgba(0,212,255,.55) 0%, rgba(0,100,180,.18) 35%, transparent 65%);
   animation: fpi-halo 2.4s ease-out 1.35s forwards; }
 .fpi-shine { position: absolute; inset: 0; z-index: 3; pointer-events: none;
   -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
@@ -168,9 +164,9 @@ const CSS = `
   background-size: 300% 100%; background-position: 150% 0; mix-blend-mode: overlay;
   animation: fpi-shine 1.1s ease-in-out 1.9s forwards; }
 
-.fpi-rings { position: absolute; left: 50%; top: calc(clamp(190px, 34vh, 320px) / 2); pointer-events: none; }
+.fpi-rings { position: absolute; left: 50%; top: 50%; z-index: 0; pointer-events: none; }
 .fpi-ring { position: absolute; left: 0; top: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
-  border: 3px solid rgba(255,140,40,.9); box-shadow: 0 0 30px rgba(255,100,0,.8), inset 0 0 20px rgba(255,100,0,.5);
+  border: 3px solid rgba(80,200,255,.9); box-shadow: 0 0 30px rgba(0,140,255,.8), inset 0 0 20px rgba(0,140,255,.5);
   opacity: 0; animation: fpi-ring 1.1s cubic-bezier(.1,.6,.3,1) 1.35s forwards; }
 .fpi-ring--2 { border-color: rgba(255,255,255,.7); animation-delay: 1.45s; }
 .fpi-ring--3 { border-width: 1px; animation-delay: 1.6s; animation-duration: 1.5s; }
@@ -179,25 +175,25 @@ const CSS = `
   font-size: clamp(3rem, 9vw, 6.5rem); letter-spacing: .18em; display: flex; padding-left: .18em; }
 .fpi-full, .fpi-push { display: inline-block; opacity: 0; }
 .fpi-full { color: #fff; text-shadow: 0 0 30px rgba(255,255,255,.25); animation: fpi-in-l .7s cubic-bezier(.2,1.4,.4,1) 1.9s forwards; }
-.fpi-push { color: #ff7a1a; text-shadow: 0 0 24px rgba(255,122,26,.9), 0 0 70px rgba(255,77,0,.5);
+.fpi-push { color: #00d4ff; text-shadow: 0 0 24px rgba(0,212,255,.9), 0 0 70px rgba(0,100,180,.5);
   animation: fpi-in-r .7s cubic-bezier(.2,1.4,.4,1) 1.9s forwards, fpi-pulse 1.6s ease-in-out 2.7s infinite; }
-.fpi-line { height: 2px; width: min(420px, 70vw); margin-top: 1.6vh; transform: scaleX(0);
-  background: linear-gradient(90deg, transparent, #ff7a1a, #fff, #ff7a1a, transparent);
-  box-shadow: 0 0 12px rgba(255,122,26,.8); animation: fpi-line .8s ease-out 2.4s forwards; }
+.fpi-line { height: 2px; width: min(420px, 70vw); margin-top: 3vh; transform: scaleX(0);
+  background: linear-gradient(90deg, transparent, #00d4ff, #fff, #00d4ff, transparent);
+  box-shadow: 0 0 12px rgba(0,212,255,.8); animation: fpi-line .8s ease-out 2.0s forwards; }
 .fpi-sub { margin-top: 1.4vh; font-family: 'Rajdhani', sans-serif; font-size: clamp(.7rem, 1.6vw, .95rem);
-  letter-spacing: .5em; color: #9a9a9a; opacity: 0; padding-left: .5em; animation: fpi-sub 1s ease-out 2.7s forwards; }
+  letter-spacing: .5em; color: #9a9a9a; opacity: 0; padding-left: .5em; animation: fpi-sub 1s ease-out 2.3s forwards; }
 
 .fpi-skip { position: absolute; right: 20px; bottom: 20px; background: transparent; border: 1px solid #333;
   color: #888; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .15em; font-size: .8rem;
   padding: 8px 14px; border-radius: 4px; cursor: pointer; opacity: 0; animation: fpi-sub .4s ease 1s forwards; }
-.fpi-skip:hover { color: #ff7a1a; border-color: #ff7a1a; }
+.fpi-skip:hover { color: #00d4ff; border-color: #00d4ff; }
 
 @keyframes fpi-beam { 0% { transform: translateX(-50%) scaleY(0); opacity: 1; } 85% { transform: translateX(-50%) scaleY(1); opacity: 1; }
   100% { transform: translateX(-50%) scaleY(1); opacity: 0; } }
 @keyframes fpi-flash { 0% { opacity: 0; } 8% { opacity: .95; } 100% { opacity: 0; } }
 @keyframes fpi-drop { 0% { opacity: 0; transform: scale(2.6) translateY(-30%); filter: blur(14px) brightness(3); }
   70% { opacity: 1; filter: blur(2px) brightness(1.8); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0) brightness(1)
-  drop-shadow(0 0 30px rgba(255,122,26,.55)); } }
+  drop-shadow(0 0 30px rgba(0,212,255,.55)); } }
 @keyframes fpi-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes fpi-halo { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: .55; transform: scale(1); } }
 @keyframes fpi-shine { to { background-position: -150% 0; } }
@@ -208,8 +204,8 @@ const CSS = `
   100% { opacity: 1; transform: none; filter: none; } }
 @keyframes fpi-in-r { 0% { opacity: 0; transform: translateX(60vw) skewX(20deg); filter: blur(8px); }
   100% { opacity: 1; transform: none; filter: none; } }
-@keyframes fpi-pulse { 0%,100% { text-shadow: 0 0 24px rgba(255,122,26,.9), 0 0 70px rgba(255,77,0,.5); }
-  50% { text-shadow: 0 0 36px rgba(255,150,60,1), 0 0 110px rgba(255,77,0,.8); } }
+@keyframes fpi-pulse { 0%,100% { text-shadow: 0 0 24px rgba(0,212,255,.9), 0 0 70px rgba(0,100,180,.5); }
+  50% { text-shadow: 0 0 36px rgba(120,230,255,1), 0 0 110px rgba(0,100,180,.8); } }
 @keyframes fpi-line { to { transform: scaleX(1); } }
 @keyframes fpi-sub { to { opacity: 1; } }
 @keyframes fpi-iris { 0% { clip-path: circle(150% at 50% 42%); } 100% { clip-path: circle(0% at 50% 42%); } }

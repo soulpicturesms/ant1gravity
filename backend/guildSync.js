@@ -2,7 +2,7 @@
 const { supabase } = require('./supabase');
 
 const ALBION_API = 'https://gameinfo.albiononline.com/api/gameinfo';
-const GUILD_ID = process.env.ALBION_GUILD_ID || '_dZi8dpyRVy53Wyksk4oBA';
+const GUILD_ID = process.env.ALBION_GUILD_ID || 'Azsds8YiRyi6aGL1rOZRLg';
 const UNCLAIMED = '!unclaimed';
 // Si la API devuelve muchos menos miembros de lo normal, probablemente falló: pedir confirmación extra
 const MAX_SAFE_REMOVAL_RATIO = 0.3;

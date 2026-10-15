@@ -51,8 +51,8 @@ export default function GuildSyncCard({ onSynced, notify }) {
   return (
     <div className="card">
       <div className="card-title">🔄 Sincronizar con Albion</div>
-      <p style={{ color: '#b0b0b0', fontSize: '0.9rem', marginBottom: 14 }}>
-        Compara las cuentas del portal con los miembros reales del gremio FULLPUSH: da de alta a los nuevos,
+      <p style={{ color: '#9090b0', fontSize: '0.9rem', marginBottom: 14 }}>
+        Compara las cuentas del portal con los miembros reales del gremio ANT1GRAVITY: da de alta a los nuevos,
         de baja a los que se fueron y actualiza fama y avatar. Admins, oficiales y pendientes no se tocan: las aprobaciones siempre son manuales.
       </p>
 
@@ -70,7 +70,7 @@ export default function GuildSyncCard({ onSynced, notify }) {
       {preview && (
         <div style={{ marginTop: 16 }}>
           <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontFamily: 'Rajdhani', fontSize: '1rem' }}>
-            <span>Gremio en Albion: <b style={{ color: '#ff7a1a' }}>{preview.guildCount}</b></span>
+            <span>Gremio en Albion: <b style={{ color: '#00d4ff' }}>{preview.guildCount}</b></span>
             <span>Altas: <b style={{ color: '#00cc66' }}>{preview.add.length}</b></span>
             <span>Bajas: <b style={{ color: '#ff3355' }}>{preview.remove.length}</b></span>
             <span>Stats a actualizar: <b>{preview.updateCount}</b></span>

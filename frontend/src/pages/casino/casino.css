@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    Casino shell — scoped to .casino-shell so it never
-   bleeds into the rest of the fullpush app.
+   bleeds into the rest of the ant1gravity app.
    ═══════════════════════════════════════════════════════ */
 
 .casino-shell {
@@ -14,9 +14,9 @@
   --c-line2:     rgba(255,255,255,0.10);
   --c-line3:     rgba(255,255,255,0.16);
   --c-text:      #ecedf4;
-  --c-text2:     #b8b8b8;
-  --c-text3:     #8a8a8a;
-  --c-text4:     #5c5c5c;
+  --c-text2:     #a5a6b8;
+  --c-text3:     #6a6a8a;
+  --c-text4:     #4a4a6a;
   --c-accent:    #ff2d7a;
   --c-accent2:   #6fff7d;
   --c-acsoft:    rgba(255,45,122,0.18);
@@ -601,7 +601,7 @@
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 28%, #ffffff, #b0b0b0);
+  background: radial-gradient(circle at 30% 28%, #ffffff, #9090b0);
   box-shadow: 0 0 5px rgba(255,255,255,0.5), 0 2px 5px rgba(0,0,0,0.6);
   transform: translateX(-50%) rotate(0deg) translateY(0);
   /* 4% of 320px = 12.8px ball top from container top

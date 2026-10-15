@@ -30,16 +30,13 @@ export default function Register() {
     <div style={{ minHeight: 'calc(100vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="/logo-fullpush-128.png" alt="" style={{ height: 96, width: 'auto', display: 'block', margin: '0 auto 12px', filter: 'drop-shadow(0 0 18px rgba(255, 122, 26, 0.35))' }} />
-          <div style={{ fontFamily: 'Rajdhani', fontSize: '2rem', fontWeight: 700, color: 'white', letterSpacing: '0.1em' }}>
-            FULL<span style={{ color: '#ff7a1a' }}>PUSH</span>
-          </div>
-          <p style={{ color: '#8a8a8a', marginTop: 8 }}>Únete al portal del gremio</p>
-          <p style={{ color: '#ff7a1a', marginTop: 6, fontSize: '0.85rem' }}>Usa tu nombre exacto de Albion. Después de registrarte, un admin tiene que aprobar tu cuenta.</p>
+          <img src="/logo-ant1gravity-320.png" alt="" style={{ width: 230, maxWidth: '80%', height: 'auto', display: 'block', margin: '0 auto 4px', filter: 'drop-shadow(0 0 18px rgba(0, 212, 255, 0.35))' }} />
+          <p style={{ color: '#6a6a8a', marginTop: 8 }}>Únete al portal del gremio</p>
+          <p style={{ color: '#00d4ff', marginTop: 6, fontSize: '0.85rem' }}>Usa tu nombre exacto de Albion. Después de registrarte, un admin tiene que aprobar tu cuenta.</p>
         </div>
 
-        <div className="card" style={{ boxShadow: '0 0 40px rgba(255, 122, 26,0.08)' }}>
-          <h2 style={{ fontFamily: 'Rajdhani', fontSize: '1.4rem', fontWeight: 700, color: '#ff7a1a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24 }}>Crear Cuenta</h2>
+        <div className="card" style={{ boxShadow: '0 0 40px rgba(0, 212, 255,0.08)' }}>
+          <h2 style={{ fontFamily: 'Rajdhani', fontSize: '1.4rem', fontWeight: 700, color: '#00d4ff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 24 }}>Crear Cuenta</h2>
 
           {error && <div className="alert alert-error">{error}</div>}
 
@@ -62,8 +59,8 @@ export default function Register() {
           </form>
         </div>
 
-        <p style={{ textAlign: 'center', marginTop: 16, color: '#8a8a8a', fontSize: '0.9rem' }}>
-          ¿Ya tienes cuenta? <Link to="/login" style={{ color: '#ff7a1a' }}>Iniciar sesión</Link>
+        <p style={{ textAlign: 'center', marginTop: 16, color: '#6a6a8a', fontSize: '0.9rem' }}>
+          ¿Ya tienes cuenta? <Link to="/login" style={{ color: '#00d4ff' }}>Iniciar sesión</Link>
         </p>
       </div>
     </div>
