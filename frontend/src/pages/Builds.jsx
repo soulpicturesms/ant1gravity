@@ -502,7 +502,7 @@ function SlotButton({ slotKey, label, value, onChange, compact = false }) {
           }}
         >
           {value?.code
-            ? <img src={`${RENDER}/${value.code}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => e.target.style.display = 'none'} />
+            ? <img key={value.code} src={`${RENDER}/${value.code}.png`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={e => e.target.style.display = 'none'} />
             : <span style={{ color: '#2a2a3a', fontSize: size * 0.35 }}>+</span>
           }
         </div>
