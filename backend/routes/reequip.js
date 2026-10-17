@@ -5,7 +5,7 @@ const router = express.Router();
 
 // ── DEATH-BASED REEQUIP (killboard integration) ─────────────────────────────
 
-const AMERICAS_CITIES = 'Caerleon,Bridgewatch,Martlock,Thetford,Lymhurst,FortSterling,BlackMarket';
+const AMERICAS_CITIES = 'Bridgewatch,Martlock,Thetford,Lymhurst,FortSterling';
 // Solo se reponen armas, casco, pecho y botas
 const REEQUIP_ALLOWED = new Set(['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes']);
 
