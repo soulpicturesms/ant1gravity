@@ -104,6 +104,7 @@ export const api = {
 
   // Reequip - death-based flow
   getDeathPrices: (items) => req(`/api/reequip/prices?items=${encodeURIComponent(items)}`, { headers: headers() }),
+  getDeathPriceHistory: (items) => req(`/api/reequip/prices/history?items=${encodeURIComponent(items)}`, { headers: headers() }),
   submitDeathRequest: (body) => req('/api/reequip/death-request', { method: 'POST', headers: headers(), body: JSON.stringify(body) }),
   getMyDeathRequests: () => req('/api/reequip/my-death-requests', { headers: headers() }),
   claimDeathRequest: (id) => req(`/api/reequip/death-request/${id}/claim`, { method: 'POST', headers: headers() }),

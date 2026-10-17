@@ -85,6 +85,26 @@ function DeathRequestModal({ request, onSave, onClose }) {
         const latest = matching.map(e => new Date(/Z$|[+-]\d\d:?\d\d$/.test(e.sell_price_min_date) ? e.sell_price_min_date : e.sell_price_min_date + 'Z')).reduce((a, b) => a > b ? a : b);
         freshnessMap[item.type] = Math.round((Date.now() - latest) / 60000);
       }
+
+      // Sin órdenes de venta escaneadas → última venta real registrada en el historial
+      const missing = items.filter(i => !priceMap[i.type]);
+      if (missing.length) {
+        try {
+          const hist = await api.getDeathPriceHistory([...new Set(missing.map(i => i.type))].join(','));
+          for (const item of missing) {
+            const series = (hist || []).filter(h => h.item_id === item.type && h.data?.length);
+            const same = series.filter(h => h.quality === item.quality);
+            const last = (same.length ? same : series)
+              .map(h => ({ ...h.data[h.data.length - 1], city: h.location }))
+              .filter(p => p.avg_price > 0)
+              .reduce((a, b) => (!a || b.timestamp > a.timestamp ? b : a), null);
+            if (!last) continue;
+            priceMap[item.type] = last.avg_price;
+            cityCountMap[item.type] = `historial ${last.city}`;
+            freshnessMap[item.type] = Math.round((Date.now() - new Date(last.timestamp + 'Z')) / 60000);
+          }
+        } catch { /* sin historial: queda para precio manual */ }
+      }
       setPrices(priceMap);
       setFreshness(freshnessMap);
       setCityCounts(cityCountMap);
@@ -200,8 +220,8 @@ function DeathRequestModal({ request, onSave, onClose }) {
                       <div>
                         <div style={{ color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>{formatSilver(prices[item.type])}</div>
                         <div style={{ fontSize: '0.68rem', color: '#4a4a6a' }}>
-                          {cityCounts[item.type]}c ·{' '}
-                          {freshness[item.type] < 60 ? `${freshness[item.type]}m` : `${Math.round(freshness[item.type] / 60)}h`} ago
+                          {typeof cityCounts[item.type] === 'number' ? `${cityCounts[item.type]}c` : cityCounts[item.type]} ·{' '}
+                          {freshness[item.type] < 60 ? `${freshness[item.type]}m` : freshness[item.type] < 2880 ? `${Math.round(freshness[item.type] / 60)}h` : `${Math.round(freshness[item.type] / 1440)}d`} ago
                         </div>
                       </div>
                     ) : Object.keys(prices).length > 0 ? (

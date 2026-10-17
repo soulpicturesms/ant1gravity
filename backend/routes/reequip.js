@@ -21,6 +21,19 @@ router.get('/prices', requireAuth, async (req, res) => {
   }
 });
 
+// Historial de ventas reales (respaldo cuando no hay órdenes de venta escaneadas)
+router.get('/prices/history', requireAuth, async (req, res) => {
+  const { items } = req.query;
+  if (!items) return res.status(400).json({ error: 'Se requieren items' });
+  try {
+    const r = await fetch(`https://west.albion-online-data.com/api/v2/stats/history/${items}.json?locations=${AMERICAS_CITIES}&time-scale=24`);
+    if (!r.ok) throw new Error(`Albion Data API ${r.status}`);
+    res.json(await r.json());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/death-request', requireAuth, async (req, res) => {
   const { event_id, death_event } = req.body;
   if (!event_id || !death_event) return res.status(400).json({ error: 'Faltan datos' });
