@@ -50,7 +50,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
 
   const [prices, setPrices]             = useState({});
   const [freshness, setFreshness]       = useState({});
-  const [sources, setSources]           = useState({});
+  const [cityCounts, setCityCounts]     = useState({});
   const [fetchingPrices, setFetching]   = useState(false);
   const [selectedKeys, setSelectedKeys] = useState(new Set(items.map(i => i.key)));
   const [adminNotes, setAdminNotes]     = useState('');
@@ -72,22 +72,22 @@ function DeathRequestModal({ request, onSave, onClose }) {
         grouped[id].push(entry);
       }
 
-      const priceMap = {}, freshnessMap = {}, sourceMap = {};
+      const priceMap = {}, freshnessMap = {}, cityCountMap = {};
       for (const item of items) {
         const entries = grouped[item.type] || [];
-        // Calidad Normal, Buena o Notable (1-3): siempre la opción más barata
-        const matching = entries.filter(e => e.quality >= 1 && e.quality <= 3 && e.sell_price_min > 0);
+        let matching = entries.filter(e => e.quality === item.quality && e.sell_price_min > 0);
+        if (matching.length === 0) matching = entries.filter(e => e.quality === 1 && e.sell_price_min > 0);
+        if (matching.length === 0) matching = entries.filter(e => e.sell_price_min > 0);
         if (matching.length === 0) continue;
 
-        const cheapest = matching.reduce((a, b) => b.sell_price_min < a.sell_price_min ? b : a);
-        priceMap[item.type] = cheapest.sell_price_min;
-        sourceMap[item.type] = `${cheapest.city} · Q${cheapest.quality}`;
-        const d = cheapest.sell_price_min_date;
-        freshnessMap[item.type] = Math.round((Date.now() - new Date(/Z$|[+-]\d\d:?\d\d$/.test(d) ? d : d + 'Z')) / 60000);
+        priceMap[item.type] = Math.round(matching.reduce((s, e) => s + e.sell_price_min, 0) / matching.length);
+        cityCountMap[item.type] = matching.length;
+        const latest = matching.map(e => new Date(/Z$|[+-]\d\d:?\d\d$/.test(e.sell_price_min_date) ? e.sell_price_min_date : e.sell_price_min_date + 'Z')).reduce((a, b) => a > b ? a : b);
+        freshnessMap[item.type] = Math.round((Date.now() - latest) / 60000);
       }
       setPrices(priceMap);
       setFreshness(freshnessMap);
-      setSources(sourceMap);
+      setCityCounts(cityCountMap);
     } catch (e) {
       setError('Error al consultar precios: ' + e.message);
     } finally {
@@ -164,7 +164,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
           </button>
           {Object.keys(prices).length > 0 && (
             <span style={{ fontSize: '0.75rem', color: '#00cc66' }}>
-              ✓ Más barato en ciudades reales · calidad Normal a Notable
+              ✓ Promedio de todas las ciudades Americas + zona oscura
             </span>
           )}
         </div>
@@ -178,7 +178,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
               <tr style={{ color: '#6a6a8a', fontSize: '0.72rem', textTransform: 'uppercase' }}>
                 <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Slot / Item</th>
                 <th style={{ textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Código</th>
-                <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Silver (más barato)</th>
+                <th style={{ textAlign: 'right', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>Silver (promedio)</th>
                 <th style={{ textAlign: 'center', padding: '6px 8px', borderBottom: '1px solid #1e1e30' }}>✓</th>
               </tr>
             </thead>
@@ -200,7 +200,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
                       <div>
                         <div style={{ color: '#ffd700', fontFamily: 'Rajdhani', fontWeight: 700 }}>{formatSilver(prices[item.type])}</div>
                         <div style={{ fontSize: '0.68rem', color: '#4a4a6a' }}>
-                          {sources[item.type]} ·{' '}
+                          {cityCounts[item.type]}c ·{' '}
                           {freshness[item.type] < 60 ? `${freshness[item.type]}m` : `${Math.round(freshness[item.type] / 60)}h`} ago
                         </div>
                       </div>
