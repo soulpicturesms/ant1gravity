@@ -99,7 +99,7 @@ function DeathRequestModal({ request, onSave, onClose }) {
     setSelectedKeys(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
   };
 
-  const toSilver = v => Math.max(0, Math.round(Number(String(v).replace(/[^d]/g, '')) || 0));
+  const toSilver = v => Math.max(0, Math.round(Number(String(v).replace(/[^\d]/g, '')) || 0));
   const itemSilver = i => prices[i.type] > 0 ? prices[i.type] : toSilver(manualPrices[i.key] || 0);
   const marketTotal = items.filter(i => selectedKeys.has(i.key)).reduce((s, i) => s + itemSilver(i), 0);
   const extra = toSilver(extraSilver);

@@ -5,7 +5,7 @@ const router = express.Router();
 
 // ── DEATH-BASED REEQUIP (killboard integration) ─────────────────────────────
 
-const AMERICAS_CITIES = 'Bridgewatch,Martlock,Thetford,Lymhurst,FortSterling,BlackMarket';
+const AMERICAS_CITIES = 'Caerleon,Bridgewatch,Martlock,Thetford,Lymhurst,FortSterling,BlackMarket';
 // Solo se reponen armas, casco, pecho y botas
 const REEQUIP_ALLOWED = new Set(['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes']);
 
@@ -13,7 +13,7 @@ router.get('/prices', requireAuth, async (req, res) => {
   const { items } = req.query;
   if (!items) return res.status(400).json({ error: 'Se requieren items' });
   try {
-    const r = await fetch(`https://albion-online-data.com/api/v2/stats/prices/${items}.json?locations=${AMERICAS_CITIES}`);
+    const r = await fetch(`https://west.albion-online-data.com/api/v2/stats/prices/${items}.json?locations=${AMERICAS_CITIES}`);
     if (!r.ok) throw new Error(`Albion Data API ${r.status}`);
     res.json(await r.json());
   } catch (e) {
